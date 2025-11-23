@@ -26,50 +26,66 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, Download } from 'lucide-react';
 import { useState } from 'react';
 
+type ForeignKey = {
+  column: string;
+  referencesTable: string;
+  referencesColumn: string;
+};
+
 export default function SqlExporterPage() {
   const [copied, setCopied] = useState(false);
 
-  const generateSqlForTable = (tableName: string, data: any[]): string => {
+  const generateSqlForTable = (tableName: string, data: any[], foreignKeys: ForeignKey[] = []): string => {
     if (!data.length) return `-- No data for table: ${tableName}\n`;
 
-    let createTableStatement = `CREATE TABLE ${tableName} (\n`;
     const firstItem = data[0];
     const columns = Object.keys(firstItem);
+    
+    let createTableStatement = `CREATE TABLE IF NOT EXISTS "${tableName}" (\n`;
 
-    columns.forEach((column, index) => {
+    columns.forEach((column) => {
       const value = firstItem[column];
-      const dataType = typeof value;
       let sqlType: string;
 
-      if (Array.isArray(value) || (value !== null && dataType === 'object')) {
-        sqlType = 'TEXT'; // JSON objects or arrays stored as text
-      } else {
-        switch (dataType) {
-            case 'number':
-            sqlType = Number.isInteger(value) ? 'INTEGER' : 'DECIMAL(10, 2)';
-            break;
-            case 'string':
-            if (column === 'id') {
-                sqlType = 'VARCHAR(255) PRIMARY KEY';
-            } else if (value.length > 100) {
-                sqlType = 'TEXT';
-            } else {
-                sqlType = 'VARCHAR(255)';
-            }
-            break;
-            case 'boolean':
-            sqlType = 'BOOLEAN';
-            break;
-            default:
-            sqlType = 'TEXT';
-        }
+      if (column === 'id') {
+        sqlType = 'VARCHAR(255) PRIMARY KEY NOT NULL';
+      } else if (foreignKeys.some(fk => fk.column === column)) {
+        sqlType = 'VARCHAR(255)';
       }
-      if (column.toLowerCase().includes('date')) sqlType = 'DATE';
-      createTableStatement += `  "${column}" ${sqlType}${index === columns.length - 1 ? '' : ','}\n`;
+      else {
+        switch (typeof value) {
+            case 'number':
+                sqlType = Number.isInteger(value) ? 'INTEGER' : 'DECIMAL(10, 2)';
+                break;
+            case 'string':
+                if (value.length > 255) {
+                    sqlType = 'TEXT';
+                } else {
+                    sqlType = 'VARCHAR(255)';
+                }
+                break;
+            case 'boolean':
+                sqlType = 'BOOLEAN';
+                break;
+            default:
+                sqlType = 'TEXT'; // For arrays, objects, etc.
+        }
+        if (column.toLowerCase().includes('date')) sqlType = 'DATE';
+      }
+      
+      createTableStatement += `  "${column}" ${sqlType}${column !== 'id' ? ' NOT NULL' : ''},\n`;
     });
-    createTableStatement += ');\n\n';
 
-    let insertStatements = `INSERT INTO ${tableName} ("${columns.join('", "')}") VALUES\n`;
+    foreignKeys.forEach(fk => {
+        createTableStatement += `  FOREIGN KEY ("${fk.column}") REFERENCES "${fk.referencesTable}"("${fk.referencesColumn}"),\n`;
+    });
+
+    // Remove last comma
+    createTableStatement = createTableStatement.trim().slice(0, -1);
+    createTableStatement += '\n);\n\n';
+
+
+    let insertStatements = `INSERT INTO "${tableName}" ("${columns.join('", "')}") VALUES\n`;
     data.forEach((item, itemIndex) => {
       const values = columns.map(column => {
         const value = item[column];
@@ -91,17 +107,25 @@ export default function SqlExporterPage() {
   };
   
   const allSql = [
+      generateSqlForTable('suppliers', suppliers),
+      generateSqlForTable('distributors', distributors),
+      generateSqlForTable('raw_materials', rawMaterials),
+      generateSqlForTable('finished_goods', finishedGoods, [
+          { column: 'components', referencesTable: 'raw_materials', referencesColumn: 'id'} // Note: This is a simplified relation for TEXT field
+      ]),
+      generateSqlForTable('production_orders', productionOrders, [
+          { column: 'productName', referencesTable: 'finished_goods', referencesColumn: 'productName' }
+      ]),
       generateSqlForTable('invoices', invoices),
+      generateSqlForTable('purchase_orders', purchaseOrders, [
+          { column: 'supplier', referencesTable: 'suppliers', referencesColumn: 'name' }
+      ]),
       generateSqlForTable('commissions', commissions),
       generateSqlForTable('sales_data', salesData),
-      generateSqlForTable('purchase_orders', purchaseOrders),
       generateSqlForTable('salaries', salaries),
-      generateSqlForTable('sales_returns', salesReturns),
-      generateSqlForTable('raw_materials', rawMaterials),
-      generateSqlForTable('finished_goods', finishedGoods),
-      generateSqlForTable('distributors', distributors),
-      generateSqlForTable('suppliers', suppliers),
-      generateSqlForTable('production_orders', productionOrders),
+      generateSqlForTable('sales_returns', salesReturns, [
+          { column: 'invoiceId', referencesTable: 'invoices', referencesColumn: 'id' }
+      ]),
   ].join('\n\n');
 
 
