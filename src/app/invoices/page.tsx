@@ -1,5 +1,8 @@
 
+'use client';
+
 import Link from "next/link";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, File, MoreHorizontal, DollarSign, CreditCard, AlertCircle, Hourglass } from "lucide-react"
-import { invoices } from "@/lib/data"
+import { invoices as initialInvoices, type Invoice } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +30,60 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CreateInvoiceDialog } from "@/components/invoices/create-invoice-dialog";
 
 export default function InvoicesPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [isCreateInvoiceOpen, setCreateInvoiceOpen] = useState(false);
+
   const totalInvoiceValue = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
   const totalUnpaid = invoices.filter(i => i.status === 'Unpaid').reduce((sum, invoice) => sum + invoice.amount, 0);
   const totalOverdue = invoices.filter(i => i.status === 'Overdue').reduce((sum, invoice) => sum + invoice.amount, 0);
   const totalDues = totalUnpaid + totalOverdue;
+
+  const handleExport = () => {
+    const headers = ["ID", "Customer", "Email", "Date", "Due Date", "Amount", "Status"];
+    const csvRows = [
+      headers.join(','),
+      ...invoices.map(invoice => 
+        [
+          invoice.id,
+          `"${invoice.customer.replace(/"/g, '""')}"`,
+          invoice.customerEmail,
+          invoice.date,
+          invoice.dueDate,
+          invoice.amount,
+          invoice.status
+        ].join(',')
+      )
+    ];
+    
+    const csvString = csvRows.join('\\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'invoices.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const addInvoice = (newInvoice: Omit<Invoice, 'id' | 'items'>) => {
+    const newId = `INV-${String(invoices.length + 1).padStart(3, '0')}`;
+    const invoiceWithId: Invoice = {
+      ...newInvoice,
+      id: newId,
+      items: [{
+        id: 'item-new',
+        description: 'New Item',
+        quantity: 1,
+        unitPrice: newInvoice.amount,
+        total: newInvoice.amount
+      }]
+    };
+    setInvoices(prev => [invoiceWithId, ...prev]);
+  }
 
 
   const renderInvoiceTable = (invoiceList: typeof invoices) => (
@@ -87,6 +138,7 @@ export default function InvoicesPage() {
 
 
   return (
+    <>
     <div className="space-y-6">
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -140,13 +192,13 @@ export default function InvoicesPage() {
             <TabsTrigger value="overdue">Overdue</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" className="h-8 gap-1">
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Export
               </span>
             </Button>
-            <Button size="sm" className="h-8 gap-1">
+            <Button size="sm" className="h-8 gap-1" onClick={() => setCreateInvoiceOpen(true)}>
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Create Invoice
@@ -178,5 +230,11 @@ export default function InvoicesPage() {
           </Card>
       </Tabs>
     </div>
+    <CreateInvoiceDialog 
+        isOpen={isCreateInvoiceOpen} 
+        onOpenChange={setCreateInvoiceOpen} 
+        onCreateInvoice={addInvoice} 
+    />
+    </>
   );
 }
