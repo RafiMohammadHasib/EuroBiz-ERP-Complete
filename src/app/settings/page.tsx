@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { PlusCircle } from "lucide-react"
+import { finishedGoods, rawMaterials } from "@/lib/data"
 
 export default function SettingsPage() {
   return (
@@ -55,9 +56,27 @@ export default function SettingsPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12">
-                    <h3 className="text-xl font-semibold">No formulas defined</h3>
-                    <p className="text-muted-foreground mt-2">Add your first production formula to get started.</p>
+                <div className="space-y-4">
+                    {finishedGoods.map(fg => (
+                        <Card key={fg.id} className="bg-muted/50">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg">{fg.productName}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <h4 className="font-semibold text-sm mb-2">Components:</h4>
+                                <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                    {fg.components.map(comp => {
+                                        const material = rawMaterials.find(rm => rm.id === comp.materialId);
+                                        return material ? (
+                                            <li key={comp.materialId}>
+                                                {material.name}: {comp.quantity} {material.unit}
+                                            </li>
+                                        ) : null;
+                                    })}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
             </CardContent>
         </Card>
