@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { rawMaterials } from "@/lib/data"
-import { DollarSign, List, PackageCheck, Archive } from "lucide-react"
+import { DollarSign, List, PackageCheck, Archive, PlusCircle, Download } from "lucide-react"
 
 export default function RawMaterialsPage() {
   const totalInventoryValue = rawMaterials.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
@@ -71,10 +71,28 @@ export default function RawMaterialsPage() {
 
       <Card>
         <CardHeader>
-            <CardTitle>Raw Materials Inventory</CardTitle>
-            <CardDescription>
-            Manage your inventory of raw materials.
-            </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Raw Materials Inventory</CardTitle>
+              <CardDescription>
+                Manage your inventory of raw materials.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="h-8 gap-1">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Export to Excel
+                  </span>
+              </Button>
+              <Button size="sm" className="h-8 gap-1">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Add Raw Material
+                  </span>
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
            <Table>
