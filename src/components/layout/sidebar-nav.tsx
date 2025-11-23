@@ -25,6 +25,7 @@ import {
   Package,
   Factory,
   Truck,
+  Database,
   Icon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ export const navItems: NavItem[] = [
   { href: "/distributors", label: "Distributors", icon: Truck },
   { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/forecast", label: "AI Forecast", icon: BrainCircuit },
+  { href: "/sql-viewer", label: "SQL Viewer", icon: Database },
 ];
 
 const bottomNavItems: NavItem[] = [
