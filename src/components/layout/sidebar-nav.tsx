@@ -27,6 +27,8 @@ import {
   Truck,
   Database,
   Icon,
+  ShoppingCart,
+  DollarSign
 } from "lucide-react";
 
 interface NavItem {
@@ -37,7 +39,8 @@ interface NavItem {
 
 export const navItems: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/invoices", label: "Invoices", icon: FileText },
+  { href: "/invoices", label: "Sales", icon: DollarSign },
+  { href: "/purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
   { href: "/commissions", label: "Commissions", icon: CreditCard },
   { href: "/returns", label: "Returns", icon: Undo2 },
   { href: "/dues", label: "Outstanding Dues", icon: Landmark },

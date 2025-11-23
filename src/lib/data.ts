@@ -46,3 +46,18 @@ export const commissions: Commission[] = [
   { id: 'COM-03', ruleName: 'Special Promotion', appliesTo: 'Product X123', type: 'Fixed', rate: 50 },
   { id: 'COM-04', ruleName: 'Distributor Tier 2', appliesTo: 'Distributor Group B', type: 'Percentage', rate: 6 },
 ];
+
+export type PurchaseOrder = {
+    id: string;
+    supplier: string;
+    date: string;
+    amount: number;
+    status: 'Pending' | 'Completed' | 'Cancelled';
+};
+
+export const purchaseOrders: PurchaseOrder[] = [
+    { id: 'PO-001', supplier: 'Acme Corp', date: '2023-10-05', amount: 1200.00, status: 'Completed' },
+    { id: 'PO-002', supplier: 'Globex Corporation', date: '2023-10-10', amount: 350.50, status: 'Completed' },
+    { id: 'PO-003', supplier: 'Soylent Corp', date: '2023-10-15', amount: 2000.00, status: 'Pending' },
+    { id: 'PO-004', supplier: 'InGen', date: '2023-10-20', amount: 500.00, status: 'Cancelled' },
+];
