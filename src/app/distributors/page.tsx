@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award } from "lucide-react"
 import { distributors } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -15,6 +15,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 export default function DistributorsPage() {
     const totalDistributors = distributors.length;
     const totalSales = distributors.reduce((acc, dist) => acc + dist.totalSales, 0);
+    const averageSales = totalDistributors > 0 ? totalSales / totalDistributors : 0;
+    const topDistributor = distributors.reduce((prev, current) => (prev.totalSales > current.totalSales) ? prev : current, distributors[0]);
 
   return (
     <div className="space-y-6">
@@ -37,6 +39,26 @@ export default function DistributorsPage() {
                 <CardContent>
                     <div className="text-2xl font-bold">BDT {totalSales.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">From all distributors</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Average Sales</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">BDT {averageSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                    <p className="text-xs text-muted-foreground">Per distributor</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Top Performer</CardTitle>
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{topDistributor?.name}</div>
+                    <p className="text-xs text-muted-foreground">BDT {topDistributor?.totalSales.toLocaleString()} in sales</p>
                 </CardContent>
             </Card>
         </div>
