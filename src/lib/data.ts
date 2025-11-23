@@ -263,12 +263,12 @@ export type Supplier = {
     name: string;
     category: string;
     status: 'Active' | 'Inactive';
-    totalPOValue: number;
 }
 
 export const suppliers: Supplier[] = [
-    { id: 'SUP-01', name: 'Chemical Supply Inc.', category: 'Chemicals', status: 'Active', totalPOValue: 30000 },
-    { id: 'SUP-02', name: 'Global Minerals Co.', category: 'Minerals', status: 'Active', totalPOValue: 25000 },
-    { id: 'SUP-03', name: 'Advanced Polymers', category: 'Polymers', status: 'Inactive', totalPOValue: 8000 },
+    { id: 'SUP-01', name: 'Chemical Supply Inc.', category: 'Chemicals', status: 'Active' },
+    { id: 'SUP-02', name: 'Global Minerals Co.', category: 'Minerals', status: 'Active' },
+    { id: 'SUP-03', name: 'Advanced Polymers', category: 'Polymers', status: 'Inactive' },
 ]
+
 

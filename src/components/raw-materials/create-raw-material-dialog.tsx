@@ -19,22 +19,17 @@ import { RawMaterial } from '@/lib/data';
 interface CreateRawMaterialDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (material: Omit<RawMaterial, 'id'>) => void;
+  onCreate: (material: Omit<RawMaterial, 'id' | 'quantity' | 'unitCost'>) => void;
 }
 
 export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: CreateRawMaterialDialogProps) {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [unitCost, setUnitCost] = useState('');
   const [unit, setUnit] = useState<'kg' | 'litre' | 'pcs'>('kg');
 
   const handleSubmit = () => {
-    const numericQuantity = parseFloat(quantity);
-    const numericUnitCost = parseFloat(unitCost);
-
-    if (!name || !category || !quantity || !unitCost || isNaN(numericQuantity) || numericQuantity <= 0 || isNaN(numericUnitCost) || numericUnitCost < 0) {
+    if (!name || !category) {
       toast({
         variant: 'destructive',
         title: 'Invalid Input',
@@ -46,8 +41,6 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
     onCreate({
       name,
       category,
-      quantity: numericQuantity,
-      unitCost: numericUnitCost,
       unit,
     });
     
@@ -58,8 +51,6 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
 
     setName('');
     setCategory('');
-    setQuantity('');
-    setUnitCost('');
     setUnit('kg');
     onOpenChange(false);
   };
@@ -98,19 +89,6 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
               placeholder="e.g., Pigment"
             />
           </div>
-           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="mat-quantity" className="text-right">
-              Quantity
-            </Label>
-            <Input
-              id="mat-quantity"
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., 500"
-            />
-          </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="mat-unit" className="text-right">
               Unit
@@ -125,19 +103,6 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
                     <SelectItem value="pcs">pcs</SelectItem>
                 </SelectContent>
             </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="mat-cost" className="text-right">
-              Unit Cost
-            </Label>
-            <Input
-              id="mat-cost"
-              type="number"
-              value={unitCost}
-              onChange={(e) => setUnitCost(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., 5.50"
-            />
           </div>
         </div>
         <DialogFooter>

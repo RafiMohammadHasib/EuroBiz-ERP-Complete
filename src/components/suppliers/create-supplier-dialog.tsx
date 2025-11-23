@@ -26,12 +26,10 @@ export function CreateSupplierDialog({ isOpen, onOpenChange, onCreate }: CreateS
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
-  const [totalPOValue, setTotalPOValue] = useState('');
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
 
   const handleSubmit = () => {
-    const numericPOValue = parseFloat(totalPOValue);
-    if (!name || !category || !totalPOValue || isNaN(numericPOValue)) {
+    if (!name || !category) {
       toast({
         variant: 'destructive',
         title: 'Invalid Input',
@@ -43,7 +41,6 @@ export function CreateSupplierDialog({ isOpen, onOpenChange, onCreate }: CreateS
     onCreate({
       name,
       category,
-      totalPOValue: numericPOValue,
       status,
     });
     
@@ -54,7 +51,6 @@ export function CreateSupplierDialog({ isOpen, onOpenChange, onCreate }: CreateS
 
     setName('');
     setCategory('');
-    setTotalPOValue('');
     setStatus('Active');
     onOpenChange(false);
   };
@@ -91,19 +87,6 @@ export function CreateSupplierDialog({ isOpen, onOpenChange, onCreate }: CreateS
               onChange={(e) => setCategory(e.target.value)}
               className="col-span-3"
               placeholder="e.g., Chemicals"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="sup-po" className="text-right">
-              Total PO Value
-            </Label>
-            <Input
-              id="sup-po"
-              type="number"
-              value={totalPOValue}
-              onChange={(e) => setTotalPOValue(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., 25000"
             />
           </div>
            <div className="grid grid-cols-4 items-center gap-4">

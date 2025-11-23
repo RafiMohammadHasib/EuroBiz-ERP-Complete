@@ -30,10 +30,12 @@ export default function RawMaterialsPage() {
   const totalUnits = rawMaterials.reduce((acc, item) => acc + item.quantity, 0);
   const mostStocked = rawMaterials.length > 0 ? rawMaterials.reduce((prev, current) => (prev.quantity > current.quantity) ? prev : current) : null;
 
-  const addRawMaterial = (newMaterial: Omit<RawMaterial, 'id'>) => {
+  const addRawMaterial = (newMaterial: Omit<RawMaterial, 'id' | 'quantity' | 'unitCost'>) => {
     const materialWithId: RawMaterial = {
         ...newMaterial,
         id: `RM-${String(rawMaterials.length + 1).padStart(3, '0')}`,
+        quantity: 0, // Start with 0 quantity
+        unitCost: 0, // Unit cost will be determined by purchase orders
     };
     setRawMaterials(prev => [materialWithId, ...prev]);
   }
