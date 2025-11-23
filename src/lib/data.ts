@@ -213,12 +213,13 @@ export type ProductionOrder = {
     quantity: number;
     status: 'In Progress' | 'Completed' | 'Pending';
     startDate: string;
+    totalCost: number;
 }
 
 export const productionOrders: ProductionOrder[] = [
-    { id: 'PROD-001', productName: 'Premium Wall Paint (1L)', quantity: 500, status: 'Completed', startDate: '2023-10-01' },
-    { id: 'PROD-002', productName: 'Weather-Proof Exterior (5L)', quantity: 250, status: 'In Progress', startDate: '2023-10-15' },
-    { id: 'PROD-003', productName: 'Standard Emulsion (1L)', quantity: 1000, status: 'Pending', startDate: '2023-10-25' },
+    { id: 'PROD-001', productName: 'Premium Wall Paint (1L)', quantity: 500, status: 'Completed', startDate: '2023-10-01', totalCost: 6250 },
+    { id: 'PROD-002', productName: 'Weather-Proof Exterior (5L)', quantity: 250, status: 'In Progress', startDate: '2023-10-15', totalCost: 11250 },
+    { id: 'PROD-003', productName: 'Standard Emulsion (1L)', quantity: 1000, status: 'Pending', startDate: '2023-10-25', totalCost: 8000 },
 ];
 
 export type RawMaterial = {
