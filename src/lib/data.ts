@@ -68,11 +68,13 @@ export type Salary = {
     name: string;
     position: string;
     amount: number;
+    status: 'Active' | 'Inactive';
+    paymentDate: string;
 };
 
 export const salaries: Salary[] = [
-    { id: 'SAL-001', name: 'John Doe', position: 'Factory Manager', amount: 5000 },
-    { id: 'SAL-002', name: 'Jane Smith', position: 'Sales Lead', amount: 4500 },
-    { id: 'SAL-003', name: 'Peter Jones', position: 'Accountant', amount: 4000 },
-    { id: 'SAL-004', name: 'Susan Williams', position: 'Lead Developer', amount: 6000 },
+    { id: 'SAL-001', name: 'John Doe', position: 'Factory Manager', amount: 5000, status: 'Active', paymentDate: '2023-10-31' },
+    { id: 'SAL-002', name: 'Jane Smith', position: 'Sales Lead', amount: 4500, status: 'Active', paymentDate: '2023-10-31' },
+    { id: 'SAL-003', name: 'Peter Jones', position: 'Accountant', amount: 4000, status: 'Active', paymentDate: '2023-10-31' },
+    { id: 'SAL-004', name: 'Susan Williams', position: 'Lead Developer', amount: 6000, status: 'Inactive', paymentDate: '2023-09-30' },
 ];

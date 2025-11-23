@@ -5,7 +5,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card"
 import {
   Table,
@@ -16,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Users, DollarSign } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Users, DollarSign, UserCheck } from "lucide-react"
 import { salaries } from "@/lib/data"
 import {
   DropdownMenu,
@@ -25,17 +24,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 
 export default function SalariesPage() {
-  const totalMonthlySalary = salaries.reduce((acc, salary) => acc + salary.amount, 0);
+  const totalMonthlySalary = salaries.filter(s => s.status === 'Active').reduce((acc, salary) => acc + salary.amount, 0);
   const totalEmployees = salaries.length;
-  const averageSalary = totalEmployees > 0 ? totalMonthlySalary / totalEmployees : 0;
+  const activeEmployees = salaries.filter(s => s.status === 'Active').length;
+  const averageSalary = activeEmployees > 0 ? totalMonthlySalary / activeEmployees : 0;
 
 
   return (
     <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Monthly Salary</CardTitle>
@@ -43,7 +43,17 @@ export default function SalariesPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">${totalMonthlySalary.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Total payroll expense for the month</p>
+                    <p className="text-xs text-muted-foreground">For active employees</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Active Employees</CardTitle>
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{activeEmployees}</div>
+                    <p className="text-xs text-muted-foreground">Currently on payroll</p>
                 </CardContent>
             </Card>
             <Card>
@@ -53,7 +63,7 @@ export default function SalariesPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{totalEmployees}</div>
-                    <p className="text-xs text-muted-foreground">Number of active employees</p>
+                    <p className="text-xs text-muted-foreground">Includes active and inactive</p>
                 </CardContent>
             </Card>
             <Card>
@@ -63,7 +73,7 @@ export default function SalariesPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">${averageSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                    <p className="text-xs text-muted-foreground">Average monthly salary per employee</p>
+                    <p className="text-xs text-muted-foreground">For active employees</p>
                 </CardContent>
             </Card>
         </div>
@@ -90,6 +100,8 @@ export default function SalariesPage() {
                 <TableRow>
                 <TableHead>Employee Name</TableHead>
                 <TableHead>Position</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Payment Date</TableHead>
                 <TableHead className="text-right">Salary</TableHead>
                 <TableHead>
                     <span className="sr-only">Actions</span>
@@ -101,6 +113,12 @@ export default function SalariesPage() {
                 <TableRow key={salary.id}>
                     <TableCell className="font-medium">{salary.name}</TableCell>
                     <TableCell>{salary.position}</TableCell>
+                    <TableCell>
+                      <Badge variant={salary.status === 'Active' ? 'secondary' : 'outline'}>
+                        {salary.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(salary.paymentDate).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                     ${salary.amount.toLocaleString()}
                     </TableCell>
