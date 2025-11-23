@@ -221,16 +221,77 @@ export const productionOrders: ProductionOrder[] = [
     { id: 'PROD-003', productName: 'Standard Emulsion (1L)', quantity: 1000, status: 'Pending', startDate: '2023-10-25' },
 ];
 
+export type RawMaterial = {
+    id: string;
+    name: string;
+    category: string;
+    quantity: number;
+    unit: 'kg' | 'litre' | 'pcs';
+    unitCost: number;
+}
+
+export const rawMaterials: RawMaterial[] = [
+    { id: 'RM-001', name: 'Titanium Dioxide', category: 'Pigment', quantity: 500, unit: 'kg', unitCost: 5.50 },
+    { id: 'RM-002', name: 'Binder Resin', category: 'Binder', quantity: 1000, unit: 'litre', unitCost: 2.20 },
+    { id: 'RM-003', name: 'Water', category: 'Solvent', quantity: 5000, unit: 'litre', unitCost: 0.01 },
+    { id: 'RM-004', name: 'Preservative', category: 'Additive', quantity: 100, unit: 'kg', unitCost: 10.00 },
+    { id: 'RM-005', name: 'Thickener', category: 'Additive', quantity: 150, unit: 'kg', unitCost: 7.80 },
+    { id: 'RM-006', name: 'Anti-Foam Agent', category: 'Additive', quantity: 50, unit: 'kg', unitCost: 12.00 },
+];
+
+export type RawMaterialComponent = {
+    materialId: string;
+    quantity: number;
+}
+
 export type FinishedGood = {
     id: string;
     productName: string;
     quantity: number;
     unitCost: number;
     sellingPrice: number | null;
+    components: RawMaterialComponent[];
 }
 
 export const finishedGoods: FinishedGood[] = [
-    { id: 'FG-001', productName: 'Premium Wall Paint (1L)', quantity: 500, unitCost: 12.50, sellingPrice: 22.99 },
-    { id: 'FG-002', productName: 'Weather-Proof Exterior (5L)', quantity: 150, unitCost: 45.00, sellingPrice: 79.99 },
-    { id: 'FG-003', productName: 'Standard Emulsion (1L)', quantity: 800, unitCost: 8.00, sellingPrice: null },
+    { 
+        id: 'FG-001', 
+        productName: 'Premium Wall Paint (1L)', 
+        quantity: 500, 
+        unitCost: 12.50, 
+        sellingPrice: 22.99,
+        components: [
+            { materialId: 'RM-001', quantity: 0.2 }, // 0.2 kg Titanium
+            { materialId: 'RM-002', quantity: 0.4 }, // 0.4 litre Binder
+            { materialId: 'RM-003', quantity: 0.35 }, // 0.35 litre Water
+            { materialId: 'RM-005', quantity: 0.05 }, // 0.05 kg Thickener
+        ]
+    },
+    { 
+        id: 'FG-002', 
+        productName: 'Weather-Proof Exterior (5L)', 
+        quantity: 150, 
+        unitCost: 45.00, 
+        sellingPrice: 79.99,
+        components: [
+            { materialId: 'RM-001', quantity: 1.5 },
+            { materialId: 'RM-002', quantity: 2.5 },
+            { materialId: 'RM-003', quantity: 1.0 },
+            { materialId: 'RM-004', quantity: 0.1 },
+            { materialId: 'RM-006', quantity: 0.05 },
+        ]
+    },
+    { 
+        id: 'FG-003', 
+        productName: 'Standard Emulsion (1L)', 
+        quantity: 800, 
+        unitCost: 8.00, 
+        sellingPrice: null,
+        components: [
+             { materialId: 'RM-001', quantity: 0.1 },
+             { materialId: 'RM-002', quantity: 0.3 },
+             { materialId: 'RM-003', quantity: 0.55 },
+             { materialId: 'RM-005', quantity: 0.05 },
+        ]
+    },
 ];
