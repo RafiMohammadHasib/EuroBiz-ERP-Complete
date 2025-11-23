@@ -78,3 +78,46 @@ export const salaries: Salary[] = [
     { id: 'SAL-003', name: 'Peter Jones', position: 'Accountant', amount: 4000, status: 'Active', paymentDate: '2023-10-31' },
     { id: 'SAL-004', name: 'Susan Williams', position: 'Lead Developer', amount: 6000, status: 'Inactive', paymentDate: '2023-09-30' },
 ];
+
+export type Distributor = {
+    id: string;
+    name: string;
+    location: string;
+    tier: 'Tier 1' | 'Tier 2' | 'Tier 3';
+    totalSales: number;
+};
+
+export const distributors: Distributor[] = [
+    { id: 'DIST-01', name: 'Global Distributors Inc.', location: 'New York, USA', tier: 'Tier 1', totalSales: 150000 },
+    { id: 'DIST-02', name: 'Euro Sales Partners', location: 'Berlin, Germany', tier: 'Tier 2', totalSales: 95000 },
+    { id: 'DIST-03', name: 'Asia Pacific Traders', location: 'Singapore', tier: 'Tier 1', totalSales: 250000 },
+];
+
+export type Supplier = {
+    id: string;
+    name: string;
+    category: string;
+    status: 'Active' | 'Inactive';
+    totalPOValue: number;
+};
+
+export const suppliers: Supplier[] = [
+    { id: 'SUP-01', name: 'Raw Materials Co.', category: 'Chemicals', status: 'Active', totalPOValue: 75000 },
+    { id: 'SUP-02', name: 'Packaging Pros', category: 'Containers', status: 'Active', totalPOValue: 32000 },
+    { id: 'SUP-03', name: 'Industrial Components', category: 'Parts', status: 'Inactive', totalPOValue: 15000 },
+];
+
+
+export type ProductionOrder = {
+    id: string;
+    productName: string;
+    quantity: number;
+    status: 'In Progress' | 'Completed' | 'Pending';
+    startDate: string;
+}
+
+export const productionOrders: ProductionOrder[] = [
+    { id: 'PROD-001', productName: 'Premium Wall Paint (1L)', quantity: 500, status: 'Completed', startDate: '2023-10-01' },
+    { id: 'PROD-002', productName: 'Weather-Proof Exterior (5L)', quantity: 250, status: 'In Progress', startDate: '2023-10-15' },
+    { id: 'PROD-003', productName: 'Standard Emulsion (1L)', quantity: 1000, status: 'Pending', startDate: '2023-10-25' },
+]
