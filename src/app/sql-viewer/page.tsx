@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { invoices } from "@/lib/data"
+import { invoices, salesData } from "@/lib/data"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { commissions } from "@/lib/data"
@@ -96,6 +96,31 @@ export default function SqlViewerPage() {
                                 <TableCell>{commission.appliesTo}</TableCell>
                                 <TableCell>{commission.type}</TableCell>
                                 <TableCell className="text-right">{commission.rate}{commission.type === 'Percentage' ? '%' : ''}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      </TabsContent>
+       <TabsContent value="sales_data">
+        <Card>
+            <CardHeader>
+                <Textarea readOnly value="SELECT * FROM sales_data;" className="font-mono bg-muted" />
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>month</TableHead>
+                            <TableHead className="text-right">revenue</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {salesData.map((data) => (
+                            <TableRow key={data.month}>
+                                <TableCell>{data.month}</TableCell>
+                                <TableCell className="text-right">${data.revenue.toLocaleString()}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
