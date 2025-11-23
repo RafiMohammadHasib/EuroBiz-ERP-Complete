@@ -20,13 +20,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown } from 'lucide-react';
+import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck } from 'lucide-react';
 import { finishedGoods, rawMaterials } from '@/lib/data';
 
 export default function FinishedGoodsPage() {
   const totalInventoryValue = finishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
   const potentialRevenue = finishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
   const productLines = finishedGoods.length;
+  const totalUnits = finishedGoods.reduce((acc, item) => acc + item.quantity, 0);
   
   return (
     <div className="space-y-6">
@@ -59,6 +60,16 @@ export default function FinishedGoodsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{productLines}</div>
             <p className="text-xs text-muted-foreground">Number of unique products</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Units in Stock</CardTitle>
+            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalUnits.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Sum of all product quantities</p>
           </CardContent>
         </Card>
       </div>
