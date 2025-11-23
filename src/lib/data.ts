@@ -296,3 +296,17 @@ export const finishedGoods: FinishedGood[] = [
         ]
     },
 ];
+
+export type SalesReturn = {
+  id: string;
+  invoiceId: string;
+  customer: string;
+  date: string;
+  amount: number;
+  returnedUnits: number;
+};
+
+export const salesReturns: SalesReturn[] = [
+  { id: 'RET-001', invoiceId: 'INV-004', customer: 'Queen Consolidated', date: '2023-10-18', amount: 300, returnedUnits: 20 },
+  { id: 'RET-002', invoiceId: 'INV-007', customer: 'Kord Industries', date: '2023-10-20', amount: 250.05, returnedUnits: 5 },
+];

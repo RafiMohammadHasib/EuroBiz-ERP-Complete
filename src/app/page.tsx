@@ -1,4 +1,5 @@
 
+
 import {
   Card,
   CardContent,
@@ -16,14 +17,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import SalesChart from "@/components/dashboard/sales-chart"
 import { DollarSign, CreditCard, Users, Undo, Truck, ShoppingCart, Building, Package } from "lucide-react"
-import { invoices, purchaseOrders, distributors, suppliers } from "@/lib/data"
+import { invoices, purchaseOrders, distributors, suppliers, salesReturns } from "@/lib/data"
 
 export default function Home() {
   const totalRevenue = invoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + i.amount, 0);
   const outstandingDues = invoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + i.amount, 0);
   const paidInvoices = invoices.filter(i => i.status === 'Paid').length;
   const uniqueCustomers = new Set(invoices.map(i => i.customer)).size;
-  const totalReturns = 2; // Mock data for now
+  const totalReturns = salesReturns.length;
   
   const pendingPurchaseOrders = purchaseOrders.filter(p => p.status === 'Pending').length;
   const totalPurchaseValue = purchaseOrders.reduce((acc, p) => acc + p.amount, 0);
