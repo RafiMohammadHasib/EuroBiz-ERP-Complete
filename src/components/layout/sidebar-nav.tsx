@@ -68,9 +68,9 @@ export default function SidebarNav({ navItems: itemsToRender }: SidebarNavProps)
   return (
     <>
       <SidebarHeader>
-        <Link href="/" className="flex items-center gap-2">
-          <Landmark className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg whitespace-nowrap group-data-[collapsible=icon]:hidden">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Landmark className="h-7 w-7 text-primary" />
+          <span className="font-bold text-xl whitespace-nowrap group-data-[collapsible=icon]:hidden">
             BizFin
           </span>
         </Link>
@@ -83,6 +83,7 @@ export default function SidebarNav({ navItems: itemsToRender }: SidebarNavProps)
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   tooltip={item.label}
+                  size="lg"
                 >
                   <item.icon />
                   <span>{item.label}</span>
@@ -100,6 +101,7 @@ export default function SidebarNav({ navItems: itemsToRender }: SidebarNavProps)
                   <SidebarMenuButton
                     isActive={pathname === item.href}
                     tooltip={item.label}
+                    size="lg"
                   >
                     <item.icon />
                     <span>{item.label}</span>
@@ -107,9 +109,9 @@ export default function SidebarNav({ navItems: itemsToRender }: SidebarNavProps)
                 </Link>
               </SidebarMenuItem>
           ))}
-          <SidebarSeparator />
+          <SidebarSeparator className="my-2"/>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout">
+            <SidebarMenuButton tooltip="Logout" size="lg">
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>
