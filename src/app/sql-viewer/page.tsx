@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -20,6 +21,7 @@ import {
   distributors,
   suppliers,
   productionOrders,
+  notifications,
 } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -153,6 +155,7 @@ export default function SqlExporterPage() {
       generateSqlForTable('sales_returns', salesReturns, [
           { column: 'invoiceId', referencesTable: 'invoices', referencesColumn: 'id' }
       ]),
+      generateSqlForTable('notifications', notifications),
   ].join('\n\n');
 
 
