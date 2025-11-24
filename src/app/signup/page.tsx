@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,11 +15,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Landmark } from 'lucide-react';
-import Link from 'next/link';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -26,14 +26,14 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     setIsLoading(true);
     setError(null);
     try {
       if (!auth) {
         throw new Error('Firebase Auth is not initialized');
       }
-      await signInWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       router.push('/');
     } catch (error: any) {
       setError(error.message);
@@ -51,7 +51,7 @@ export default function LoginPage() {
                 <CardTitle className="text-3xl font-bold">BizFin</CardTitle>
             </div>
           <CardDescription>
-            Enter your email below to login to your account
+            Create an account to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,15 +80,15 @@ export default function LoginPage() {
             {error && (
                 <p className="text-sm text-destructive">{error}</p>
             )}
-            <Button type="submit" className="w-full" onClick={handleLogin} disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+            <Button type="submit" className="w-full" onClick={handleSignup} disabled={isLoading}>
+              {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </div>
         </CardContent>
-        <CardFooter className="text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline ml-1">
-                Sign up
+         <CardFooter className="text-center text-sm">
+            Already have an account?{' '}
+            <Link href="/login" className="underline ml-1">
+                Log in
             </Link>
         </CardFooter>
       </Card>
