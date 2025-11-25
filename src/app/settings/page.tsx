@@ -15,6 +15,7 @@ import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Commission, FinishedGood, RawMaterial } from '@/lib/data';
 import { CreateCommissionRuleDialog } from '@/components/commissions/create-commission-rule-dialog';
 import { CreateFormulaDialog } from '@/components/settings/create-formula-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Define a type for your settings document
 type BusinessSettings = {
@@ -144,6 +145,10 @@ export default function SettingsPage() {
         setBusinessSettings(prev => ({ ...prev, [id]: isNumeric ? Number(value) : value }));
     }
 
+    const handleSettingsSelectChange = (field: keyof BusinessSettings, value: string) => {
+        setBusinessSettings(prev => ({...prev, [field]: value}))
+    }
+
   const addCommissionRule = async (newRule: Omit<Commission, 'id'>) => {
     // This functionality is already connected to Firestore via `commissions/page.tsx` logic
     // but we can add it here too if direct creation from settings is needed.
@@ -230,11 +235,27 @@ export default function SettingsPage() {
                        <div className="grid md:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="language">Language</Label>
-                                <Input id="language" value={businessSettings.language} onChange={handleBusinessDetailsChange} />
+                                <Select value={businessSettings.language} onValueChange={(value) => handleSettingsSelectChange('language', value)}>
+                                    <SelectTrigger id="language">
+                                        <SelectValue placeholder="Select Language" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="English">English</SelectItem>
+                                        <SelectItem value="Bengali">Bengali</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="currency">Currency</Label>
-                                <Input id="currency" value={businessSettings.currency} onChange={handleBusinessDetailsChange} />
+                                <Select value={businessSettings.currency} onValueChange={(value) => handleSettingsSelectChange('currency', value)}>
+                                    <SelectTrigger id="currency">
+                                        <SelectValue placeholder="Select Currency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="BDT">BDT</SelectItem>
+                                        <SelectItem value="USD">USD</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="vatTax">VAT / Tax (%)</Label>
