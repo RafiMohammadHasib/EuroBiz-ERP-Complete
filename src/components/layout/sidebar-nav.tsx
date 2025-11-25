@@ -111,11 +111,21 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
   };
 
   const isLoginPage = pathname === '/login';
+
+  if (isUserLoading) {
+      return null;
+  }
+
+  if (!user && !isLoginPage) {
+      return null; // Don't render sidebar if not logged in and not on login page
+  }
 
   if (isLoginPage) {
       return null;
@@ -191,23 +201,12 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
               </SidebarMenuItem>
           ))}
           <SidebarSeparator className="my-2"/>
-            {!isUserLoading && (
-                 <SidebarMenuItem>
-                    {user ? (
-                        <SidebarMenuButton tooltip="Logout" size="sm" onClick={handleLogout}>
-                            <LogOut />
-                            <span>Logout</span>
-                        </SidebarMenuButton>
-                    ) : (
-                        <Link href="/login">
-                             <SidebarMenuButton tooltip="Login" size="sm">
-                                <LogIn />
-                                <span>Login</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    )}
-                </SidebarMenuItem>
-            )}
+            <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Logout" size="sm" onClick={handleLogout}>
+                    <LogOut />
+                    <span>Logout</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>

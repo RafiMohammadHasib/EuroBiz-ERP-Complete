@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Landmark } from 'lucide-react';
-import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -86,10 +85,7 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline ml-1">
-                Sign up
-            </Link>
+            Don&apos;t have an account? Contact your administrator.
         </CardFooter>
       </Card>
     </div>

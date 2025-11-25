@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
-import DashboardLayout from '@/components/layout/dashboard-layout';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 import AuthHandler from '@/components/layout/auth-handler';
@@ -28,7 +27,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
            <AuthHandler>
-              <DashboardLayout>{children}</DashboardLayout>
+              {children}
            </AuthHandler>
         </FirebaseClientProvider>
         <Toaster />
