@@ -125,6 +125,18 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
+    
+    /**
+     * @description Controls access to distributor information.
+     * @path /distributors/{distributorId}
+     * @allow (get, list) Any authenticated user can read distributor data.
+     * @allow (write) Only admins can create, update, or delete distributors.
+     * @principle Public read for signed-in users, with writes restricted to admins.
+     */
+    match /distributors/{distributorId} {
+        allow get, list: if isSignedIn();
+        allow write: if isAdmin();
+    }
 
     /**
      * @description Controls access to supplier information.
