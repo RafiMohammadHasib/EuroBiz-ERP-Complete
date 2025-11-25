@@ -29,7 +29,7 @@ export default function DuesPage() {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
   const { toast } = useToast();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
 
   useEffect(() => {
     const handleDataUpdate = (event: Event) => {
@@ -75,7 +75,7 @@ export default function DuesPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalSalesDue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalSalesDue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Total money to be received</p>
                 </CardContent>
             </Card>
@@ -85,7 +85,7 @@ export default function DuesPage() {
                     <Landmark className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalPurchaseDue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalPurchaseDue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Total money to be paid</p>
                 </CardContent>
             </Card>
@@ -110,7 +110,7 @@ export default function DuesPage() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Invoice ID</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount Due ({currency})</TableHead>
+                    <TableHead className="text-right">Amount Due ({currencySymbol})</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -164,7 +164,7 @@ export default function DuesPage() {
                         <TableHead>Supplier</TableHead>
                         <TableHead>PO ID</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount Due ({currency})</TableHead>
+                        <TableHead className="text-right">Amount Due ({currencySymbol})</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>

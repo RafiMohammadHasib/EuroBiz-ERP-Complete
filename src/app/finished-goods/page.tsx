@@ -28,7 +28,7 @@ import { useSettings } from '@/context/settings-context';
 
 export default function FinishedGoodsPage() {
   const firestore = useFirestore();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
   const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
   const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
 
@@ -54,7 +54,7 @@ export default function FinishedGoodsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalInventoryValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalInventoryValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on unit cost</p>
           </CardContent>
         </Card>
@@ -64,7 +64,7 @@ export default function FinishedGoodsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {potentialRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{potentialRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on selling price</p>
           </CardContent>
         </Card>
@@ -131,9 +131,9 @@ export default function FinishedGoodsPage() {
                           </TableCell>
                           <TableCell className="font-medium">{item.productName}</TableCell>
                           <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{currency} {item.unitCost.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
                           <TableCell className="text-right">
-                              {item.sellingPrice ? `${currency} ${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
+                              {item.sellingPrice ? `${currencySymbol}${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
                           </TableCell>
                           <TableCell>
                               <DropdownMenu>

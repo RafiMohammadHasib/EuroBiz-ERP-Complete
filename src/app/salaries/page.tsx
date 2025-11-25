@@ -36,7 +36,7 @@ import { useSettings } from "@/context/settings-context";
 
 export default function SalariesPage() {
   const firestore = useFirestore();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
   const salariesCollection = useMemoFirebase(() => collection(firestore, 'salaries'), [firestore]);
   const { data: salaries, isLoading } = useCollection<Salary>(salariesCollection);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
@@ -76,7 +76,7 @@ export default function SalariesPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalMonthlySalary.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalMonthlySalary.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">For active employees</p>
                 </CardContent>
             </Card>
@@ -106,7 +106,7 @@ export default function SalariesPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {averageSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{averageSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     <p className="text-xs text-muted-foreground">For active employees</p>
                 </CardContent>
             </Card>
@@ -159,7 +159,7 @@ export default function SalariesPage() {
                       </TableCell>
                       <TableCell>{new Date(salary.paymentDate).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                      {currency} {salary.amount.toLocaleString()}
+                      {currencySymbol}{salary.amount.toLocaleString()}
                       </TableCell>
                       <TableCell>
                       <DropdownMenu>

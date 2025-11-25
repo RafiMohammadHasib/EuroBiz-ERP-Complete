@@ -15,7 +15,7 @@ const chartConfig = {
 };
 
 export default function PurchaseAnalysisChart() {
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
   const data = useMemo(() => {
     const monthlyData: { [key: string]: number } = {};
     purchaseOrders.forEach(po => {
@@ -51,7 +51,7 @@ export default function PurchaseAnalysisChart() {
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `${currency} ${Number(value) / 1000}K`}
+            tickFormatter={(value) => `${currencySymbol}${Number(value) / 1000}K`}
           />
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
           <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} />

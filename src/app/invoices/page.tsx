@@ -38,7 +38,7 @@ import { useSettings } from "@/context/settings-context";
 
 export default function InvoicesPage() {
   const firestore = useFirestore();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
   const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
   const [isCreateInvoiceOpen, setCreateInvoiceOpen] = useState(false);
@@ -136,7 +136,7 @@ export default function InvoicesPage() {
               </Badge>
             </TableCell>
             <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
-            <TableCell className="text-right">{currency} {invoice.amount.toLocaleString()}</TableCell>
+            <TableCell className="text-right">{currencySymbol}{invoice.amount.toLocaleString()}</TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -172,7 +172,7 @@ export default function InvoicesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalInvoiceValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalInvoiceValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">From all invoices</p>
           </CardContent>
         </Card>
@@ -182,7 +182,7 @@ export default function InvoicesPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalDues.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalDues.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Across all unpaid & overdue invoices</p>
           </CardContent>
         </Card>
@@ -192,7 +192,7 @@ export default function InvoicesPage() {
             <Hourglass className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalUnpaid.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalUnpaid.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Invoices currently pending payment</p>
           </CardContent>
         </Card>
@@ -202,7 +202,7 @@ export default function InvoicesPage() {
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{currency} {totalOverdue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-destructive">{currencySymbol}{totalOverdue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Invoices past their due date</p>
           </CardContent>
         </Card>

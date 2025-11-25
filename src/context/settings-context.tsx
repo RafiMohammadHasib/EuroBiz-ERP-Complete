@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
@@ -8,14 +9,12 @@ type Currency = 'BDT' | 'USD';
 
 interface SettingsContextType {
   currency: Currency;
+  currencySymbol: string;
   setCurrency: (currency: Currency) => void;
-  // Add other settings here in the future
 }
 
-// Define a type for your settings document
 type BusinessSettings = {
     currency?: Currency;
-    // other fields
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -32,9 +31,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settingsData]);
 
+  const currencySymbol = currency === 'USD' ? '$' : '৳';
 
   const value = {
     currency,
+    currencySymbol,
     setCurrency,
   };
 

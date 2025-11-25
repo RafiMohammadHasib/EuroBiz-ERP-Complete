@@ -22,7 +22,7 @@ import { useSettings } from "@/context/settings-context";
 
 export default function ProductionPage() {
     const firestore = useFirestore();
-    const { currency } = useSettings();
+    const { currencySymbol } = useSettings();
     const productionOrdersCollection = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
     const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
     
@@ -88,7 +88,7 @@ export default function ProductionPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalProductionCost.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalProductionCost.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">For all production orders</p>
                 </CardContent>
             </Card>
@@ -144,8 +144,8 @@ export default function ProductionPage() {
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.productName}</TableCell>
                             <TableCell>{order.quantity.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{currency} {order.totalCost.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{currency} {(order.totalCost / order.quantity).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{currencySymbol}{order.totalCost.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{currencySymbol}{(order.totalCost / order.quantity).toFixed(2)}</TableCell>
                              <TableCell>
                                 <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'In Progress' ? 'default' : 'outline'}>
                                     {order.status}

@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currency, setCurrency } = useSettings();
+  const { currency, setCurrency, currencySymbol } = useSettings();
 
   // --- Firestore References ---
   const settingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
@@ -264,8 +264,8 @@ export default function SettingsPage() {
                                     <SelectValue placeholder="Select Currency" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="BDT">BDT</SelectItem>
-                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value="BDT">BDT (৳)</SelectItem>
+                                    <SelectItem value="USD">USD ($)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -344,7 +344,7 @@ export default function SettingsPage() {
                                         <p className="text-sm text-muted-foreground">{rule.appliesTo}</p>
                                     </div>
                                     <div className="font-semibold text-primary">
-                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `${currency} ${rule.rate.toLocaleString()}`}
+                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `${currencySymbol}${rule.rate.toLocaleString()}`}
                                     </div>
                                 </div>
                             ))}

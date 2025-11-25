@@ -25,7 +25,7 @@ import { useSettings } from "@/context/settings-context";
 
 export default function Home() {
   const firestore = useFirestore();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
 
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
   const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
@@ -67,7 +67,7 @@ export default function Home() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on {paidInvoices} paid invoices</p>
           </CardContent>
         </Card>
@@ -77,7 +77,7 @@ export default function Home() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {outstandingDues.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{outstandingDues.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Across all unpaid invoices</p>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export default function Home() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalPurchaseValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalPurchaseValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">For all purchase orders</p>
           </CardContent>
         </Card>
@@ -182,7 +182,7 @@ export default function Home() {
                               {invoice.customerEmail}
                           </div>
                       </TableCell>
-                      <TableCell>{currency} {invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell>{currencySymbol}{invoice.amount.toLocaleString()}</TableCell>
                       <TableCell>
                           <Badge variant={invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Unpaid' ? 'outline' : 'destructive'}>
                             {invoice.status}

@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Invoice } from '@/lib/data';
+import { useSettings } from '@/context/settings-context';
 
 interface CreateInvoiceDialogProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CreateInvoiceDialogProps {
 
 export function CreateInvoiceDialog({ isOpen, onOpenChange, onCreateInvoice }: CreateInvoiceDialogProps) {
   const { toast } = useToast();
+  const { currency } = useSettings();
   const [customer, setCustomer] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [amount, setAmount] = useState('');
@@ -106,7 +108,7 @@ export function CreateInvoiceDialog({ isOpen, onOpenChange, onCreateInvoice }: C
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">
-              Amount (BDT)
+              Amount ({currency})
             </Label>
             <Input
               id="amount"

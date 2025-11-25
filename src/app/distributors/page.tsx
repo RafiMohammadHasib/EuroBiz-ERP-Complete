@@ -22,7 +22,7 @@ import { useSettings } from "@/context/settings-context";
 
 export default function DistributorsPage() {
     const firestore = useFirestore();
-    const { currency } = useSettings();
+    const { currencySymbol } = useSettings();
     const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
     const { data: distributors, isLoading } = useCollection<Distributor>(distributorsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function DistributorsPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalSales.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalSales.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">From all distributors</p>
                 </CardContent>
             </Card>
@@ -82,7 +82,7 @@ export default function DistributorsPage() {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {averageSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{averageSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                     <p className="text-xs text-muted-foreground">Per distributor</p>
                 </CardContent>
             </Card>
@@ -94,7 +94,7 @@ export default function DistributorsPage() {
                 <CardContent>
                     <div className="text-2xl font-bold">{topDistributor?.name || 'N/A'}</div>
                     <p className="text-xs text-muted-foreground">
-                        {topDistributor ? `${currency} ${topDistributor.totalSales.toLocaleString()} in sales` : 'No distributors found'}
+                        {topDistributor ? `${currencySymbol}${topDistributor.totalSales.toLocaleString()} in sales` : 'No distributors found'}
                     </p>
                 </CardContent>
             </Card>
@@ -140,7 +140,7 @@ export default function DistributorsPage() {
                             <TableCell className="font-medium">{dist.name}</TableCell>
                             <TableCell>{dist.location}</TableCell>
                             <TableCell>{dist.tier}</TableCell>
-                            <TableCell className="text-right">{currency} {dist.totalSales.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{currencySymbol}{dist.totalSales.toLocaleString()}</TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>

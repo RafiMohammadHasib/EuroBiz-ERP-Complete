@@ -25,7 +25,7 @@ let localSalesReturns = [...initialSalesReturns];
 
 export default function ReturnsPage() {
   const { toast } = useToast();
-  const { currency } = useSettings();
+  const { currencySymbol, currency } = useSettings();
   const [invoiceId, setInvoiceId] = useState('');
   const [returnAmount, setReturnAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +96,7 @@ export default function ReturnsPage() {
     setTimeout(() => {
         toast({
           title: 'Return Processed Successfully',
-          description: `Invoice ${invoiceId} has been updated. The new due amount is ${localInvoices[invoiceIndex].amount.toLocaleString('en-US', { style: 'currency', currency: 'BDT' })}. ${returnedUnits} units returned to inventory.`,
+          description: `Invoice ${invoiceId} has been updated. The new due amount is ${localInvoices[invoiceIndex].amount.toLocaleString('en-US', { style: 'currency', currency: currency })}. ${returnedUnits} units returned to inventory.`,
         });
         setInvoiceId('');
         setReturnAmount('');
@@ -118,7 +118,7 @@ export default function ReturnsPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{currency} {totalReturnValue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{totalReturnValue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">From {totalReturnsProcessed} returns</p>
                 </CardContent>
             </Card>
@@ -164,7 +164,7 @@ export default function ReturnsPage() {
                         />
                         </div>
                         <div className="space-y-2">
-                        <Label htmlFor="return-amount">Value of Returned Goods ({currency})</Label>
+                        <Label htmlFor="return-amount">Value of Returned Goods ({currencySymbol})</Label>
                         <Input
                             id="return-amount"
                             type="number"
@@ -203,7 +203,7 @@ export default function ReturnsPage() {
                                         <TableCell className="font-medium">{r.id}</TableCell>
                                         <TableCell>{r.customer}</TableCell>
                                         <TableCell>{new Date(r.date).toLocaleDateString()}</TableCell>
-                                        <TableCell className="text-right">{currency} {r.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right">{currencySymbol}{r.amount.toLocaleString()}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

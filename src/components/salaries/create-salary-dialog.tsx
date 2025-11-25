@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Salary } from '@/lib/data';
+import { useSettings } from '@/context/settings-context';
 
 interface CreateSalaryDialogProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface CreateSalaryDialogProps {
 }
 
 export function CreateSalaryDialog({ isOpen, onOpenChange, onCreate }: CreateSalaryDialogProps) {
+  const { currency } = useSettings();
   const [name, setName] = useState('');
   const [position, setPosition] = useState('');
   const [amount, setAmount] = useState('');
@@ -86,7 +88,7 @@ export function CreateSalaryDialog({ isOpen, onOpenChange, onCreate }: CreateSal
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">
-              Salary (BDT)
+              Salary ({currency})
             </Label>
             <Input
               id="amount"

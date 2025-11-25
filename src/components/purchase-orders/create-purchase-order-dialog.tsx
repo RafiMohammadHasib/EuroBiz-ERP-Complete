@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { PurchaseOrder, Supplier, RawMaterial, PurchaseOrderItem } from '@/lib/data';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '../ui/separator';
+import { useSettings } from '@/context/settings-context';
 
 interface CreatePurchaseOrderDialogProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ interface CreatePurchaseOrderDialogProps {
 
 export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, suppliers, rawMaterials }: CreatePurchaseOrderDialogProps) {
   const { toast } = useToast();
+  const { currencySymbol } = useSettings();
   const [supplier, setSupplier] = useState('');
   const [status, setStatus] = useState<'Pending' | 'Completed' | 'Cancelled'>('Pending');
   const [items, setItems] = useState<Omit<PurchaseOrderItem, 'id'>[]>([]);
@@ -206,7 +209,7 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
             </div>
              <div className="space-y-2 text-right">
                 <div className="text-sm text-muted-foreground">Subtotal</div>
-                <div className="font-medium">BDT {subTotal.toLocaleString()}</div>
+                <div className="font-medium">{currencySymbol}{subTotal.toLocaleString()}</div>
             </div>
             <div className="grid grid-cols-2 items-center gap-2">
                 <Label htmlFor="tax">VAT/Tax</Label>
@@ -214,7 +217,7 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
             </div>
              <div className="space-y-2 text-right">
                 <div className="text-sm text-muted-foreground">Grand Total</div>
-                <div className="font-semibold text-lg">BDT {grandTotal.toLocaleString()}</div>
+                <div className="font-semibold text-lg">{currencySymbol}{grandTotal.toLocaleString()}</div>
             </div>
              <div className="grid grid-cols-2 items-center gap-2">
                 <Label htmlFor="paidAmount">Paid Amount</Label>
@@ -222,7 +225,7 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
             </div>
              <div className="space-y-2 text-right">
                 <div className="text-sm text-muted-foreground">Due Amount</div>
-                <div className="font-semibold text-destructive text-lg">BDT {dueAmount.toLocaleString()}</div>
+                <div className="font-semibold text-destructive text-lg">{currencySymbol}{dueAmount.toLocaleString()}</div>
             </div>
           </div>
         </div>

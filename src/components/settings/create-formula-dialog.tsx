@@ -30,7 +30,7 @@ interface CreateFormulaDialogProps {
 
 export function CreateFormulaDialog({ isOpen, onOpenChange, onCreate, rawMaterials }: CreateFormulaDialogProps) {
   const { toast } = useToast();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
   const [productName, setProductName] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [components, setComponents] = useState<{ materialId: string; quantity: number }[]>([]);
@@ -163,7 +163,7 @@ export function CreateFormulaDialog({ isOpen, onOpenChange, onCreate, rawMateria
             <div className="flex justify-end items-center">
                 <div className="text-right">
                     <p className="text-sm text-muted-foreground">Calculated Unit Cost</p>
-                    <p className="font-bold text-lg">{currency} {calculateUnitCost().toFixed(2)}</p>
+                    <p className="font-bold text-lg">{currencySymbol}{calculateUnitCost().toFixed(2)}</p>
                 </div>
             </div>
         </div>

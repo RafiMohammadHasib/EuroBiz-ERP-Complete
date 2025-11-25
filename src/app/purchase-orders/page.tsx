@@ -39,7 +39,7 @@ import { useSettings } from "@/context/settings-context";
 export default function PurchaseOrdersPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currency } = useSettings();
+  const { currencySymbol } = useSettings();
 
   const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
   const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
@@ -166,7 +166,7 @@ export default function PurchaseOrdersPage() {
                     </Badge>
                     </TableCell>
                     <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">{currency} {order.amount.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{currencySymbol}{order.amount.toLocaleString()}</TableCell>
                     <TableCell>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -204,7 +204,7 @@ export default function PurchaseOrdersPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {totalPOValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalPOValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">From all purchase orders</p>
           </CardContent>
         </Card>
@@ -214,7 +214,7 @@ export default function PurchaseOrdersPage() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currency} {pendingPOValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{pendingPOValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">For all pending orders</p>
           </CardContent>
         </Card>
