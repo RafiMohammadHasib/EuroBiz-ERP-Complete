@@ -152,7 +152,7 @@ service cloud.firestore {
     
     match /purchaseOrders/{purchaseOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isAdmin();
+        allow write: if isSignedIn();
     }
 
     match /sales_returns/{returnId} {
@@ -294,3 +294,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
