@@ -86,13 +86,25 @@ export default function PurchaseOrdersPage() {
             const poRef = doc(firestore, 'purchaseOrders', orderId);
             batch.update(poRef, { status: 'Completed' });
 
-            // 2. Update raw material stock
+            // 2. Update raw material stock and unit cost
             orderToUpdate.items.forEach(item => {
                 const material = safeRawMaterials.find(rm => rm.id === item.rawMaterialId);
                 if (material) {
                     const materialRef = doc(firestore, 'rawMaterials', material.id);
-                    const newQuantity = material.quantity + item.quantity;
-                    batch.update(materialRef, { quantity: newQuantity });
+                    
+                    const oldTotalValue = material.quantity * material.unitCost;
+                    const newItemsValue = item.quantity * item.unitCost;
+                    const newTotalQuantity = material.quantity + item.quantity;
+                    
+                    // Calculate weighted-average cost. Avoid division by zero.
+                    const newUnitCost = newTotalQuantity > 0
+                        ? (oldTotalValue + newItemsValue) / newTotalQuantity
+                        : item.unitCost;
+
+                    batch.update(materialRef, { 
+                        quantity: newTotalQuantity,
+                        unitCost: newUnitCost
+                    });
                 }
             });
 
