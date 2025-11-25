@@ -147,7 +147,7 @@ service cloud.firestore {
      */
     match /suppliers/{supplierId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isSignedIn();
     }
     
     match /purchaseOrders/{purchaseOrderId} {
