@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import placeholder from '@/lib/placeholder-images.json';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const authIllustration = placeholder.placeholderImages.find(p => p.id === 'auth-illustration') as ImagePlaceholder | undefined;
 
   const handleLogin = async () => {
@@ -30,6 +32,10 @@ export default function LoginPage() {
         throw new Error('Firebase Auth is not initialized');
       }
       await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! You have successfully logged in.",
+      });
       router.push('/');
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -37,7 +43,6 @@ export default function LoginPage() {
       } else {
         setError(error.message);
       }
-    } finally {
       setIsLoading(false);
     }
   };
