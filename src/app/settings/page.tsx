@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -138,83 +139,101 @@ export default function SettingsPage() {
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="md:col-span-1">
-            <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+      <div className="space-y-6">
+         <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
             <p className="text-muted-foreground">
-              Manage your account and business-wide settings.
+              Manage your account, business rules, and system preferences.
             </p>
-          </div>
-
-          <div className="md:col-span-2 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Profile</CardTitle>
-                <CardDescription>Update your personal information.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
-                  <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" value={email} disabled />
-                </div>
-              </CardContent>
-              <CardContent>
-                <Button onClick={handleProfileUpdate} disabled={isSavingProfile}>
-                  {isSavingProfile ? 'Saving...' : 'Save Profile'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>For security, you must provide your current password.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                </div>
-              </CardContent>
-              <CardContent>
-                <Button onClick={handlePasswordUpdate} disabled={isSavingPassword}>
-                  {isSavingPassword ? 'Saving...' : 'Update Password'}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
-
-        <Separator />
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="md:col-span-1">
-                <h2 className="text-2xl font-bold tracking-tight">Business Settings</h2>
-                <p className="text-muted-foreground">
-                Define rules and formulas that govern your business operations.
-                </p>
-            </div>
-            <div className="md:col-span-2">
-                <Tabs defaultValue="formulas">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="formulas">Production Formulas</TabsTrigger>
-                    <TabsTrigger value="commissions">Commission Rules</TabsTrigger>
-                </TabsList>
-                <TabsContent value="formulas">
-                    <Card className="mt-4">
+        <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-5">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="system">System</TabsTrigger>
+                <TabsTrigger value="business">Business</TabsTrigger>
+                <TabsTrigger value="production">Production</TabsTrigger>
+                <TabsTrigger value="commission">Commission</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" className="mt-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Profile</CardTitle>
+                            <CardDescription>Update your personal information.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                            <Label htmlFor="displayName">Display Name</Label>
+                            <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input id="email" type="email" value={email} disabled />
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button onClick={handleProfileUpdate} disabled={isSavingProfile}>
+                            {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Change Password</CardTitle>
+                            <CardDescription>For security, you must provide your current password.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                            <Label htmlFor="currentPassword">Current Password</Label>
+                            <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                            <Label htmlFor="newPassword">New Password</Label>
+                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                            <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button onClick={handlePasswordUpdate} disabled={isSavingPassword}>
+                            {isSavingPassword ? 'Saving...' : 'Update Password'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </TabsContent>
+            <TabsContent value="system" className="mt-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>System Settings</CardTitle>
+                        <CardDescription>Manage system-wide preferences.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-64">
+                            <h3 className="text-xl font-semibold">System settings coming soon</h3>
+                            <p className="text-muted-foreground mt-2">Manage theme, notifications, and more.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="business" className="mt-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Business Settings</CardTitle>
+                        <CardDescription>Manage general business information.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-64">
+                            <h3 className="text-xl font-semibold">Business settings coming soon</h3>
+                            <p className="text-muted-foreground mt-2">Manage company details, currency, and more.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="production" className="mt-6">
+                 <Card>
                     <CardHeader>
                          <div className="flex items-center justify-between">
                             <div>
@@ -251,49 +270,47 @@ export default function SettingsPage() {
                             ))}
                         </div>
                     </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="commissions">
-                    <Card className="mt-4">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Commission Rules</CardTitle>
-                                <CardDescription>Set up rules for sales commissions.</CardDescription>
-                            </div>
-                            <Button size="sm" className="h-8 gap-1" onClick={() => setCommissionRuleDialogOpen(true)}>
-                                <PlusCircle className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Rule</span>
-                            </Button>
+                </Card>
+            </TabsContent>
+            <TabsContent value="commission" className="mt-6">
+                <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Commission Rules</CardTitle>
+                            <CardDescription>Set up rules for sales commissions.</CardDescription>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        {commissionsLoading ? <p>Loading rules...</p> : commissions && commissions.length > 0 ? (
-                            <div className="space-y-4">
-                                {commissions.map(rule => (
-                                    <div key={rule.id} className="flex justify-between items-center rounded-lg border p-4">
-                                        <div>
-                                            <p className="font-semibold">{rule.ruleName}</p>
-                                            <p className="text-sm text-muted-foreground">{rule.appliesTo}</p>
-                                        </div>
-                                        <div className="font-semibold text-primary">
-                                            {rule.type === 'Percentage' ? `${rule.rate}%` : `BDT ${rule.rate.toLocaleString()}`}
-                                        </div>
+                        <Button size="sm" className="h-8 gap-1" onClick={() => setCommissionRuleDialogOpen(true)}>
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Rule</span>
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {commissionsLoading ? <p>Loading rules...</p> : commissions && commissions.length > 0 ? (
+                        <div className="space-y-4">
+                            {commissions.map(rule => (
+                                <div key={rule.id} className="flex justify-between items-center rounded-lg border p-4">
+                                    <div>
+                                        <p className="font-semibold">{rule.ruleName}</p>
+                                        <p className="text-sm text-muted-foreground">{rule.appliesTo}</p>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12">
-                                <h3 className="text-xl font-semibold">No commission rules defined</h3>
-                                <p className="text-muted-foreground mt-2">Add your first commission rule to get started.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                    </Card>
-                </TabsContent>
-                </Tabs>
-            </div>
-        </div>
+                                    <div className="font-semibold text-primary">
+                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `BDT ${rule.rate.toLocaleString()}`}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12">
+                            <h3 className="text-xl font-semibold">No commission rules defined</h3>
+                            <p className="text-muted-foreground mt-2">Add your first commission rule to get started.</p>
+                        </div>
+                    )}
+                </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
       <CreateCommissionRuleDialog
         isOpen={isCommissionRuleDialogOpen}
