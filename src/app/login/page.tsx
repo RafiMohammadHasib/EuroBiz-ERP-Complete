@@ -3,19 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Landmark } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import placeholder from '@/lib/placeholder-images.json';
+import type { ImagePlaceholder } from '@/lib/placeholder-images';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -24,6 +20,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const router = useRouter();
+  const authIllustration = placeholder.placeholderImages.find(p => p.id === 'auth-illustration') as ImagePlaceholder | undefined;
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -35,27 +32,43 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
     } catch (error: any) {
-      setError(error.message);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          setError('Invalid email or password. Please try again.');
+      } else {
+        setError(error.message);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="space-y-1 text-center">
-            <div className="inline-flex items-center justify-center gap-2">
+    <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
+      <div className="hidden bg-muted lg:flex items-center justify-center">
+        {authIllustration && (
+             <Image
+                src={authIllustration.imageUrl}
+                alt="Illustration"
+                width="1280"
+                height="853"
+                className="w-[80%] h-auto object-contain"
+                data-ai-hint={authIllustration.imageHint}
+             />
+        )}
+      </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+             <div className="inline-flex items-center justify-center gap-2 mb-2">
                 <Landmark className="h-8 w-8 text-primary" />
-                <CardTitle className="text-3xl font-bold">BizFin</CardTitle>
+                <h1 className="text-3xl font-bold">BizFin</h1>
             </div>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
+            <p className="text-balance text-muted-foreground">
+              Login to your account
+            </p>
+          </div>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -64,30 +77,43 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="#"
+                  className="ml-auto inline-block text-sm underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input 
                 id="password" 
                 type="password" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            {error && (
-                <p className="text-sm text-destructive">{error}</p>
+             {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
             )}
             <Button type="submit" className="w-full" onClick={handleLogin} disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </div>
-        </CardContent>
-        <CardFooter className="text-center text-sm">
-            Don&apos;t have an account? Contact your administrator.
-        </CardFooter>
-      </Card>
+          <div className="mt-4 text-center text-sm">
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="underline">
+              Sign up
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
