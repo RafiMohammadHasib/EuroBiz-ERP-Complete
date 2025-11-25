@@ -43,11 +43,6 @@ export function CreateSupplierDialog({ isOpen, onOpenChange, onCreate }: CreateS
       category,
       status,
     });
-    
-    toast({
-      title: 'Supplier Added (Simulated)',
-      description: `New supplier "${name}" has been added.`,
-    });
 
     setName('');
     setCategory('');

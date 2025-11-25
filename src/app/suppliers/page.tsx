@@ -17,7 +17,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "@/components/ui/badge"
 import { CreateSupplierDialog } from "@/components/suppliers/create-supplier-dialog";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function SuppliersPage() {
@@ -26,6 +27,7 @@ export default function SuppliersPage() {
     const { data: suppliers, isLoading: isLoadingSuppliers } = useCollection<Supplier>(suppliersCollection);
     const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const { toast } = useToast();
 
     const supplierData = useMemo(() => {
         if (!suppliers) return [];
@@ -44,9 +46,21 @@ export default function SuppliersPage() {
     const totalPOValue = supplierData.reduce((acc, s) => acc + s.totalPOValue, 0);
     const averagePOValue = totalSuppliers > 0 ? totalPOValue / totalSuppliers : 0;
 
-    const addSupplier = (newSupplier: Omit<Supplier, 'id'>) => {
-        // In a real app, this would be a Firestore call
-        console.log("New supplier to add (simulated):", newSupplier);
+    const addSupplier = async (newSupplier: Omit<Supplier, 'id'>) => {
+        try {
+            await addDoc(suppliersCollection, newSupplier);
+            toast({
+                title: 'Supplier Added',
+                description: `New supplier "${newSupplier.name}" has been added.`,
+            });
+        } catch (error) {
+            console.error("Error adding supplier:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not add the supplier.',
+            });
+        }
     }
 
   return (
