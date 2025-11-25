@@ -24,9 +24,11 @@ import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageChec
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from 'firebase/firestore';
 import type { FinishedGood, RawMaterial } from '@/lib/data';
+import { useSettings } from '@/context/settings-context';
 
 export default function FinishedGoodsPage() {
   const firestore = useFirestore();
+  const { currency } = useSettings();
   const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
   const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
 
@@ -52,7 +54,7 @@ export default function FinishedGoodsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">BDT {totalInventoryValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currency} {totalInventoryValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on unit cost</p>
           </CardContent>
         </Card>
@@ -62,7 +64,7 @@ export default function FinishedGoodsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">BDT {potentialRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currency} {potentialRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on selling price</p>
           </CardContent>
         </Card>
@@ -129,9 +131,9 @@ export default function FinishedGoodsPage() {
                           </TableCell>
                           <TableCell className="font-medium">{item.productName}</TableCell>
                           <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{currency} {item.unitCost.toFixed(2)}</TableCell>
                           <TableCell className="text-right">
-                              {item.sellingPrice ? `BDT ${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
+                              {item.sellingPrice ? `${currency} ${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
                           </TableCell>
                           <TableCell>
                               <DropdownMenu>

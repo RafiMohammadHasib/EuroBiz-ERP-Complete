@@ -31,9 +31,11 @@ import { CreateCommissionRuleDialog } from "@/components/commissions/create-comm
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/context/settings-context";
 
 export default function CommissionsPage() {
     const firestore = useFirestore();
+    const { currency } = useSettings();
     const commissionsCollection = useMemoFirebase(() => collection(firestore, 'commissions'), [firestore]);
     const { data: commissions, isLoading } = useCollection<Commission>(commissionsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
@@ -78,7 +80,7 @@ export default function CommissionsPage() {
                     <BarChart className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">BDT {totalCommissionValue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currency} {totalCommissionValue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Based on current rules</p>
                 </CardContent>
             </Card>
@@ -135,7 +137,7 @@ export default function CommissionsPage() {
                       <TableCell>{commission.appliesTo}</TableCell>
                       <TableCell>{commission.type}</TableCell>
                       <TableCell className="text-right">
-                      {commission.type === 'Percentage' ? `${commission.rate}%` : `BDT ${commission.rate.toLocaleString()}`}
+                      {commission.type === 'Percentage' ? `${commission.rate}%` : `${currency} ${commission.rate.toLocaleString()}`}
                       </TableCell>
                       <TableCell>
                       <DropdownMenu>

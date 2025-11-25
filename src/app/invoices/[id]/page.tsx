@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Printer } from 'lucide-react';
 import { Landmark } from 'lucide-react';
+import { useSettings } from '@/context/settings-context';
 
 export default function InvoicePage({ params }: { params: { id: string } }) {
+  const { currency } = useSettings();
   const invoice = invoices.find((inv) => inv.id === params.id.toUpperCase());
 
   if (!invoice) {
@@ -88,8 +90,8 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.description}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right">BDT {item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">BDT {item.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{currency} {item.unitPrice.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{currency} {item.total.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -101,16 +103,16 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
             <div className="grid gap-2 w-full sm:w-[250px]">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>BDT {invoice.amount.toFixed(2)}</span>
+                    <span>{currency} {invoice.amount.toFixed(2)}</span>
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span>BDT 0.00</span>
+                    <span>{currency} 0.00</span>
                 </div>
                 <Separator />
                  <div className="flex justify-between font-bold text-lg">
                     <span>Total Due</span>
-                    <span>BDT {invoice.amount.toFixed(2)}</span>
+                    <span>{currency} {invoice.amount.toFixed(2)}</span>
                 </div>
             </div>
           </div>

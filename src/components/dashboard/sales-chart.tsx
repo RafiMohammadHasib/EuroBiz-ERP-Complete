@@ -8,6 +8,7 @@ import type { Invoice } from "@/lib/data";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Skeleton } from "../ui/skeleton";
+import { useSettings } from "@/context/settings-context";
 
 const chartConfig = {
   revenue: {
@@ -18,6 +19,7 @@ const chartConfig = {
 
 export default function SalesChart() {
   const firestore = useFirestore();
+  const { currency } = useSettings();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
   const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
 
@@ -65,7 +67,7 @@ export default function SalesChart() {
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `BDT ${Number(value) / 1000}K`}
+            tickFormatter={(value) => `${currency} ${Number(value) / 1000}K`}
           />
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
           <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />

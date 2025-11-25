@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -18,6 +19,7 @@ import { FinishedGood, RawMaterial } from '@/lib/data';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
+import { useSettings } from '@/context/settings-context';
 
 interface CreateFormulaDialogProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ interface CreateFormulaDialogProps {
 
 export function CreateFormulaDialog({ isOpen, onOpenChange, onCreate, rawMaterials }: CreateFormulaDialogProps) {
   const { toast } = useToast();
+  const { currency } = useSettings();
   const [productName, setProductName] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [components, setComponents] = useState<{ materialId: string; quantity: number }[]>([]);
@@ -160,7 +163,7 @@ export function CreateFormulaDialog({ isOpen, onOpenChange, onCreate, rawMateria
             <div className="flex justify-end items-center">
                 <div className="text-right">
                     <p className="text-sm text-muted-foreground">Calculated Unit Cost</p>
-                    <p className="font-bold text-lg">BDT {calculateUnitCost().toFixed(2)}</p>
+                    <p className="font-bold text-lg">{currency} {calculateUnitCost().toFixed(2)}</p>
                 </div>
             </div>
         </div>
@@ -171,5 +174,3 @@ export function CreateFormulaDialog({ isOpen, onOpenChange, onCreate, rawMateria
     </Dialog>
   );
 }
-
-    

@@ -16,6 +16,9 @@ import type { Commission, FinishedGood, RawMaterial } from '@/lib/data';
 import { CreateCommissionRuleDialog } from '@/components/commissions/create-commission-rule-dialog';
 import { CreateFormulaDialog } from '@/components/settings/create-formula-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSettings } from '@/context/settings-context';
+import { companyDetails as initialCompanyDetails } from '@/lib/data';
+
 
 // Define a type for your settings document
 type BusinessSettings = {
@@ -25,7 +28,7 @@ type BusinessSettings = {
     phone: string;
     logoUrl: string;
     language: string;
-    currency: string;
+    currency: 'BDT' | 'USD';
     vatTax: number;
 };
 
@@ -34,6 +37,7 @@ export default function SettingsPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { currency, setCurrency } = useSettings();
 
   // --- Firestore References ---
   const settingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
@@ -54,8 +58,14 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
-      name: '', address: '', email: '', phone: '', logoUrl: '',
-      language: 'English', currency: 'BDT', vatTax: 0,
+      name: initialCompanyDetails.name, 
+      address: initialCompanyDetails.address, 
+      email: initialCompanyDetails.email, 
+      phone: initialCompanyDetails.phone, 
+      logoUrl: initialCompanyDetails.logoUrl,
+      language: 'English', 
+      currency: 'BDT', 
+      vatTax: 0,
   });
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -75,8 +85,9 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settingsData) {
       setBusinessSettings(settingsData);
+      setCurrency(settingsData.currency || 'BDT');
     }
-  }, [settingsData]);
+  }, [settingsData, setCurrency]);
 
 
   // --- Handlers ---
@@ -131,6 +142,7 @@ export default function SettingsPage() {
     setIsSavingBusiness(true);
     try {
         await setDoc(settingsDocRef, businessSettings, { merge: true });
+        setCurrency(businessSettings.currency);
         toast({ title: 'Settings Updated', description: 'Your new settings have been saved.' });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error Saving Settings', description: error.message });
@@ -146,7 +158,7 @@ export default function SettingsPage() {
     }
 
     const handleSettingsSelectChange = (field: keyof BusinessSettings, value: string) => {
-        setBusinessSettings(prev => ({...prev, [field]: value}))
+        setBusinessSettings(prev => ({...prev, [field]: value as any}));
     }
 
   const addCommissionRule = async (newRule: Omit<Commission, 'id'>) => {
@@ -332,7 +344,7 @@ export default function SettingsPage() {
                                         <p className="text-sm text-muted-foreground">{rule.appliesTo}</p>
                                     </div>
                                     <div className="font-semibold text-primary">
-                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `BDT ${rule.rate.toLocaleString()}`}
+                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `${currency} ${rule.rate.toLocaleString()}`}
                                     </div>
                                 </div>
                             ))}

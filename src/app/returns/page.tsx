@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { invoices, salesReturns as initialSalesReturns } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DollarSign, Package, Undo } from 'lucide-react';
+import { useSettings } from '@/context/settings-context';
 
 // This is a client-side simulation. State is not persisted.
 let finishedGoodsInventory = 150; // Starting mock inventory
@@ -24,6 +25,7 @@ let localSalesReturns = [...initialSalesReturns];
 
 export default function ReturnsPage() {
   const { toast } = useToast();
+  const { currency } = useSettings();
   const [invoiceId, setInvoiceId] = useState('');
   const [returnAmount, setReturnAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +118,7 @@ export default function ReturnsPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">BDT {totalReturnValue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currency} {totalReturnValue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">From {totalReturnsProcessed} returns</p>
                 </CardContent>
             </Card>
@@ -162,7 +164,7 @@ export default function ReturnsPage() {
                         />
                         </div>
                         <div className="space-y-2">
-                        <Label htmlFor="return-amount">Value of Returned Goods (BDT)</Label>
+                        <Label htmlFor="return-amount">Value of Returned Goods ({currency})</Label>
                         <Input
                             id="return-amount"
                             type="number"
@@ -201,7 +203,7 @@ export default function ReturnsPage() {
                                         <TableCell className="font-medium">{r.id}</TableCell>
                                         <TableCell>{r.customer}</TableCell>
                                         <TableCell>{new Date(r.date).toLocaleDateString()}</TableCell>
-                                        <TableCell className="text-right">BDT {r.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right">{currency} {r.amount.toLocaleString()}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

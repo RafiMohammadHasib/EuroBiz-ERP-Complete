@@ -18,9 +18,11 @@ import { CreateProductionOrderDialog } from "@/components/production/create-prod
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/context/settings-context";
 
 export default function ProductionPage() {
     const firestore = useFirestore();
+    const { currency } = useSettings();
     const productionOrdersCollection = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
     const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
     
@@ -86,7 +88,7 @@ export default function ProductionPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">BDT {totalProductionCost.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currency} {totalProductionCost.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">For all production orders</p>
                 </CardContent>
             </Card>
@@ -142,8 +144,8 @@ export default function ProductionPage() {
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.productName}</TableCell>
                             <TableCell>{order.quantity.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">BDT {order.totalCost.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">BDT {(order.totalCost / order.quantity).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{currency} {order.totalCost.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{currency} {(order.totalCost / order.quantity).toFixed(2)}</TableCell>
                              <TableCell>
                                 <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'In Progress' ? 'default' : 'outline'}>
                                     {order.status}

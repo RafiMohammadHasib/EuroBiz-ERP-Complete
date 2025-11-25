@@ -24,9 +24,11 @@ import { CreateRawMaterialDialog } from "@/components/raw-materials/create-raw-m
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/context/settings-context";
 
 export default function RawMaterialsPage() {
   const firestore = useFirestore();
+  const { currency } = useSettings();
   const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
   const { data: rawMaterials, isLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
@@ -94,7 +96,7 @@ export default function RawMaterialsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">BDT {totalInventoryValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{currency} {totalInventoryValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Based on unit cost</p>
           </CardContent>
         </Card>
@@ -179,8 +181,8 @@ export default function RawMaterialsPage() {
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>{item.category}</TableCell>
                     <TableCell className="text-right">{item.quantity.toLocaleString()} {item.unit}</TableCell>
-                    <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">BDT {(item.quantity * item.unitCost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                    <TableCell className="text-right">{currency} {item.unitCost.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{currency} {(item.quantity * item.unitCost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                   </TableRow>
                 ))
               )}

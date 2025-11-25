@@ -19,10 +19,12 @@ import { CreateSupplierDialog } from "@/components/suppliers/create-supplier-dia
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/context/settings-context";
 
 
 export default function SuppliersPage() {
     const firestore = useFirestore();
+    const { currency } = useSettings();
     const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
     const { data: suppliers, isLoading: isLoadingSuppliers } = useCollection<Supplier>(suppliersCollection);
     const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
@@ -93,7 +95,7 @@ export default function SuppliersPage() {
                     <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">BDT {totalPOValue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{currency} {totalPOValue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Across all suppliers</p>
                 </CardContent>
             </Card>
@@ -103,7 +105,7 @@ export default function SuppliersPage() {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">BDT {averagePOValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                    <div className="text-2xl font-bold">{currency} {averagePOValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
                     <p className="text-xs text-muted-foreground">Per supplier</p>
                 </CardContent>
             </Card>
@@ -151,7 +153,7 @@ export default function SuppliersPage() {
                                 <TableCell>
                                     <Badge variant={supplier.status === 'Active' ? 'secondary' : 'outline'}>{supplier.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-right">BDT {supplier.totalPOValue.toLocaleString()}</TableCell>
+                                <TableCell className="text-right">{currency} {supplier.totalPOValue.toLocaleString()}</TableCell>
                                 <TableCell>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

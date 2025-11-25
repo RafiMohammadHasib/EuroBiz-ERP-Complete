@@ -5,6 +5,7 @@ import { finishedGoods } from "@/lib/data";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { useSettings } from "@/context/settings-context";
 
 const chartConfig = {
   totalValue: {
@@ -14,6 +15,7 @@ const chartConfig = {
 };
 
 export default function InventoryValueChart() {
+  const { currency } = useSettings();
   const data = useMemo(() => {
     return finishedGoods.map(item => ({
         name: item.productName.substring(0, 15) + (item.productName.length > 15 ? '...' : ''), // shorten name for chart
@@ -39,7 +41,7 @@ export default function InventoryValueChart() {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `BDT ${Number(value) / 1000}K`}
+                tickFormatter={(value) => `${currency} ${Number(value) / 1000}K`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Bar dataKey="totalValue" fill="var(--color-totalValue)" radius={[0, 4, 4, 0]} layout="vertical" />
@@ -47,4 +49,3 @@ export default function InventoryValueChart() {
       </ChartContainer>
   );
 }
-
