@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Users, DollarSign, UserCheck } from "lucide-react"
-import { salaries as initialSalaries, type Salary } from "@/lib/data"
+import { type Salary } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,23 +29,39 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { CreateSalaryDialog } from "@/components/salaries/create-salary-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SalariesPage() {
-  const [salaries, setSalaries] = useState<Salary[]>(initialSalaries);
+  const firestore = useFirestore();
+  const salariesCollection = useMemoFirebase(() => collection(firestore, 'salaries'), [firestore]);
+  const { data: salaries, isLoading } = useCollection<Salary>(salariesCollection);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const totalMonthlySalary = salaries.filter(s => s.status === 'Active').reduce((acc, salary) => acc + salary.amount, 0);
-  const totalEmployees = salaries.length;
-  const activeEmployees = salaries.filter(s => s.status === 'Active').length;
+  const safeSalaries = salaries || [];
+
+  const totalMonthlySalary = safeSalaries.filter(s => s.status === 'Active').reduce((acc, salary) => acc + salary.amount, 0);
+  const totalEmployees = safeSalaries.length;
+  const activeEmployees = safeSalaries.filter(s => s.status === 'Active').length;
   const averageSalary = activeEmployees > 0 ? totalMonthlySalary / activeEmployees : 0;
 
-  const addSalary = (newSalary: Omit<Salary, 'id' | 'paymentDate'>) => {
-    const salaryWithId: Salary = {
-      ...newSalary,
-      id: `SAL-${String(salaries.length + 1).padStart(3, '0')}`,
-      paymentDate: new Date().toISOString().split('T')[0],
-    };
-    setSalaries(prev => [salaryWithId, ...prev]);
+  const addSalary = async (newSalary: Omit<Salary, 'id'>) => {
+    try {
+      await addDoc(salariesCollection, newSalary);
+      toast({
+        title: 'Employee Added',
+        description: `New employee "${newSalary.name}" has been added to the payroll.`,
+      });
+    } catch(error) {
+      console.error("Error adding salary:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not add the employee salary.",
+      });
+    }
   }
 
   return (
@@ -124,36 +141,42 @@ export default function SalariesPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {salaries.map((salary) => (
-                <TableRow key={salary.id}>
-                    <TableCell className="font-medium">{salary.name}</TableCell>
-                    <TableCell>{salary.position}</TableCell>
-                    <TableCell>
-                      <Badge variant={salary.status === 'Active' ? 'secondary' : 'outline'}>
-                        {salary.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(salary.paymentDate).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                    BDT {salary.amount.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    </TableCell>
-                </TableRow>
-                ))}
+                {isLoading ? (
+                   <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : (
+                  safeSalaries.map((salary) => (
+                  <TableRow key={salary.id}>
+                      <TableCell className="font-medium">{salary.name}</TableCell>
+                      <TableCell>{salary.position}</TableCell>
+                      <TableCell>
+                        <Badge variant={salary.status === 'Active' ? 'secondary' : 'outline'}>
+                          {salary.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(salary.paymentDate).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                      BDT {salary.amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                          </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                      </TableCell>
+                  </TableRow>
+                  ))
+                )}
             </TableBody>
             </Table>
         </CardContent>

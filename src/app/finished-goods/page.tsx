@@ -21,13 +21,27 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck } from 'lucide-react';
-import { finishedGoods, rawMaterials } from '@/lib/data';
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from 'firebase/firestore';
+import type { FinishedGood, RawMaterial } from '@/lib/data';
 
 export default function FinishedGoodsPage() {
-  const totalInventoryValue = finishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
-  const potentialRevenue = finishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
-  const productLines = finishedGoods.length;
-  const totalUnits = finishedGoods.reduce((acc, item) => acc + item.quantity, 0);
+  const firestore = useFirestore();
+  const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+
+  const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
+  const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
+
+  const safeFinishedGoods = finishedGoods || [];
+  const safeRawMaterials = rawMaterials || [];
+
+  const totalInventoryValue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const potentialRevenue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
+  const productLines = safeFinishedGoods.length;
+  const totalUnits = safeFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
+
+  const isLoading = fgLoading || rmLoading;
   
   return (
     <div className="space-y-6">
@@ -96,62 +110,68 @@ export default function FinishedGoodsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {finishedGoods.map((item) => (
-                <Collapsible key={item.id} asChild>
-                    <React.Fragment>
-                    <TableRow className="cursor-pointer">
-                        <TableCell>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="w-9 p-0 data-[state=open]:rotate-180">
-                                <ChevronDown className="h-4 w-4" />
-                                <span className="sr-only">Toggle</span>
-                            </Button>
-                        </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
-                        <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                            {item.sellingPrice ? `BDT ${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
-                        </TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>Edit Selling Price</DropdownMenuItem>
-                                <DropdownMenuItem>View History</DropdownMenuItem>
-                            </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    <CollapsibleContent asChild>
-                        <tr className="bg-muted/50">
-                            <td colSpan={6} className="p-0">
-                                <div className="p-4 pl-16">
-                                    <h4 className="font-semibold text-sm mb-2">Production Formula:</h4>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                                        {item.components.map(comp => {
-                                            const material = rawMaterials.find(rm => rm.id === comp.materialId);
-                                            return material ? (
-                                                <li key={comp.materialId}>
-                                                    {material.name}: {comp.quantity} {material.unit}
-                                                </li>
-                                            ) : null;
-                                        })}
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    </CollapsibleContent>
-                    </React.Fragment>
-                </Collapsible>
-              ))}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+                </TableRow>
+              ) : (
+                safeFinishedGoods.map((item) => (
+                  <Collapsible key={item.id} asChild>
+                      <React.Fragment>
+                      <TableRow className="cursor-pointer">
+                          <TableCell>
+                          <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="w-9 p-0 data-[state=open]:rotate-180">
+                                  <ChevronDown className="h-4 w-4" />
+                                  <span className="sr-only">Toggle</span>
+                              </Button>
+                          </CollapsibleTrigger>
+                          </TableCell>
+                          <TableCell className="font-medium">{item.productName}</TableCell>
+                          <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                              {item.sellingPrice ? `BDT ${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
+                          </TableCell>
+                          <TableCell>
+                              <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                  </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuItem>Edit Selling Price</DropdownMenuItem>
+                                  <DropdownMenuItem>View History</DropdownMenuItem>
+                              </DropdownMenuContent>
+                              </DropdownMenu>
+                          </TableCell>
+                      </TableRow>
+                      <CollapsibleContent asChild>
+                          <tr className="bg-muted/50">
+                              <td colSpan={6} className="p-0">
+                                  <div className="p-4 pl-16">
+                                      <h4 className="font-semibold text-sm mb-2">Production Formula:</h4>
+                                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                          {item.components.map(comp => {
+                                              const material = safeRawMaterials.find(rm => rm.id === comp.materialId);
+                                              return material ? (
+                                                  <li key={comp.materialId}>
+                                                      {material.name}: {comp.quantity} {material.unit}
+                                                  </li>
+                                              ) : null;
+                                          })}
+                                      </ul>
+                                  </div>
+                              </td>
+                          </tr>
+                      </CollapsibleContent>
+                      </React.Fragment>
+                  </Collapsible>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

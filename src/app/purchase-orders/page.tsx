@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Package, ShoppingCart, List, CheckCircle } from "lucide-react"
-import { purchaseOrders as initialPurchaseOrders, type PurchaseOrder, suppliers, rawMaterials as initialRawMaterials } from "@/lib/data"
+import { type PurchaseOrder, type Supplier, type RawMaterial } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,51 +31,85 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreatePurchaseOrderDialog } from "@/components/purchase-orders/create-purchase-order-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, doc, updateDoc, writeBatch } from "firebase/firestore";
 
 
 export default function PurchaseOrdersPage() {
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
-  const [rawMaterials, setRawMaterials] = useState(initialRawMaterials);
-  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const firestore = useFirestore();
   const { toast } = useToast();
 
-  const totalPOValue = purchaseOrders.reduce((sum, order) => sum + order.amount, 0);
-  const pendingPOValue = purchaseOrders.filter(o => o.status === 'Pending').reduce((sum, order) => sum + order.amount, 0);
-  const totalOrders = purchaseOrders.length;
-  const completedOrders = purchaseOrders.filter(o => o.status === 'Completed').length;
+  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
+  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
+  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
 
-  const addPurchaseOrder = (newOrder: Omit<PurchaseOrder, 'id'>) => {
-    const orderWithId: PurchaseOrder = {
-        ...newOrder,
-        id: `PO-${String(purchaseOrders.length + 1).padStart(3, '0')}`,
-    };
-    setPurchaseOrders(prev => [orderWithId, ...prev]);
+  const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
+  const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
+  const { data: rawMaterials, isLoading: materialsLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
+
+  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const safePOs = purchaseOrders || [];
+  const safeSuppliers = suppliers || [];
+  const safeRawMaterials = rawMaterials || [];
+
+  const totalPOValue = safePOs.reduce((sum, order) => sum + order.amount, 0);
+  const pendingPOValue = safePOs.filter(o => o.status === 'Pending').reduce((sum, order) => sum + order.amount, 0);
+  const totalOrders = safePOs.length;
+  const completedOrders = safePOs.filter(o => o.status === 'Completed').length;
+
+  const addPurchaseOrder = async (newOrder: Omit<PurchaseOrder, 'id'>) => {
+    try {
+      await addDoc(purchaseOrdersCollection, newOrder);
+      toast({
+        title: "Purchase Order Created",
+        description: `New PO for ${newOrder.supplier} has been added.`,
+      });
+    } catch(error) {
+       console.error("Error adding purchase order: ", error);
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not create purchase order."
+       });
+    }
   }
 
-  const handleMarkAsCompleted = (orderId: string) => {
-    let orderToUpdate: PurchaseOrder | undefined;
-    const updatedPOs = purchaseOrders.map(po => {
-        if (po.id === orderId) {
-            orderToUpdate = po;
-            return { ...po, status: 'Completed' as const };
-        }
-        return po;
-    });
+  const handleMarkAsCompleted = async (orderId: string) => {
+    const orderToUpdate = safePOs.find(po => po.id === orderId);
 
     if (orderToUpdate) {
-        const updatedRawMaterials = [...rawMaterials];
-        orderToUpdate.items.forEach(item => {
-            const materialIndex = updatedRawMaterials.findIndex(rm => rm.id === item.rawMaterialId);
-            if (materialIndex !== -1) {
-                updatedRawMaterials[materialIndex].quantity += item.quantity;
-            }
-        });
-        setRawMaterials(updatedRawMaterials);
-        setPurchaseOrders(updatedPOs);
-        toast({
-            title: "Purchase Order Completed",
-            description: `Order ${orderId} has been marked as completed and stock has been updated.`
-        });
+        try {
+            const batch = writeBatch(firestore);
+
+            // 1. Update PO status
+            const poRef = doc(firestore, 'purchaseOrders', orderId);
+            batch.update(poRef, { status: 'Completed' });
+
+            // 2. Update raw material stock
+            orderToUpdate.items.forEach(item => {
+                const material = safeRawMaterials.find(rm => rm.id === item.rawMaterialId);
+                if (material) {
+                    const materialRef = doc(firestore, 'rawMaterials', material.id);
+                    const newQuantity = material.quantity + item.quantity;
+                    batch.update(materialRef, { quantity: newQuantity });
+                }
+            });
+
+            await batch.commit();
+
+            toast({
+                title: "Purchase Order Completed",
+                description: `Order ${orderId} has been marked as completed and stock has been updated.`
+            });
+        } catch(error) {
+            console.error("Error completing PO: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not complete the purchase order."
+            });
+        }
     }
   }
 
@@ -103,37 +137,43 @@ export default function PurchaseOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.supplier}</TableCell>
-                <TableCell>
-                  <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'Pending' ? 'outline' : 'destructive'}>
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                <TableCell className="text-right">BDT {order.amount.toLocaleString()}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      {order.status === 'Pending' && (
-                        <DropdownMenuItem onClick={() => handleMarkAsCompleted(order.id)}>Mark as Completed</DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem>Cancel</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {poLoading ? (
+               <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+               </TableRow>
+            ) : (
+                orders.map((order) => (
+                <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.supplier}</TableCell>
+                    <TableCell>
+                    <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'Pending' ? 'outline' : 'destructive'}>
+                        {order.status}
+                    </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">BDT {order.amount.toLocaleString()}</TableCell>
+                    <TableCell>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        {order.status === 'Pending' && (
+                            <DropdownMenuItem onClick={() => handleMarkAsCompleted(order.id)}>Mark as Completed</DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem>Cancel</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
       </CardContent>
@@ -202,13 +242,13 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
         <TabsContent value="all" className="mt-4">
-          {renderPurchaseOrderTable(purchaseOrders)}
+          {renderPurchaseOrderTable(safePOs)}
         </TabsContent>
         <TabsContent value="pending" className="mt-4">
-          {renderPurchaseOrderTable(purchaseOrders.filter(o => o.status === 'Pending'))}
+          {renderPurchaseOrderTable(safePOs.filter(o => o.status === 'Pending'))}
         </TabsContent>
         <TabsContent value="completed" className="mt-4">
-          {renderPurchaseOrderTable(purchaseOrders.filter(o => o.status === 'Completed'))}
+          {renderPurchaseOrderTable(safePOs.filter(o => o.status === 'Completed'))}
         </TabsContent>
       </Tabs>
     </div>
@@ -216,8 +256,8 @@ export default function PurchaseOrdersPage() {
         isOpen={isCreateDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={addPurchaseOrder}
-        suppliers={suppliers}
-        rawMaterials={rawMaterials}
+        suppliers={safeSuppliers}
+        rawMaterials={safeRawMaterials}
     />
     </>
   );

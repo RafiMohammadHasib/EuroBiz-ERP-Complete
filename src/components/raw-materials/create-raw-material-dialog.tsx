@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +20,7 @@ import { RawMaterial } from '@/lib/data';
 interface CreateRawMaterialDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (material: Omit<RawMaterial, 'id' | 'quantity' | 'unitCost'>) => void;
+  onCreate: (material: Omit<RawMaterial, 'id'>) => void;
 }
 
 export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: CreateRawMaterialDialogProps) {
@@ -27,6 +28,8 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [unit, setUnit] = useState<'kg' | 'litre' | 'pcs'>('kg');
+  const [unitCost, setUnitCost] = useState('');
+  const [quantity, setQuantity] = useState('0');
 
   const handleSubmit = () => {
     if (!name || !category) {
@@ -42,16 +45,15 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
       name,
       category,
       unit,
-    });
-    
-    toast({
-      title: 'Raw Material Added (Simulated)',
-      description: `New material "${name}" has been added to inventory.`,
+      quantity: parseInt(quantity, 10) || 0,
+      unitCost: parseFloat(unitCost) || 0,
     });
 
     setName('');
     setCategory('');
     setUnit('kg');
+    setUnitCost('');
+    setQuantity('0');
     onOpenChange(false);
   };
 
@@ -61,7 +63,7 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
         <DialogHeader>
           <DialogTitle>Add New Raw Material</DialogTitle>
           <DialogDescription>
-            Fill in the details for the new raw material.
+            Fill in the details for the new raw material. Quantity and cost will be updated via Purchase Orders.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -103,6 +105,32 @@ export function CreateRawMaterialDialog({ isOpen, onOpenChange, onCreate }: Crea
                     <SelectItem value="pcs">pcs</SelectItem>
                 </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="mat-cost" className="text-right">
+              Initial Unit Cost
+            </Label>
+            <Input
+              id="mat-cost"
+              type="number"
+              value={unitCost}
+              onChange={(e) => setUnitCost(e.target.value)}
+              className="col-span-3"
+              placeholder="0.00"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="mat-qty" className="text-right">
+              Initial Quantity
+            </Label>
+            <Input
+              id="mat-qty"
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="col-span-3"
+              placeholder="0"
+            />
           </div>
         </div>
         <DialogFooter>

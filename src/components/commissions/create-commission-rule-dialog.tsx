@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Commission } from '@/lib/data';
 
@@ -23,7 +23,6 @@ interface CreateCommissionRuleDialogProps {
 }
 
 export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate }: CreateCommissionRuleDialogProps) {
-  const { toast } = useToast();
   const [ruleName, setRuleName] = useState('');
   const [appliesTo, setAppliesTo] = useState('');
   const [type, setType] = useState<'Percentage' | 'Fixed'>('Percentage');
@@ -32,11 +31,7 @@ export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate }: C
   const handleSubmit = () => {
     const numericRate = parseFloat(rate);
     if (!ruleName || !appliesTo || !rate || isNaN(numericRate) || numericRate <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Input',
-        description: 'Please fill out all fields with valid data.',
-      });
+      alert('Please fill out all fields with valid data.');
       return;
     }
 
@@ -47,11 +42,6 @@ export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate }: C
       rate: numericRate,
     });
     
-    toast({
-      title: 'Commission Rule Created (Simulated)',
-      description: `A new rule "${ruleName}" has been added.`,
-    });
-
     setRuleName('');
     setAppliesTo('');
     setType('Percentage');

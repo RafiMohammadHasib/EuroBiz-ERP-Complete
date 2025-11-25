@@ -1,4 +1,5 @@
 
+'use client';
 
 import {
   Card,
@@ -17,20 +18,43 @@ import {
 import { Badge } from "@/components/ui/badge"
 import SalesChart from "@/components/dashboard/sales-chart"
 import { DollarSign, CreditCard, Users, Undo, Truck, ShoppingCart, Building, Package } from "lucide-react"
-import { invoices, purchaseOrders, distributors, suppliers, salesReturns } from "@/lib/data"
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import type { Invoice, SalesReturn, Distributor, Supplier, PurchaseOrder } from "@/lib/data";
 
 export default function Home() {
-  const totalRevenue = invoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + i.amount, 0);
-  const outstandingDues = invoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + i.amount, 0);
-  const paidInvoices = invoices.filter(i => i.status === 'Paid').length;
-  const uniqueCustomers = new Set(invoices.map(i => i.customer)).size;
-  const totalReturns = salesReturns.length;
-  
-  const pendingPurchaseOrders = purchaseOrders.filter(p => p.status === 'Pending').length;
-  const totalPurchaseValue = purchaseOrders.reduce((acc, p) => acc + p.amount, 0);
-  const totalSuppliers = new Set(suppliers.map(p => p.name)).size;
-  const totalDistributors = new Set(distributors.map(d => d.name)).size;
+  const firestore = useFirestore();
 
+  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
+  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
+  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
+  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
+  const salesReturnsCollection = useMemoFirebase(() => collection(firestore, 'sales_returns'), [firestore]);
+
+  const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
+  const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
+  const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
+  const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
+  const { data: salesReturns, isLoading: returnsLoading } = useCollection<SalesReturn>(salesReturnsCollection);
+
+  const safeInvoices = invoices || [];
+  const safePOs = purchaseOrders || [];
+  const safeDistributors = distributors || [];
+  const safeSuppliers = suppliers || [];
+  const safeReturns = salesReturns || [];
+
+  const totalRevenue = safeInvoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + i.amount, 0);
+  const outstandingDues = safeInvoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + i.amount, 0);
+  const paidInvoices = safeInvoices.filter(i => i.status === 'Paid').length;
+  const uniqueCustomers = new Set(safeInvoices.map(i => i.customer)).size;
+  const totalReturns = safeReturns.length;
+  
+  const pendingPurchaseOrders = safePOs.filter(p => p.status === 'Pending').length;
+  const totalPurchaseValue = safePOs.reduce((acc, p) => acc + p.amount, 0);
+  const totalSuppliers = new Set(safeSuppliers.map(p => p.name)).size;
+  const totalDistributors = new Set(safeDistributors.map(d => d.name)).size;
+
+  const isLoading = invoicesLoading || poLoading || distributorsLoading || suppliersLoading || returnsLoading;
 
   return (
     <div className="flex flex-col gap-6">
@@ -141,22 +165,30 @@ export default function Home() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.slice(0, 5).map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                        <div className="font-medium">{invoice.customer}</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            {invoice.customerEmail}
-                        </div>
-                    </TableCell>
-                    <TableCell>BDT {invoice.amount.toLocaleString()}</TableCell>
-                    <TableCell>
-                        <Badge variant={invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Unpaid' ? 'outline' : 'destructive'}>
-                          {invoice.status}
-                        </Badge>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  safeInvoices.slice(0, 5).map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                          <div className="font-medium">{invoice.customer}</div>
+                          <div className="hidden text-sm text-muted-foreground md:inline">
+                              {invoice.customerEmail}
+                          </div>
+                      </TableCell>
+                      <TableCell>BDT {invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell>
+                          <Badge variant={invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Unpaid' ? 'outline' : 'destructive'}>
+                            {invoice.status}
+                          </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

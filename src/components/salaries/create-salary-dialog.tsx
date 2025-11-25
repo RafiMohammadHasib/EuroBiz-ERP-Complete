@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Salary } from '@/lib/data';
 
@@ -23,7 +23,6 @@ interface CreateSalaryDialogProps {
 }
 
 export function CreateSalaryDialog({ isOpen, onOpenChange, onCreate }: CreateSalaryDialogProps) {
-  const { toast } = useToast();
   const [name, setName] = useState('');
   const [position, setPosition] = useState('');
   const [amount, setAmount] = useState('');
@@ -32,11 +31,8 @@ export function CreateSalaryDialog({ isOpen, onOpenChange, onCreate }: CreateSal
   const handleSubmit = () => {
     const numericAmount = parseFloat(amount);
     if (!name || !position || !amount || isNaN(numericAmount) || numericAmount <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Input',
-        description: 'Please fill out all fields with valid data.',
-      });
+      // Simple validation, can be improved with a library like Zod
+      alert('Please fill out all fields with valid data.');
       return;
     }
 
@@ -47,11 +43,6 @@ export function CreateSalaryDialog({ isOpen, onOpenChange, onCreate }: CreateSal
       status,
     });
     
-    toast({
-      title: 'Employee Added (Simulated)',
-      description: `New employee "${name}" has been added to the payroll.`,
-    });
-
     setName('');
     setPosition('');
     setAmount('');

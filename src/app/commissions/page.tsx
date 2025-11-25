@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Percent, BarChart } from "lucide-react"
-import { commissions as initialCommissions, type Commission } from "@/lib/data"
+import { type Commission } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,26 +28,44 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CreateCommissionRuleDialog } from "@/components/commissions/create-commission-rule-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CommissionsPage() {
-    const [commissions, setCommissions] = useState<Commission[]>(initialCommissions);
+    const firestore = useFirestore();
+    const commissionsCollection = useMemoFirebase(() => collection(firestore, 'commissions'), [firestore]);
+    const { data: commissions, isLoading } = useCollection<Commission>(commissionsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const { toast } = useToast();
 
-    const totalCommissionValue = commissions.reduce((acc, commission) => {
+    const safeCommissions = commissions || [];
+
+    const totalCommissionValue = safeCommissions.reduce((acc, commission) => {
         if (commission.type === 'Percentage') {
+            // This is an estimation. A real calculation would need sales data.
             return acc + (10000 * (commission.rate / 100)); 
         }
         return acc + commission.rate;
     }, 0);
 
-    const averageCommissionRate = commissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
+    const averageCommissionRate = safeCommissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
 
-    const addCommissionRule = (newRule: Omit<Commission, 'id'>) => {
-        const ruleWithId: Commission = {
-            ...newRule,
-            id: `COM-${String(commissions.length + 1).padStart(2, '0')}`,
-        };
-        setCommissions(prev => [ruleWithId, ...prev]);
+    const addCommissionRule = async (newRule: Omit<Commission, 'id'>) => {
+      try {
+        await addDoc(commissionsCollection, newRule);
+        toast({
+          title: 'Commission Rule Created',
+          description: `A new rule "${newRule.ruleName}" has been added.`,
+        });
+      } catch (error) {
+        console.error("Error adding commission rule:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not create the commission rule.",
+        });
+      }
     }
 
   return (
@@ -105,31 +124,37 @@ export default function CommissionsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {commissions.map((commission) => (
-                <TableRow key={commission.id}>
-                    <TableCell className="font-medium">{commission.ruleName}</TableCell>
-                    <TableCell>{commission.appliesTo}</TableCell>
-                    <TableCell>{commission.type}</TableCell>
-                    <TableCell className="text-right">
-                    {commission.type === 'Percentage' ? `${commission.rate}%` : `BDT ${commission.rate.toLocaleString()}`}
-                    </TableCell>
-                    <TableCell>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    </TableCell>
-                </TableRow>
-                ))}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : (
+                  safeCommissions.map((commission) => (
+                  <TableRow key={commission.id}>
+                      <TableCell className="font-medium">{commission.ruleName}</TableCell>
+                      <TableCell>{commission.appliesTo}</TableCell>
+                      <TableCell>{commission.type}</TableCell>
+                      <TableCell className="text-right">
+                      {commission.type === 'Percentage' ? `${commission.rate}%` : `BDT ${commission.rate.toLocaleString()}`}
+                      </TableCell>
+                      <TableCell>
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                          </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                      </TableCell>
+                  </TableRow>
+                  ))
+                )}
             </TableBody>
             </Table>
         </CardContent>

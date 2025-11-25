@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Distributor } from '@/lib/data';
 
@@ -23,7 +23,6 @@ interface CreateDistributorDialogProps {
 }
 
 export function CreateDistributorDialog({ isOpen, onOpenChange, onCreate }: CreateDistributorDialogProps) {
-  const { toast } = useToast();
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [tier, setTier] = useState<'Tier 1' | 'Tier 2' | 'Tier 3'>('Tier 2');
@@ -32,11 +31,8 @@ export function CreateDistributorDialog({ isOpen, onOpenChange, onCreate }: Crea
   const handleSubmit = () => {
     const numericSales = parseFloat(totalSales);
     if (!name || !location || !totalSales || isNaN(numericSales)) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Input',
-        description: 'Please fill out all fields with valid data.',
-      });
+      // Add better validation feedback
+      alert('Please fill out all fields with valid data.');
       return;
     }
 
@@ -47,11 +43,6 @@ export function CreateDistributorDialog({ isOpen, onOpenChange, onCreate }: Crea
       totalSales: numericSales,
     });
     
-    toast({
-      title: 'Distributor Added (Simulated)',
-      description: `New distributor "${name}" has been added.`,
-    });
-
     setName('');
     setLocation('');
     setTier('Tier 2');

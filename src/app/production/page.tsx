@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -10,26 +11,49 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign } from "lucide-react"
-import { productionOrders as initialProductionOrders, type ProductionOrder, finishedGoods } from "@/lib/data"
+import { type ProductionOrder, type FinishedGood } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { CreateProductionOrderDialog } from "@/components/production/create-production-order-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductionPage() {
-    const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>(initialProductionOrders);
+    const firestore = useFirestore();
+    const productionOrdersCollection = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
+    const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+    
+    const { data: productionOrders, isLoading: poLoading } = useCollection<ProductionOrder>(productionOrdersCollection);
+    const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const { toast } = useToast();
 
-    const wipOrders = productionOrders.filter(o => o.status === "In Progress").length;
-    const completedOrders = productionOrders.filter(o => o.status === "Completed").length;
-    const totalProductionCost = productionOrders.reduce((acc, order) => acc + order.totalCost, 0);
-    const totalUnitsProduced = productionOrders.reduce((acc, order) => acc + order.quantity, 0);
+    const safeProductionOrders = productionOrders || [];
+    const safeFinishedGoods = finishedGoods || [];
 
-    const addProductionOrder = (newOrder: Omit<ProductionOrder, 'id'>) => {
-        const orderWithId: ProductionOrder = {
-            ...newOrder,
-            id: `PROD-${String(productionOrders.length + 1).padStart(3, '0')}`,
-        };
-        setProductionOrders(prev => [orderWithId, ...prev]);
+    const wipOrders = safeProductionOrders.filter(o => o.status === "In Progress").length;
+    const completedOrders = safeProductionOrders.filter(o => o.status === "Completed").length;
+    const totalProductionCost = safeProductionOrders.reduce((acc, order) => acc + order.totalCost, 0);
+    const totalUnitsProduced = safeProductionOrders.reduce((acc, order) => acc + order.quantity, 0);
+    
+    const isLoading = poLoading || fgLoading;
+
+    const addProductionOrder = async (newOrder: Omit<ProductionOrder, 'id'>) => {
+      try {
+        await addDoc(productionOrdersCollection, newOrder);
+        toast({
+          title: 'Production Order Created',
+          description: `New order for ${newOrder.quantity} units of ${newOrder.productName} has been created.`,
+        });
+      } catch(error) {
+        console.error("Error adding production order: ", error);
+        toast({
+          variant: "destructive",
+          title: 'Error',
+          description: 'Could not create the production order.'
+        })
+      }
     }
 
   return (
@@ -108,7 +132,12 @@ export default function ProductionPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {productionOrders.map(order => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">Loading...</TableCell>
+                      </TableRow>
+                    ) : (
+                      safeProductionOrders.map(order => (
                          <TableRow key={order.id}>
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.productName}</TableCell>
@@ -122,7 +151,8 @@ export default function ProductionPage() {
                              </TableCell>
                             <TableCell>{new Date(order.startDate).toLocaleDateString()}</TableCell>
                          </TableRow>
-                    ))}
+                      ))
+                    )}
                 </TableBody>
             </Table>
         </CardContent>
@@ -132,7 +162,7 @@ export default function ProductionPage() {
         isOpen={isCreateDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={addProductionOrder}
-        products={finishedGoods}
+        products={safeFinishedGoods}
     />
     </>
   );

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -17,34 +18,49 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { rawMaterials as initialRawMaterials, type RawMaterial } from "@/lib/data"
+import { type RawMaterial } from "@/lib/data"
 import { DollarSign, List, PackageCheck, Archive, PlusCircle, Download } from "lucide-react"
 import { CreateRawMaterialDialog } from "@/components/raw-materials/create-raw-material-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RawMaterialsPage() {
-  const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>(initialRawMaterials);
+  const firestore = useFirestore();
+  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+  const { data: rawMaterials, isLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const totalInventoryValue = rawMaterials.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
-  const materialTypes = rawMaterials.length;
-  const totalUnits = rawMaterials.reduce((acc, item) => acc + item.quantity, 0);
-  const mostStocked = rawMaterials.length > 0 ? rawMaterials.reduce((prev, current) => (prev.quantity > current.quantity) ? prev : current) : null;
+  const safeRawMaterials = rawMaterials || [];
 
-  const addRawMaterial = (newMaterial: Omit<RawMaterial, 'id' | 'quantity' | 'unitCost'>) => {
-    const materialWithId: RawMaterial = {
-        ...newMaterial,
-        id: `RM-${String(rawMaterials.length + 1).padStart(3, '0')}`,
-        quantity: 0, // Start with 0 quantity
-        unitCost: 0, // Unit cost will be determined by purchase orders
-    };
-    setRawMaterials(prev => [materialWithId, ...prev]);
+  const totalInventoryValue = safeRawMaterials.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const materialTypes = safeRawMaterials.length;
+  const totalUnits = safeRawMaterials.reduce((acc, item) => acc + item.quantity, 0);
+  const mostStocked = safeRawMaterials.length > 0 ? safeRawMaterials.reduce((prev, current) => (prev.quantity > current.quantity) ? prev : current) : null;
+
+  const addRawMaterial = async (newMaterial: Omit<RawMaterial, 'id'>) => {
+    try {
+      await addDoc(rawMaterialsCollection, newMaterial);
+       toast({
+        title: 'Raw Material Added',
+        description: `New material "${newMaterial.name}" has been added to inventory.`,
+      });
+    } catch(error) {
+      console.error("Error adding raw material:", error);
+      toast({
+        variant: "destructive",
+        title: 'Error',
+        description: 'Could not add the new raw material.'
+      })
+    }
   }
 
   const handleExport = () => {
     const headers = ["ID", "Name", "Category", "Quantity", "Unit", "Unit Cost"];
     const csvRows = [
       headers.join(','),
-      ...rawMaterials.map(material => 
+      ...safeRawMaterials.map(material => 
         [
           material.id,
           `"${material.name.replace(/"/g, '""')}"`,
@@ -153,15 +169,21 @@ export default function RawMaterialsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rawMaterials.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell className="text-right">{item.quantity.toLocaleString()} {item.unit}</TableCell>
-                  <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">BDT {(item.quantity * item.unitCost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                safeRawMaterials.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell className="text-right">{item.quantity.toLocaleString()} {item.unit}</TableCell>
+                    <TableCell className="text-right">BDT {item.unitCost.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">BDT {(item.quantity * item.unitCost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -21,7 +21,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, File, MoreHorizontal, DollarSign, CreditCard, AlertCircle, Hourglass } from "lucide-react"
-import { invoices as initialInvoices, type Invoice } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,21 +30,30 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreateInvoiceDialog } from "@/components/invoices/create-invoice-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import type { Invoice } from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const firestore = useFirestore();
+  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
+  const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
   const [isCreateInvoiceOpen, setCreateInvoiceOpen] = useState(false);
+  const { toast } = useToast();
 
-  const totalInvoiceValue = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const totalUnpaid = invoices.filter(i => i.status === 'Unpaid').reduce((sum, invoice) => sum + invoice.amount, 0);
-  const totalOverdue = invoices.filter(i => i.status === 'Overdue').reduce((sum, invoice) => sum + invoice.amount, 0);
+  const safeInvoices = invoices || [];
+
+  const totalInvoiceValue = safeInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
+  const totalUnpaid = safeInvoices.filter(i => i.status === 'Unpaid').reduce((sum, invoice) => sum + invoice.amount, 0);
+  const totalOverdue = safeInvoices.filter(i => i.status === 'Overdue').reduce((sum, invoice) => sum + invoice.amount, 0);
   const totalDues = totalUnpaid + totalOverdue;
 
   const handleExport = () => {
     const headers = ["ID", "Customer", "Email", "Date", "Due Date", "Amount", "Status"];
     const csvRows = [
       headers.join(','),
-      ...invoices.map(invoice => 
+      ...safeInvoices.map(invoice => 
         [
           invoice.id,
           `"${invoice.customer.replace(/"/g, '""')}"`,
@@ -69,11 +77,9 @@ export default function InvoicesPage() {
     document.body.removeChild(link);
   };
 
-  const addInvoice = (newInvoice: Omit<Invoice, 'id' | 'items'>) => {
-    const newId = `INV-${String(invoices.length + 1).padStart(3, '0')}`;
-    const invoiceWithId: Invoice = {
+  const addInvoice = async (newInvoice: Omit<Invoice, 'id' | 'items'>) => {
+    const invoiceWithItems = {
       ...newInvoice,
-      id: newId,
       items: [{
         id: 'item-new',
         description: 'New Item',
@@ -82,11 +88,23 @@ export default function InvoicesPage() {
         total: newInvoice.amount
       }]
     };
-    setInvoices(prev => [invoiceWithId, ...prev]);
+    try {
+      await addDoc(invoicesCollection, invoiceWithItems);
+      toast({
+        title: "Invoice Created",
+        description: `A new invoice for ${newInvoice.customer} has been added.`,
+      });
+    } catch(error) {
+      console.error("Error adding invoice: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not create the invoice.",
+      });
+    }
   }
 
-
-  const renderInvoiceTable = (invoiceList: typeof invoices) => (
+  const renderInvoiceTable = (invoiceList: Invoice[]) => (
     <Table>
       <TableHeader>
         <TableRow>
@@ -101,7 +119,12 @@ export default function InvoicesPage() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {invoiceList.map((invoice) => (
+        {isLoading ? (
+          <TableRow>
+            <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+          </TableRow>
+        ) : (
+          invoiceList.map((invoice) => (
           <TableRow key={invoice.id}>
             <TableCell className="font-medium">{invoice.id}</TableCell>
             <TableCell>{invoice.customer}</TableCell>
@@ -131,7 +154,7 @@ export default function InvoicesPage() {
               </DropdownMenu>
             </TableCell>
           </TableRow>
-        ))}
+        )))}
       </TableBody>
     </Table>
   );
@@ -215,16 +238,16 @@ export default function InvoicesPage() {
             </CardHeader>
             <CardContent>
                 <TabsContent value="all" className="mt-0">
-                  {renderInvoiceTable(invoices)}
+                  {renderInvoiceTable(safeInvoices)}
                 </TabsContent>
                 <TabsContent value="paid" className="mt-0">
-                  {renderInvoiceTable(invoices.filter(i => i.status === 'Paid'))}
+                  {renderInvoiceTable(safeInvoices.filter(i => i.status === 'Paid'))}
                 </TabsContent>
                 <TabsContent value="unpaid" className="mt-0">
-                  {renderInvoiceTable(invoices.filter(i => i.status === 'Unpaid'))}
+                  {renderInvoiceTable(safeInvoices.filter(i => i.status === 'Unpaid'))}
                 </TabsContent>
                 <TabsContent value="overdue" className="mt-0">
-                  {renderInvoiceTable(invoices.filter(i => i.status === 'Overdue'))}
+                  {renderInvoiceTable(safeInvoices.filter(i => i.status === 'Overdue'))}
                 </TabsContent>
             </CardContent>
           </Card>

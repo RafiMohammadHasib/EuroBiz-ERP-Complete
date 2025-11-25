@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -10,26 +11,43 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award } from "lucide-react"
-import { distributors as initialDistributors, type Distributor } from "@/lib/data"
+import { type Distributor } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { CreateDistributorDialog } from "@/components/distributors/create-distributor-dialog";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DistributorsPage() {
-    const [distributors, setDistributors] = useState<Distributor[]>(initialDistributors);
+    const firestore = useFirestore();
+    const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
+    const { data: distributors, isLoading } = useCollection<Distributor>(distributorsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const { toast } = useToast();
 
-    const totalDistributors = distributors.length;
-    const totalSales = distributors.reduce((acc, dist) => acc + dist.totalSales, 0);
+    const safeDistributors = distributors || [];
+
+    const totalDistributors = safeDistributors.length;
+    const totalSales = safeDistributors.reduce((acc, dist) => acc + dist.totalSales, 0);
     const averageSales = totalDistributors > 0 ? totalSales / totalDistributors : 0;
-    const topDistributor = distributors.length > 0 ? distributors.reduce((prev, current) => (prev.totalSales > current.totalSales) ? prev : current) : null;
+    const topDistributor = safeDistributors.length > 0 ? safeDistributors.reduce((prev, current) => (prev.totalSales > current.totalSales) ? prev : current) : null;
 
-    const addDistributor = (newDistributor: Omit<Distributor, 'id'>) => {
-        const distributorWithId: Distributor = {
-            ...newDistributor,
-            id: `DIST-${String(distributors.length + 1).padStart(2, '0')}`,
-        };
-        setDistributors(prev => [distributorWithId, ...prev]);
+    const addDistributor = async (newDistributor: Omit<Distributor, 'id'>) => {
+      try {
+        await addDoc(distributorsCollection, newDistributor);
+        toast({
+          title: 'Distributor Added',
+          description: `New distributor "${newDistributor.name}" has been added.`,
+        });
+      } catch (error) {
+        console.error("Error adding distributor: ", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not add the distributor.',
+        });
+      }
     }
 
   return (
@@ -110,7 +128,12 @@ export default function DistributorsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {distributors.map((dist) => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
+                      </TableRow>
+                    ) : (
+                      safeDistributors.map((dist) => (
                         <TableRow key={dist.id}>
                             <TableCell className="font-medium">{dist.name}</TableCell>
                             <TableCell>{dist.location}</TableCell>
@@ -132,7 +155,8 @@ export default function DistributorsPage() {
                                 </DropdownMenu>
                             </TableCell>
                         </TableRow>
-                    ))}
+                      ))
+                    )}
                 </TableBody>
             </Table>
         </CardContent>
