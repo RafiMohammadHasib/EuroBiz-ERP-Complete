@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign } from "lucide-react"
-import { type ProductionOrder, type FinishedGood } from "@/lib/data"
+import { type ProductionOrder, type FinishedGood, type RawMaterial } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { CreateProductionOrderDialog } from "@/components/production/create-production-order-dialog";
@@ -25,21 +25,24 @@ export default function ProductionPage() {
     const { currencySymbol } = useSettings();
     const productionOrdersCollection = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
     const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+    const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
     
     const { data: productionOrders, isLoading: poLoading } = useCollection<ProductionOrder>(productionOrdersCollection);
     const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
+    const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const safeProductionOrders = productionOrders || [];
     const safeFinishedGoods = finishedGoods || [];
+    const safeRawMaterials = rawMaterials || [];
 
     const wipOrders = safeProductionOrders.filter(o => o.status === "In Progress").length;
     const completedOrders = safeProductionOrders.filter(o => o.status === "Completed").length;
     const totalProductionCost = safeProductionOrders.reduce((acc, order) => acc + order.totalCost, 0);
     const totalUnitsProduced = safeProductionOrders.reduce((acc, order) => acc + order.quantity, 0);
     
-    const isLoading = poLoading || fgLoading;
+    const isLoading = poLoading || fgLoading || rmLoading;
 
     const addProductionOrder = async (newOrder: Omit<ProductionOrder, 'id'>) => {
       try {
@@ -144,8 +147,8 @@ export default function ProductionPage() {
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.productName}</TableCell>
                             <TableCell>{order.quantity.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{currencySymbol}{order.totalCost.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{currencySymbol}{(order.totalCost / order.quantity).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{currencySymbol}{order.totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                            <TableCell className="text-right">{currencySymbol}{order.unitCost.toFixed(2)}</TableCell>
                              <TableCell>
                                 <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'In Progress' ? 'default' : 'outline'}>
                                     {order.status}
@@ -165,6 +168,7 @@ export default function ProductionPage() {
         onOpenChange={setCreateDialogOpen}
         onCreate={addProductionOrder}
         products={safeFinishedGoods}
+        rawMaterials={safeRawMaterials}
     />
     </>
   );

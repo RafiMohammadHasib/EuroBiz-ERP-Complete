@@ -241,14 +241,19 @@ export type ProductionOrder = {
   id: string;
   productName: string;
   quantity: number;
+  materialCost: number;
+  labourCost: number;
+  otherCosts: number;
+  wastageValue: number;
   totalCost: number;
+  unitCost: number;
   status: 'In Progress' | 'Completed' | 'Pending';
   startDate: string;
 };
 
 export const productionOrders: ProductionOrder[] = [
-  { id: 'PROD-001', productName: 'Premium Wall Paint', quantity: 500, totalCost: 37750, status: 'Completed', startDate: '2023-11-05' },
-  { id: 'PROD-002', productName: 'Weather-Proof Exterior', quantity: 300, totalCost: 28500, status: 'In Progress', startDate: '2023-11-20' },
+  { id: 'PROD-001', productName: 'Premium Wall Paint', quantity: 500, materialCost: 37750, labourCost: 5000, otherCosts: 2000, wastageValue: 500, totalCost: 45250, unitCost: 90.5, status: 'Completed', startDate: '2023-11-05' },
+  { id: 'PROD-002', productName: 'Weather-Proof Exterior', quantity: 300, materialCost: 28500, labourCost: 4000, otherCosts: 1500, wastageValue: 300, totalCost: 34300, unitCost: 114.33, status: 'In Progress', startDate: '2023-11-20' },
 ];
 
 export type Distributor = {
@@ -295,5 +300,4 @@ const twoDaysAgo = new Date(now);
 twoDaysAgo.setDate(now.getDate() - 2);
 const lastWeek = new Date(now);
 lastWeek.setDate(now.getDate() - 7);
-
     
