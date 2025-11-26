@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,20 +13,35 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Commission } from '@/lib/data';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
+import { Commission, Distributor, FinishedGood } from '@/lib/data';
 
 interface CreateCommissionRuleDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onCreate: (rule: Omit<Commission, 'id'>) => void;
+  products: FinishedGood[];
+  distributors: Distributor[];
 }
 
-export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate }: CreateCommissionRuleDialogProps) {
+export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate, products, distributors }: CreateCommissionRuleDialogProps) {
   const [ruleName, setRuleName] = useState('');
   const [appliesTo, setAppliesTo] = useState('');
   const [type, setType] = useState<'Percentage' | 'Fixed'>('Percentage');
   const [rate, setRate] = useState('');
+
+  const appliesToOptions = useMemo(() => {
+    const productOptions = products.map(p => p.productName);
+    const distributorOptions = distributors.map(d => d.name);
+    const tierOptions = [...new Set(distributors.map(d => d.tier))];
+    
+    return {
+      products: productOptions,
+      distributors: distributorOptions,
+      tiers: tierOptions
+    };
+  }, [products, distributors]);
+
 
   const handleSubmit = () => {
     const numericRate = parseFloat(rate);
@@ -75,13 +90,25 @@ export function CreateCommissionRuleDialog({ isOpen, onOpenChange, onCreate }: C
             <Label htmlFor="applies-to" className="text-right">
               Applies To
             </Label>
-            <Input
-              id="applies-to"
-              value={appliesTo}
-              onChange={(e) => setAppliesTo(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., All Products, Tier 1"
-            />
+            <Select value={appliesTo} onValueChange={setAppliesTo}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a product, distributor, or tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Products</SelectLabel>
+                    {appliesToOptions.products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Distributors</SelectLabel>
+                    {appliesToOptions.distributors.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Distributor Tiers</SelectLabel>
+                    {appliesToOptions.tiers.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">

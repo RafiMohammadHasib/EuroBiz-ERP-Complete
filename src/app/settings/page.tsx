@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle } from 'lucide-react';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
-import type { Commission, FinishedGood, RawMaterial } from '@/lib/data';
+import type { Commission, FinishedGood, RawMaterial, Distributor } from '@/lib/data';
 import { CreateCommissionRuleDialog } from '@/components/commissions/create-commission-rule-dialog';
 import { CreateFormulaDialog } from '@/components/settings/create-formula-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const commissionsCollection = useMemoFirebase(() => collection(firestore, 'commissions'), [firestore]);
   const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
   const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   
   // --- Data Hooks ---
   const { data: profileSettingsData, isLoading: profileLoading } = useDoc<ProfileSettings>(profileSettingsDocRef);
@@ -62,6 +63,7 @@ export default function SettingsPage() {
   const { data: commissions, isLoading: commissionsLoading } = useCollection<Commission>(commissionsCollection);
   const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
   const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
+  const { data: distributors, isLoading: distLoading } = useCollection<Distributor>(distributorsCollection);
 
   // --- Component State ---
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>({ displayName: '' });
@@ -472,6 +474,8 @@ export default function SettingsPage() {
         isOpen={isCommissionRuleDialogOpen}
         onOpenChange={setCommissionRuleDialogOpen}
         onCreate={addCommissionRule}
+        products={finishedGoods || []}
+        distributors={distributors || []}
       />
       <CreateFormulaDialog
         isOpen={isFormulaDialogOpen}
