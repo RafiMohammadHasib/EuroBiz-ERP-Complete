@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
-import type { Invoice, FinishedGood, Customer } from "@/lib/data";
+import type { Invoice, FinishedGood, Distributor } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { CreateInvoiceDialog } from "@/components/invoices/create-invoice-dialog";
 import { useRouter } from "next/navigation";
@@ -23,10 +23,10 @@ export default function CreateSalePage() {
   const { toast } = useToast();
   
   const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
-  const customersCollection = useMemoFirebase(() => collection(firestore, 'customers'), [firestore]);
+  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   
   const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
-  const { data: customers, isLoading: customersLoading } = useCollection<Customer>(customersCollection);
+  const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -96,7 +96,7 @@ export default function CreateSalePage() {
     }
   }
 
-  const isLoading = productsLoading || customersLoading;
+  const isLoading = productsLoading || distributorsLoading;
 
   return (
     <>
@@ -105,12 +105,12 @@ export default function CreateSalePage() {
           <CardHeader>
             <CardTitle>Create Sale</CardTitle>
             <CardDescription>
-              Select a customer and add products to generate a new invoice.
+              Select a distributor and add products to generate a new invoice.
             </CardDescription>
           </CardHeader>
           <CardContent>
               <CreateInvoiceDialog 
-                customers={customers || []}
+                distributors={distributors || []}
                 products={products || []}
                 onCreateInvoice={addInvoice}
                 isLoading={isLoading || isSaving}

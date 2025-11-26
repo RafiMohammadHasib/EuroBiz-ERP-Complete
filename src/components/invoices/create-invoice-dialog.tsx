@@ -7,20 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Customer } from '@/lib/data';
+import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Distributor } from '@/lib/data';
 import { useSettings } from '@/context/settings-context';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { InvoiceItemForm } from './invoice-item-form';
 
 interface CreateInvoiceFormProps {
-  customers: Customer[];
+  distributors: Distributor[];
   products: FinishedGood[];
   onCreateInvoice: (invoice: Omit<Invoice, 'id'>) => void;
   isLoading: boolean;
 }
 
-export function CreateInvoiceDialog({ customers, products, onCreateInvoice, isLoading }: CreateInvoiceFormProps) {
+export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, isLoading }: CreateInvoiceFormProps) {
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
   
@@ -30,13 +30,10 @@ export function CreateInvoiceDialog({ customers, products, onCreateInvoice, isLo
   const [items, setItems] = useState<Omit<InvoiceItemType, 'id' | 'total'>[]>([]);
 
   useEffect(() => {
-    const selectedCustomer = customers.find(c => c.firstName + ' ' + c.lastName === customerName);
-    if (selectedCustomer) {
-        setCustomerEmail(selectedCustomer.email);
-    } else {
-        setCustomerEmail('');
-    }
-  }, [customerName, customers]);
+    // Since distributors don't have an email in the current data model, we'll leave it blank.
+    // This can be updated if the distributor data model changes.
+    setCustomerEmail('');
+  }, [customerName]);
 
 
   const handleItemChange = (index: number, updatedItem: Omit<InvoiceItemType, 'id' | 'total'>) => {
@@ -60,7 +57,7 @@ export function CreateInvoiceDialog({ customers, products, onCreateInvoice, isLo
       toast({
         variant: 'destructive',
         title: 'Invalid Input',
-        description: 'Please select a customer and add at least one valid item.',
+        description: 'Please select a distributor and add at least one valid item.',
       });
       return;
     }
@@ -71,7 +68,7 @@ export function CreateInvoiceDialog({ customers, products, onCreateInvoice, isLo
 
     const newInvoice: Omit<Invoice, 'id'> = {
       customer: customerName,
-      customerEmail: customerEmail,
+      customerEmail: customerEmail, // This will be blank for now
       amount: subTotal,
       status,
       date: today.toISOString().split('T')[0],
@@ -96,21 +93,21 @@ export function CreateInvoiceDialog({ customers, products, onCreateInvoice, isLo
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="grid gap-2">
-                <Label htmlFor="customer-name">Customer</Label>
+                <Label htmlFor="distributor-name">Distributor</Label>
                 <Select value={customerName} onValueChange={setCustomerName}>
-                    <SelectTrigger id="customer-name">
-                        <SelectValue placeholder="Select a customer" />
+                    <SelectTrigger id="distributor-name">
+                        <SelectValue placeholder="Select a distributor" />
                     </SelectTrigger>
                     <SelectContent>
-                        {customers.map(c => (
-                            <SelectItem key={c.id} value={`${c.firstName} ${c.lastName}`}>{c.firstName} {c.lastName}</SelectItem>
+                        {distributors.map(d => (
+                            <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="customer-email">Email</Label>
-                <Input id="customer-email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="Customer email" readOnly={customers.some(c => c.firstName + ' ' + c.lastName === customerName)} />
+                <Input id="customer-email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="(Optional) Distributor email" />
             </div>
              <div className="grid gap-2">
                 <Label htmlFor="status">Status</Label>
