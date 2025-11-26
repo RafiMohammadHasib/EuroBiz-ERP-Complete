@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Distributor } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateDistributorDialogProps {
   isOpen: boolean;
@@ -27,12 +28,16 @@ export function CreateDistributorDialog({ isOpen, onOpenChange, onCreate }: Crea
   const [location, setLocation] = useState('');
   const [tier, setTier] = useState<'Tier 1' | 'Tier 2' | 'Tier 3'>('Tier 2');
   const [totalSales, setTotalSales] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     const numericSales = parseFloat(totalSales);
     if (!name || !location || !totalSales || isNaN(numericSales)) {
-      // Add better validation feedback
-      alert('Please fill out all fields with valid data.');
+       toast({
+        variant: 'destructive',
+        title: 'Invalid Input',
+        description: 'Please fill out all fields with valid data.',
+      });
       return;
     }
 
