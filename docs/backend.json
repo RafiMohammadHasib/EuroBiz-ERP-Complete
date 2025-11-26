@@ -329,6 +329,42 @@
         "email"
       ]
     },
+    "SalaryPayment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalaryPayment",
+      "type": "object",
+      "description": "Represents a single salary payment record.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment."
+        },
+        "employeeName": {
+          "type": "string",
+          "description": "Name of the employee who received the salary."
+        },
+        "position": {
+          "type": "string",
+          "description": "Position/job title of the employee at the time of payment."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "The date the salary was paid.",
+          "format": "date"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The total amount paid."
+        }
+      },
+      "required": [
+        "id",
+        "employeeName",
+        "position",
+        "paymentDate",
+        "amount"
+      ]
+    },
     "UserRole": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserRole",
@@ -456,6 +492,22 @@
                     "description": "Unique identifier for the sales commission record."
                 }
             ]
+        }
+      },
+      {
+        "path": "/salary_payments/{paymentId}",
+        "definition": {
+          "entityName": "SalaryPayment",
+          "schema": {
+            "$ref": "#/backend/entities/SalaryPayment"
+          },
+          "description": "Stores records of salary payments made.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "Unique identifier for the salary payment record."
+            }
+          ]
         }
       },
       {
@@ -590,5 +642,3 @@
     "reasoning": "The Firestore structure is designed to support the BizFin Sales ERP application, focusing on commission management, invoice handling, sales return processing, and outstanding dues monitoring. The structure prioritizes Authorization Independence by avoiding hierarchical `get()` calls in security rules. It uses Structural Segregation to ensure that all documents within a collection share the same security requirements. Access Modeling follows consistent patterns: path-based ownership for user-related data and membership maps for collaborative data if needed in the future. Data clarity and predictability are maintained through explicit state modeling and consistent naming conventions.\n\nThe core entities (Product, DistributionChannel, Salesperson, Customer) are stored in top-level collections. SalesCommission, SalesInvoice, SalesReturn, and OutstandingDue are structured as subcollections under their respective parent entities to reflect the relationships described in the entities section. This approach enables efficient querying and management of related data while maintaining security and scalability. For example, sales commissions are nested under Salesperson, Product, and DistributionChannel to enable complex commission reporting and management based on these dimensions. SalesReturns are nested under SalesInvoices, and OutstandingDues are also related to SalesInvoices, reflecting their direct relationship.\n\nAuthorization Independence is achieved by potentially denormalizing relevant authorization data into each document in the subcollections if access control depends on parent document attributes, though this is not explicitly required by the current schema. The structure supports QAPs by enabling secure list operations, leveraging Structural Segregation to ensure consistent security requirements within each collection and subcollection. A 'user_roles' collection has been added to manage role-based access control, allowing for flexible admin privileges."
   }
 }
-
-    

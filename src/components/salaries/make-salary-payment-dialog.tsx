@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,76 +14,54 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Employee, SalaryPayment } from '@/lib/data';
-import { useSettings } from '@/context/settings-context';
-import { Separator } from '../ui/separator';
+import { type SalaryPayment } from '@/lib/data';
 
 interface MakeSalaryPaymentDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (payment: Omit<SalaryPayment, 'id'> | SalaryPayment) => void;
-  employees: Employee[];
   payment?: SalaryPayment | null;
 }
 
-export function MakeSalaryPaymentDialog({ isOpen, onOpenChange, onConfirm, employees, payment }: MakeSalaryPaymentDialogProps) {
+export function MakeSalaryPaymentDialog({ isOpen, onOpenChange, onConfirm, payment }: MakeSalaryPaymentDialogProps) {
   const { toast } = useToast();
-  const { currencySymbol } = useSettings();
   
-  const [employeeId, setEmployeeId] = useState('');
-  const [salaryMonth, setSalaryMonth] = useState('');
-  const [bonus, setBonus] = useState('0');
-  const [deductions, setDeductions] = useState('0');
-  const [paymentMethod, setPaymentMethod] = useState<SalaryPayment['paymentMethod']>('Bank Transfer');
+  const [employeeName, setEmployeeName] = useState('');
+  const [position, setPosition] = useState('');
+  const [amount, setAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
-
-  const selectedEmployee = useMemo(() => employees.find(e => e.id === employeeId), [employeeId, employees]);
 
   useEffect(() => {
     if (payment) {
-        setEmployeeId(payment.employeeId);
-        setSalaryMonth(payment.salaryMonth);
-        setBonus(String(payment.bonus));
-        setDeductions(String(payment.deductions));
-        setPaymentMethod(payment.paymentMethod);
+        setEmployeeName(payment.employeeName);
+        setPosition(payment.position);
+        setAmount(String(payment.amount));
         setPaymentDate(payment.paymentDate);
     } else {
-        const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        setSalaryMonth(currentMonth);
+        // Reset form for new entry
+        setEmployeeName('');
+        setPosition('');
+        setAmount('');
+        setPaymentDate(new Date().toISOString().split('T')[0]);
     }
-  }, [payment]);
-
-  const { baseSalary, netPay } = useMemo(() => {
-    const base = selectedEmployee?.salary || 0;
-    const bonusAmount = parseFloat(bonus) || 0;
-    const deductionAmount = parseFloat(deductions) || 0;
-    const net = base + bonusAmount - deductionAmount;
-    return { baseSalary: base, netPay: net };
-  }, [selectedEmployee, bonus, deductions]);
+  }, [payment, isOpen]); // Rerun effect if dialog opens or payment data changes
 
   const handleSubmit = () => {
-    if (!employeeId || !salaryMonth) {
+    const numericAmount = parseFloat(amount);
+    if (!employeeName || !position || !paymentDate || !numericAmount || numericAmount <= 0) {
       toast({
         variant: 'destructive',
         title: 'Invalid Input',
-        description: 'Please select an employee and specify the salary month.',
+        description: 'Please fill out all fields with valid data.',
       });
       return;
     }
     
     const paymentData = {
-        employeeId,
-        employeeName: selectedEmployee!.name,
-        position: selectedEmployee!.position,
+        employeeName,
+        position,
         paymentDate,
-        salaryMonth,
-        amount: baseSalary,
-        bonus: parseFloat(bonus) || 0,
-        deductions: parseFloat(deductions) || 0,
-        netPay,
-        paymentMethod,
+        amount: numericAmount,
     };
 
     if(payment) {
@@ -97,60 +75,43 @@ export function MakeSalaryPaymentDialog({ isOpen, onOpenChange, onConfirm, emplo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{payment ? 'Edit' : 'Make'} Salary Payment</DialogTitle>
+          <DialogTitle>{payment ? 'Edit' : 'Record'} Salary Payment</DialogTitle>
           <DialogDescription>
-            {payment ? 'Update the details for this salary payment.' : 'Select an employee and record their salary payment for a specific month.'}
+            {payment ? 'Update the details for this salary payment record.' : 'Enter the details of the salary payment.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+              <Label htmlFor="employeeName">Employee Name</Label>
+              <Input
+                  id="employeeName"
+                  value={employeeName}
+                  onChange={(e) => setEmployeeName(e.target.value)}
+                  placeholder="e.g., John Doe"
+              />
+          </div>
+          <div className="space-y-2">
+              <Label htmlFor="position">Position</Label>
+              <Input
+                  id="position"
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  placeholder="e.g., Sales Manager"
+              />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="employee">Employee</Label>
-                <Select value={employeeId} onValueChange={setEmployeeId} disabled={!!payment}>
-                    <SelectTrigger id="employee">
-                        <SelectValue placeholder="Select Employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {employees.filter(e => e.status === 'Active').map(e => (
-                            <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="salary-month">Salary For Month</Label>
+                <Label htmlFor="amount">Amount</Label>
                 <Input
-                    id="salary-month"
-                    type="month"
-                    value={salaryMonth}
-                    onChange={(e) => setSalaryMonth(e.target.value)}
+                    id="amount"
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="e.g., 50000"
                 />
             </div>
-          </div>
-          <div className="p-4 bg-muted/50 rounded-md space-y-2">
-             <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Base Salary</span>
-                <span className="font-medium">{currencySymbol}{baseSalary.toLocaleString()}</span>
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="bonus">Bonus</Label>
-                    <Input id="bonus" type="number" value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="0" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="deductions">Deductions</Label>
-                    <Input id="deductions" type="number" value={deductions} onChange={(e) => setDeductions(e.target.value)} placeholder="0" />
-                </div>
-             </div>
-             <Separator className="my-2" />
-             <div className="flex justify-between items-center font-bold text-lg">
-                <span>Net Pay</span>
-                <span>{currencySymbol}{netPay.toLocaleString()}</span>
-             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="payment-date">Payment Date</Label>
                 <Input
@@ -160,23 +121,12 @@ export function MakeSalaryPaymentDialog({ isOpen, onOpenChange, onConfirm, emplo
                     onChange={(e) => setPaymentDate(e.target.value)}
                 />
             </div>
-             <div className="space-y-2">
-                <Label htmlFor="payment-method">Payment Method</Label>
-                <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-                    <SelectTrigger id="payment-method">
-                        <SelectValue placeholder="Select Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="Cheque">Cheque</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleSubmit}>Confirm Payment</Button>
+          <Button type="submit" onClick={handleSubmit}>
+            {payment ? 'Save Changes' : 'Save Record'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

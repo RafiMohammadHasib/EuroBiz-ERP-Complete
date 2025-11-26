@@ -212,22 +212,16 @@ export const employees: Employee[] = [
 
 export type SalaryPayment = {
     id: string;
-    employeeId: string;
     employeeName: string;
     position: string;
     paymentDate: string;
-    salaryMonth: string;
     amount: number;
-    bonus: number;
-    deductions: number;
-    netPay: number;
-    paymentMethod: 'Bank Transfer' | 'Cash' | 'Cheque';
 };
 
 export const salaryPayments: SalaryPayment[] = [
-    { id: 'SP-001', employeeId: 'EMP-001', employeeName: 'Alice Johnson', position: 'CEO', paymentDate: '2023-11-30', salaryMonth: '2023-11', amount: 150000, bonus: 20000, deductions: 5000, netPay: 165000, paymentMethod: 'Bank Transfer' },
-    { id: 'SP-002', employeeId: 'EMP-002', employeeName: 'Bob Williams', position: 'Sales Director', paymentDate: '2023-11-30', salaryMonth: '2023-11', amount: 90000, bonus: 5000, deductions: 2000, netPay: 93000, paymentMethod: 'Bank Transfer' },
-    { id: 'SP-003', employeeId: 'EMP-003', employeeName: 'Charlie Brown', position: 'Production Manager', paymentDate: '2023-11-30', salaryMonth: '2023-11', amount: 75000, bonus: 0, deductions: 1500, netPay: 73500, paymentMethod: 'Cheque' },
+    { id: 'SP-001', employeeName: 'Alice Johnson', position: 'CEO', paymentDate: '2023-11-30', amount: 165000 },
+    { id: 'SP-002', employeeName: 'Bob Williams', position: 'Sales Director', paymentDate: '2023-11-30', amount: 93000 },
+    { id: 'SP-003', employeeName: 'Charlie Brown', position: 'Production Manager', paymentDate: '2023-11-30', amount: 73500 },
 ];
 
 

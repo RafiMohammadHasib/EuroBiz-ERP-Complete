@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Users, DollarSign, UserCheck, Trash2, Edit } from "lucide-react"
-import { type Employee, type SalaryPayment } from "@/lib/data"
+import { type SalaryPayment } from "@/lib/data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,10 +39,7 @@ export default function SalariesPage() {
   const firestore = useFirestore();
   const { currencySymbol } = useSettings();
   
-  const employeesCollection = useMemoFirebase(() => collection(firestore, 'employees'), [firestore]);
   const salaryPaymentsCollection = useMemoFirebase(() => collection(firestore, 'salary_payments'), [firestore]);
-
-  const { data: employees, isLoading: employeesLoading } = useCollection<Employee>(employeesCollection);
   const { data: salaryPayments, isLoading: paymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCollection);
 
   const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -51,24 +48,23 @@ export default function SalariesPage() {
   
   const { toast } = useToast();
 
-  const safeEmployees = employees || [];
   const safeSalaryPayments = salaryPayments || [];
 
-  const totalMonthlySalary = safeEmployees.filter(s => s.status === 'Active').reduce((acc, salary) => acc + salary.salary, 0);
-  const activeEmployeesCount = safeEmployees.filter(s => s.status === 'Active').length;
-  const averageSalary = activeEmployeesCount > 0 ? totalMonthlySalary / activeEmployeesCount : 0;
   const totalPaidThisMonth = safeSalaryPayments
     .filter(p => new Date(p.paymentDate).getMonth() === new Date().getMonth() && new Date(p.paymentDate).getFullYear() === new Date().getFullYear())
-    .reduce((acc, p) => acc + p.netPay, 0);
+    .reduce((acc, p) => acc + p.amount, 0);
 
-  const isLoading = employeesLoading || paymentsLoading;
+  const uniqueEmployees = new Set(safeSalaryPayments.map(p => p.employeeName)).size;
+
+
+  const isLoading = paymentsLoading;
 
   const handleCreatePayment = async (newPayment: Omit<SalaryPayment, 'id'>) => {
     try {
       await addDoc(salaryPaymentsCollection, newPayment);
       toast({
         title: 'Salary Payment Recorded',
-        description: `Payment to ${newPayment.employeeName} for ${newPayment.salaryMonth} has been recorded.`,
+        description: `Payment to ${newPayment.employeeName} has been recorded.`,
       });
     } catch(error) {
       console.error("Error making salary payment:", error);
@@ -137,32 +133,12 @@ export default function SalariesPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Employees</CardTitle>
+                    <CardTitle className="text-sm font-medium">Employees Paid</CardTitle>
                     <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{activeEmployeesCount}</div>
-                    <p className="text-xs text-muted-foreground">Currently on payroll</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Payroll</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{currencySymbol}{totalMonthlySalary.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Estimated for active employees</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Average Salary</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{currencySymbol}{averageSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                    <p className="text-xs text-muted-foreground">For active employees</p>
+                    <div className="text-2xl font-bold">{uniqueEmployees}</div>
+                    <p className="text-xs text-muted-foreground">Unique employees paid this month</p>
                 </CardContent>
             </Card>
         </div>
@@ -178,7 +154,7 @@ export default function SalariesPage() {
                 <Button size="sm" className="h-8 gap-1" onClick={() => setPaymentDialogOpen(true)}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Make Payment
+                    Record Payment
                     </span>
                 </Button>
             </div>
@@ -188,10 +164,9 @@ export default function SalariesPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Employee</TableHead>
+                    <TableHead>Position</TableHead>
                     <TableHead>Payment Date</TableHead>
-                    <TableHead>Salary Month</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead className="text-right">Net Pay</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                     <TableHead>
                         <span className="sr-only">Actions</span>
                     </TableHead>
@@ -200,22 +175,18 @@ export default function SalariesPage() {
             <TableBody>
                 {isLoading ? (
                    <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
                 ) : (
                   safeSalaryPayments.map((payment) => (
                   <TableRow key={payment.id}>
                       <TableCell>
                         <div className="font-medium">{payment.employeeName}</div>
-                        <div className="text-sm text-muted-foreground">{payment.position}</div>
                       </TableCell>
+                       <TableCell>{payment.position}</TableCell>
                       <TableCell>{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
-                       <TableCell>{payment.salaryMonth}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{payment.paymentMethod}</Badge>
-                      </TableCell>
                       <TableCell className="text-right">
-                        {currencySymbol}{payment.netPay.toLocaleString()}
+                        {currencySymbol}{payment.amount.toLocaleString()}
                       </TableCell>
                       <TableCell>
                       <DropdownMenu>
@@ -248,7 +219,6 @@ export default function SalariesPage() {
         isOpen={isPaymentDialogOpen}
         onOpenChange={setPaymentDialogOpen}
         onConfirm={handleCreatePayment}
-        employees={safeEmployees}
         key={paymentToEdit ? 'edit-dialog-open' : 'create-dialog-open'}
     />
     {paymentToEdit && (
@@ -256,7 +226,6 @@ export default function SalariesPage() {
             isOpen={!!paymentToEdit}
             onOpenChange={() => setPaymentToEdit(null)}
             onConfirm={(payment) => handleUpdatePayment(payment as SalaryPayment)}
-            employees={safeEmployees}
             payment={paymentToEdit}
             key={paymentToEdit.id}
         />
@@ -266,7 +235,7 @@ export default function SalariesPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the payment record for {paymentToDelete?.employeeName} for the month of {paymentToDelete?.salaryMonth}.
+                    This action cannot be undone. This will permanently delete the payment record for {paymentToDelete?.employeeName}.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
