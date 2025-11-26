@@ -42,12 +42,10 @@ export default function SalesPage() {
 
   const kpiData = useMemo(() => {
     const totalRevenue = safeInvoices
-      .filter(inv => inv.status === 'Paid')
-      .reduce((acc, inv) => acc + inv.amount, 0);
+      .reduce((acc, inv) => acc + inv.paidAmount, 0);
 
     const outstandingDues = safeInvoices
-      .filter(inv => inv.status === 'Unpaid' || inv.status === 'Overdue' || inv.status === 'Partially Paid')
-      .reduce((acc, inv) => acc + inv.amount, 0);
+      .reduce((acc, inv) => acc + inv.dueAmount, 0);
 
     const totalInvoices = safeInvoices.length;
 
@@ -91,7 +89,7 @@ export default function SalesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{currencySymbol}{kpiData.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">From paid invoices</p>
+              <p className="text-xs text-muted-foreground">Total amount received</p>
             </CardContent>
           </Card>
           <Card>
@@ -179,7 +177,7 @@ export default function SalesPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                {currencySymbol}{invoice.amount.toLocaleString()}
+                                {currencySymbol}{invoice.totalAmount.toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
                                 <Link href={`/invoices/${invoice.id}`} passHref>

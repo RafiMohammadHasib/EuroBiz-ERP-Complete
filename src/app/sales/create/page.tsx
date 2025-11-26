@@ -157,7 +157,7 @@ export default function CreateSalePage() {
           <CardHeader>
             <CardTitle>Create Sale</CardTitle>
             <CardDescription>
-              Select a distributor and add products to generate a new invoice. Discounts will be calculated automatically.
+              Select a distributor and add products to generate a new invoice. Commissions will be calculated automatically.
             </CardDescription>
           </CardHeader>
           <CardContent>

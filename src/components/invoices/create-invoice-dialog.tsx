@@ -113,7 +113,9 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
     const newInvoice: Omit<Invoice, 'id'> = {
       customer: customerName,
       customerEmail: distributors.find(d => d.name === customerName)?.email || '',
-      amount: grandTotal,
+      totalAmount: grandTotal,
+      paidAmount: numericPaidAmount,
+      dueAmount: grandTotal - numericPaidAmount,
       status: invoiceStatus,
       date: today.toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],

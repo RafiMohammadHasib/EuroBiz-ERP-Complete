@@ -103,7 +103,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
             <div className="grid gap-2 w-full sm:w-[250px]">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{currencySymbol}{invoice.amount.toFixed(2)}</span>
+                    <span>{currencySymbol}{invoice.totalAmount.toFixed(2)}</span>
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Taxes & Fees</span>
@@ -112,7 +112,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                 <Separator />
                  <div className="flex justify-between font-bold text-lg">
                     <span>Total Due</span>
-                    <span>{currencySymbol}{invoice.amount.toFixed(2)}</span>
+                    <span>{currencySymbol}{invoice.dueAmount.toFixed(2)}</span>
                 </div>
             </div>
           </div>

@@ -62,11 +62,11 @@ export default function ReturnsPage() {
     }
 
     const invoice = localInvoices[invoiceIndex];
-    if (amount > invoice.amount) {
+    if (amount > invoice.dueAmount) {
         toast({
             variant: 'destructive',
             title: 'Invalid Amount',
-            description: 'Return amount cannot be greater than the invoice amount.',
+            description: 'Return amount cannot be greater than the invoice due amount.',
         });
         setIsLoading(false);
         return;
@@ -74,7 +74,8 @@ export default function ReturnsPage() {
 
     // Simulate the business logic
     // 1. Decrease the outstanding due amount
-    localInvoices[invoiceIndex].amount -= amount;
+    localInvoices[invoiceIndex].dueAmount -= amount;
+    localInvoices[invoiceIndex].paidAmount -= amount; // Assuming a return is a refund against what was paid or owed
 
     // 2. Add returned stock to inventory (assuming each 15 BDT is one unit for this mock)
     const returnedUnits = Math.floor(amount / 15);
@@ -96,7 +97,7 @@ export default function ReturnsPage() {
     setTimeout(() => {
         toast({
           title: 'Return Processed Successfully',
-          description: `Invoice ${invoiceId} has been updated. The new due amount is ${localInvoices[invoiceIndex].amount.toLocaleString('en-US', { style: 'currency', currency: currency })}. ${returnedUnits} units returned to inventory.`,
+          description: `Invoice ${invoiceId} has been updated. The new due amount is ${localInvoices[invoiceIndex].dueAmount.toLocaleString('en-US', { style: 'currency', currency: currency })}. ${returnedUnits} units returned to inventory.`,
         });
         setInvoiceId('');
         setReturnAmount('');

@@ -1,15 +1,14 @@
 
 
-
-
-
 export type Invoice = {
   id: string;
   customer: string;
   customerEmail: string;
   date: string;
   dueDate: string;
-  amount: number;
+  totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
   status: 'Paid' | 'Unpaid' | 'Overdue' | 'Partially Paid';
   items: InvoiceItem[];
 };
@@ -51,7 +50,9 @@ export const invoices: Invoice[] = [
     customerEmail: 'tony@stark.com', 
     date: '2023-10-01', 
     dueDate: '2023-10-31',
-    amount: 2500.00, 
+    totalAmount: 2500.00,
+    paidAmount: 2500.00,
+    dueAmount: 0,
     status: 'Paid',
     items: [
         { id: 'item-1', description: 'Premium Wall Paint (1L)', quantity: 100, unitPrice: 20.00, total: 2000.00 },
@@ -64,7 +65,9 @@ export const invoices: Invoice[] = [
     customerEmail: 'bruce@wayne.com', 
     date: '2023-10-05', 
     dueDate: '2023-11-04',
-    amount: 1500.75, 
+    totalAmount: 1500.75, 
+    paidAmount: 1500.75,
+    dueAmount: 0,
     status: 'Paid',
     items: [
         { id: 'item-3', description: 'Eco-friendly Solvent', quantity: 50, unitPrice: 30.015, total: 1500.75 }
@@ -76,7 +79,9 @@ export const invoices: Invoice[] = [
     customerEmail: 'norman@oscorp.com', 
     date: '2023-11-15', 
     dueDate: '2023-12-15',
-    amount: 3200.00, 
+    totalAmount: 3200.00, 
+    paidAmount: 0,
+    dueAmount: 3200.00,
     status: 'Unpaid',
     items: [
         { id: 'item-4', description: 'Industrial Grade Coating', quantity: 40, unitPrice: 80.00, total: 3200.00 }
@@ -88,7 +93,9 @@ export const invoices: Invoice[] = [
     customerEmail: 'miles@cyberdyne.com', 
     date: '2023-09-20', 
     dueDate: '2023-10-20',
-    amount: 5000.00, 
+    totalAmount: 5000.00, 
+    paidAmount: 0,
+    dueAmount: 5000.00,
     status: 'Overdue',
     items: [
         { id: 'item-5', description: 'Advanced Polymer Compound', quantity: 10, unitPrice: 500.00, total: 5000.00 }
@@ -100,7 +107,9 @@ export const invoices: Invoice[] = [
     customerEmail: 'oliver@queen.com',
     date: '2023-12-01',
     dueDate: '2023-12-31',
-    amount: 750.50,
+    totalAmount: 750.50,
+    paidAmount: 0,
+    dueAmount: 750.50,
     status: 'Unpaid',
     items: [
         { id: 'item-6', description: 'Specialty Arrowhead Paint', quantity: 15, unitPrice: 50.033, total: 750.50 }
@@ -338,4 +347,5 @@ const twoDaysAgo = new Date(now);
 twoDaysAgo.setDate(now.getDate() - 2);
 const lastWeek = new Date(now);
 lastWeek.setDate(now.getDate() - 7);
+
 

@@ -27,6 +27,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import type { Invoice, PurchaseOrder } from '@/lib/data';
 import { MakePaymentDialog } from '@/components/dues/make-payment-dialog';
+import { RecordSalePaymentDialog } from '@/components/dues/record-sale-payment-dialog';
 
 export default function DuesPage() {
   const { toast } = useToast();
@@ -34,6 +35,7 @@ export default function DuesPage() {
   const firestore = useFirestore();
 
   const [paymentPo, setPaymentPo] = useState<PurchaseOrder | null>(null);
+  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
 
   // Firestore collections
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
@@ -43,21 +45,39 @@ export default function DuesPage() {
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
 
-  const outstandingInvoices = invoices?.filter((i) => i.status !== 'Paid' && i.amount > 0) || [];
-  const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.amount, 0);
+  const outstandingInvoices = invoices?.filter((i) => i.status !== 'Paid' && i.dueAmount > 0) || [];
+  const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.dueAmount, 0);
 
   const pendingPurchaseOrders = purchaseOrders?.filter((po) => po.paymentStatus !== 'Paid') || [];
   const totalPurchaseDue = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
 
-  const handleRecordPayment = async (invoiceId: string) => {
+  const handleRecordSalePayment = async (invoiceId: string, paymentAmount: number) => {
     if (!firestore) return;
+    const invoiceToUpdate = invoices?.find(inv => inv.id === invoiceId);
+    if (!invoiceToUpdate) return;
+    
+    const newPaidAmount = invoiceToUpdate.paidAmount + paymentAmount;
+    const newDueAmount = invoiceToUpdate.totalAmount - newPaidAmount;
+
+    let newStatus: Invoice['status'];
+    if (newDueAmount <= 0.001) {
+        newStatus = 'Paid';
+    } else {
+        newStatus = 'Partially Paid';
+    }
+
     try {
         const invoiceRef = doc(firestore, 'invoices', invoiceId);
-        await updateDoc(invoiceRef, { status: 'Paid' });
+        await updateDoc(invoiceRef, { 
+            status: newStatus,
+            paidAmount: newPaidAmount,
+            dueAmount: newDueAmount < 0 ? 0 : newDueAmount,
+        });
         toast({
             title: 'Payment Recorded',
-            description: `Invoice ${invoiceId} has been marked as Paid.`,
+            description: `${currencySymbol}${paymentAmount.toLocaleString()} recorded for Invoice ${invoiceId}.`,
         });
+        setPaymentInvoice(null);
     } catch (error) {
         console.error("Error recording payment:", error);
         toast({
@@ -173,17 +193,17 @@ export default function DuesPage() {
                         <TableCell>
                             <Badge
                             variant={
-                                invoice.status === 'Overdue' ? 'destructive' : 'outline'
+                                invoice.status === 'Overdue' ? 'destructive' : invoice.status === 'Partially Paid' ? 'default' : 'outline'
                             }
                             >
                             {invoice.status}
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                            {invoice.amount.toLocaleString()}
+                            {invoice.dueAmount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-center">
-                            <Button size="sm" onClick={() => handleRecordPayment(invoice.id)}>Record Payment</Button>
+                            <Button size="sm" onClick={() => setPaymentInvoice(invoice)}>Record Payment</Button>
                         </TableCell>
                         </TableRow>
                     ))
@@ -261,6 +281,14 @@ export default function DuesPage() {
         onOpenChange={(isOpen) => !isOpen && setPaymentPo(null)}
         purchaseOrder={paymentPo}
         onConfirmPayment={handleMakePayment}
+      />
+    )}
+     {paymentInvoice && (
+      <RecordSalePaymentDialog 
+        isOpen={!!paymentInvoice}
+        onOpenChange={(isOpen) => !isOpen && setPaymentInvoice(null)}
+        invoice={paymentInvoice}
+        onConfirmPayment={handleRecordSalePayment}
       />
     )}
     </>
