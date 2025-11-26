@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck } from "lucide-react"
-import { type Supplier, purchaseOrders as initialPurchaseOrders } from "@/lib/data"
+import { type Supplier, type PurchaseOrder } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
@@ -26,13 +26,16 @@ export default function SuppliersPage() {
     const firestore = useFirestore();
     const { currencySymbol } = useSettings();
     const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
+    const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
+
     const { data: suppliers, isLoading: isLoadingSuppliers } = useCollection<Supplier>(suppliersCollection);
-    const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
+    const { data: purchaseOrders, isLoading: isLoadingPOs } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
+
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const supplierData = useMemo(() => {
-        if (!suppliers) return [];
+        if (!suppliers || !purchaseOrders) return [];
         return suppliers.map(supplier => {
             const supplierPOs = purchaseOrders.filter(po => po.supplier === supplier.name);
             const totalPOValue = supplierPOs.reduce((acc, po) => acc + po.amount, 0);
@@ -42,6 +45,8 @@ export default function SuppliersPage() {
             }
         });
     }, [suppliers, purchaseOrders]);
+
+    const isLoading = isLoadingSuppliers || isLoadingPOs;
 
     const totalSuppliers = supplierData.length;
     const activeSuppliers = supplierData.filter(s => s.status === 'Active').length;
@@ -141,9 +146,9 @@ export default function SuppliersPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {isLoadingSuppliers ? (
+                    {isLoading ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                            <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                         </TableRow>
                     ) : (
                         supplierData.map((supplier) => (
