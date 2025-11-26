@@ -33,7 +33,7 @@ export default function SalesPage() {
   const firestore = useFirestore();
   const { currencySymbol } = useSettings();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
+  const { data: invoices, isLoading } = useCollection<Invoice & { amount?: number }>(invoicesCollection);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -177,7 +177,7 @@ export default function SalesPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                {currencySymbol}{invoice.totalAmount.toLocaleString()}
+                                {currencySymbol}{(invoice.totalAmount ?? invoice.amount ?? 0).toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
                                 <Link href={`/invoices/${invoice.id}`} passHref>
