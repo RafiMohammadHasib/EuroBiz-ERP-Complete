@@ -141,7 +141,7 @@ service cloud.firestore {
      */
     match /distributors/{distributorId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin();
     }
 
     /**
@@ -153,12 +153,16 @@ service cloud.firestore {
      */
     match /suppliers/{supplierId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
     
     match /purchaseOrders/{purchaseOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin();
+    }
+    
+    match /salaries/{salaryId} {
+        allow read, write: if isAdmin();
     }
 
     match /sales_returns/{returnId} {
@@ -172,26 +176,26 @@ service cloud.firestore {
 
     match /invoices/{invoiceId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin();
     }
 
     match /rawMaterials/{materialId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /finishedGoods/{goodId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
     
     match /productionOrders/{productionOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin();
     }
 
     match /commissions/{commissionId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isAdmin();
     }
 
     // ---------------------------
@@ -317,5 +321,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
