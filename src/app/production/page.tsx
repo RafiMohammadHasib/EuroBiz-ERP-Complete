@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign } from "lucide-react"
+import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign, MoreHorizontal } from "lucide-react"
 import { type ProductionOrder, type FinishedGood, type RawMaterial } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,8 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function ProductionPage() {
     const firestore = useFirestore();
@@ -31,6 +33,7 @@ export default function ProductionPage() {
     const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
     const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const [orderToCancel, setOrderToCancel] = useState<ProductionOrder | null>(null);
     const { toast } = useToast();
 
     const safeProductionOrders = productionOrders || [];
@@ -62,23 +65,29 @@ export default function ProductionPage() {
       }
     }
     
-    const handleMarkAsComplete = async (orderId: string) => {
+    const handleUpdateStatus = async (orderId: string, status: 'Completed' | 'Cancelled') => {
         if (!firestore) return;
         try {
             const orderRef = doc(firestore, 'productionOrders', orderId);
-            await updateDoc(orderRef, { status: 'Completed' });
+            await updateDoc(orderRef, { status });
             toast({
-                title: 'Production Complete',
-                description: `Order ${orderId} has been marked as completed.`,
+                title: `Production ${status}`,
+                description: `Order ${orderId} has been marked as ${status.toLowerCase()}.`,
             });
         } catch (error) {
-            console.error("Error completing production order:", error);
+            console.error(`Error updating order status:`, error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
                 description: 'Could not update the order status.',
             });
         }
+    };
+    
+    const handleCancelOrder = async () => {
+        if (!orderToCancel) return;
+        await handleUpdateStatus(orderToCancel.id, 'Cancelled');
+        setOrderToCancel(null);
     };
 
   return (
@@ -171,17 +180,38 @@ export default function ProductionPage() {
                             <TableCell className="text-right">{currencySymbol}{(order.totalCost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                             <TableCell className="text-right">{currencySymbol}{(order.unitCost || 0).toFixed(2)}</TableCell>
                              <TableCell>
-                                <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'In Progress' ? 'default' : 'outline'}>
+                                <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'In Progress' ? 'default' : order.status === 'Cancelled' ? 'destructive' : 'outline'}>
                                     {order.status}
                                 </Badge>
                              </TableCell>
                             <TableCell>{new Date(order.startDate).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right">
-                                {order.status !== 'Completed' && (
-                                    <Button variant="outline" size="sm" onClick={() => handleMarkAsComplete(order.id)}>
-                                        Mark as Complete
+                               <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
                                     </Button>
-                                )}
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem disabled>View Details</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => handleUpdateStatus(order.id, 'Completed')}
+                                            disabled={order.status === 'Completed' || order.status === 'Cancelled'}
+                                        >
+                                            Mark as Complete
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                            className="text-destructive"
+                                            onClick={() => setOrderToCancel(order)}
+                                            disabled={order.status === 'Completed' || order.status === 'Cancelled'}
+                                        >
+                                            Cancel Order
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </TableCell>
                          </TableRow>
                       ))
@@ -198,6 +228,25 @@ export default function ProductionPage() {
         products={safeFinishedGoods}
         rawMaterials={safeRawMaterials}
     />
+     <AlertDialog open={!!orderToCancel} onOpenChange={(open) => !open && setOrderToCancel(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will cancel production order for "{orderToCancel?.productName}".
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Back</AlertDialogCancel>
+            <AlertDialogAction
+                onClick={handleCancelOrder}
+                className="bg-destructive hover:bg-destructive/90"
+            >
+                Confirm Cancellation
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

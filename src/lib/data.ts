@@ -247,7 +247,7 @@ export type ProductionOrder = {
   wastageValue: number;
   totalCost: number;
   unitCost: number;
-  status: 'In Progress' | 'Completed' | 'Pending';
+  status: 'In Progress' | 'Completed' | 'Pending' | 'Cancelled';
   startDate: string;
   createdAt: any;
 };
