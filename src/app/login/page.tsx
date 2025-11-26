@@ -49,8 +49,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full min-h-screen lg:grid lg:grid-cols-2 bg-[#F7F7F7] font-sans relative">
-      <div className="hidden lg:flex flex-col items-center justify-center p-12 bg-gradient-to-br from-primary/20 via-white to-primary/10 relative overflow-hidden">
+    <div className="w-full min-h-screen lg:grid lg:grid-cols-2 bg-gradient-to-br from-primary/20 via-white to-primary/10 font-sans relative">
+      <div className="hidden lg:flex flex-col items-center justify-center p-12 relative overflow-hidden">
         <div className='absolute top-10 left-10 flex items-center gap-3 text-2xl font-bold text-primary'>
             EuroBiz <span className='font-light text-gray-700'>ERP</span>
         </div>
