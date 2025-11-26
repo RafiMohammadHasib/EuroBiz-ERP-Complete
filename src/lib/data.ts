@@ -2,6 +2,7 @@
 
 
 
+
 export type Invoice = {
   id: string;
   customer: string;
@@ -9,7 +10,7 @@ export type Invoice = {
   date: string;
   dueDate: string;
   amount: number;
-  status: 'Paid' | 'Unpaid' | 'Overdue';
+  status: 'Paid' | 'Unpaid' | 'Overdue' | 'Partially Paid';
   items: InvoiceItem[];
 };
 
@@ -138,6 +139,8 @@ export type SalesCommission = {
     commissionRate: number;
     saleDate: string;
     saleAmount: number;
+    discountAmount: number;
+    netSaleAmount: number;
     commissionAmount: number;
     invoiceId: string;
     ruleId: string;
@@ -335,3 +338,4 @@ const twoDaysAgo = new Date(now);
 twoDaysAgo.setDate(now.getDate() - 2);
 const lastWeek = new Date(now);
 lastWeek.setDate(now.getDate() - 7);
+

@@ -17,7 +17,7 @@ interface CreateInvoiceFormProps {
   distributors: Distributor[];
   products: FinishedGood[];
   commissionRules: Commission[];
-  onCreateInvoice: (invoice: Omit<Invoice, 'id'>, totalDiscount: number) => void;
+  onCreateInvoice: (invoice: Omit<Invoice, 'id'>, totalCommission: number) => void;
   isLoading: boolean;
 }
 
@@ -26,7 +26,6 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
   const { currencySymbol } = useSettings();
   
   const [customerName, setCustomerName] = useState('');
-  const [status, setStatus] = useState<'Paid' | 'Unpaid' | 'Overdue'>('Unpaid');
   const [items, setItems] = useState<Omit<InvoiceItemType, 'id' | 'total'>[]>([]);
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentType, setPaymentType] = useState<'Cash' | 'Card' | 'Bank Transfer'>('Cash');
@@ -46,10 +45,10 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
     setItems(items.filter((_, i) => i !== index));
   };
   
-  const { subTotal, totalDiscount, grandTotal } = useMemo(() => {
+  const { subTotal, totalCommission, grandTotal } = useMemo(() => {
     const distributor = distributors.find(d => d.name === customerName);
     let subTotal = 0;
-    let totalDiscount = 0;
+    let totalCommission = 0;
 
     items.forEach(item => {
         const itemTotal = item.quantity * item.unitPrice;
@@ -72,12 +71,12 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
         });
         
         if (itemDiscountRate > 0) {
-            totalDiscount += itemTotal * (itemDiscountRate / 100);
+            totalCommission += itemTotal * (itemDiscountRate / 100);
         }
     });
 
-    const grandTotal = subTotal - totalDiscount;
-    return { subTotal, totalDiscount, grandTotal };
+    const grandTotal = subTotal - totalCommission;
+    return { subTotal, totalCommission, grandTotal };
   }, [items, customerName, distributors, products, commissionRules]);
 
   const dueAmount = useMemo(() => {
@@ -102,11 +101,20 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
     
     const numericPaidAmount = parseFloat(paidAmount) || 0;
 
+    let invoiceStatus: Invoice['status'] = 'Unpaid';
+    if (numericPaidAmount > 0) {
+        if (numericPaidAmount < grandTotal) {
+            invoiceStatus = 'Partially Paid';
+        } else {
+            invoiceStatus = 'Paid';
+        }
+    }
+
     const newInvoice: Omit<Invoice, 'id'> = {
       customer: customerName,
       customerEmail: distributors.find(d => d.name === customerName)?.email || '',
       amount: grandTotal,
-      status: numericPaidAmount >= grandTotal ? 'Paid' : 'Unpaid',
+      status: invoiceStatus,
       date: today.toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
       items: items.map((item, index) => ({
@@ -116,11 +124,10 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
       })),
     };
     
-    onCreateInvoice(newInvoice, totalDiscount);
+    onCreateInvoice(newInvoice, totalCommission);
 
     // Reset form
     setCustomerName('');
-    setStatus('Unpaid');
     setItems([]);
     setPaidAmount('');
   };
@@ -171,7 +178,7 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
                 </div>
                  <div className="flex justify-between text-destructive">
                     <span className="text-muted-foreground">Commission</span>
-                    <span className="font-medium">-{currencySymbol}{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="font-medium">-{currencySymbol}{totalCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax</span>

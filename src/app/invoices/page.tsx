@@ -46,7 +46,7 @@ export default function SalesPage() {
       .reduce((acc, inv) => acc + inv.amount, 0);
 
     const outstandingDues = safeInvoices
-      .filter(inv => inv.status === 'Unpaid' || inv.status === 'Overdue')
+      .filter(inv => inv.status === 'Unpaid' || inv.status === 'Overdue' || inv.status === 'Partially Paid')
       .reduce((acc, inv) => acc + inv.amount, 0);
 
     const totalInvoices = safeInvoices.length;
@@ -58,7 +58,7 @@ export default function SalesPage() {
     return safeInvoices
       .filter(invoice => {
         // Status filter
-        if (statusFilter !== 'all' && invoice.status.toLowerCase() !== statusFilter) {
+        if (statusFilter !== 'all' && invoice.status.toLowerCase().replace(' ', '-') !== statusFilter) {
           return false;
         }
         // Search term filter
@@ -69,6 +69,16 @@ export default function SalesPage() {
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [safeInvoices, searchTerm, statusFilter]);
+
+  const getStatusVariant = (status: Invoice['status']) => {
+    switch (status) {
+        case 'Paid': return 'secondary';
+        case 'Overdue': return 'destructive';
+        case 'Partially Paid': return 'default';
+        case 'Unpaid':
+        default: return 'outline';
+    }
+  }
 
   return (
     <>
@@ -111,6 +121,7 @@ export default function SalesPage() {
                 <TabsList>
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="unpaid">Unpaid</TabsTrigger>
+                    <TabsTrigger value="partially-paid">Partially Paid</TabsTrigger>
                     <TabsTrigger value="paid">Paid</TabsTrigger>
                     <TabsTrigger value="overdue">Overdue</TabsTrigger>
                 </TabsList>
@@ -162,9 +173,7 @@ export default function SalesPage() {
                             <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
                             <TableCell>
                                 <Badge
-                                variant={
-                                    invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Overdue' ? 'destructive' : 'outline'
-                                }
+                                variant={getStatusVariant(invoice.status)}
                                 >
                                 {invoice.status}
                                 </Badge>
