@@ -89,6 +89,14 @@
           "type": "number",
           "description": "The total amount of the sale."
         },
+        "discountAmount": {
+          "type": "number",
+          "description": "The calculated discount amount for the sale item."
+        },
+        "netSaleAmount": {
+          "type": "number",
+          "description": "The sale amount after discount."
+        },
         "commissionAmount": {
           "type": "number",
           "description": "The calculated commission amount for the sale."
@@ -119,6 +127,8 @@
         "commissionRate",
         "saleDate",
         "saleAmount",
+        "discountAmount",
+        "netSaleAmount",
         "commissionAmount",
         "invoiceId",
         "ruleId",

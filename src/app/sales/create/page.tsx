@@ -33,7 +33,7 @@ export default function CreateSalePage() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const addInvoice = async (newInvoice: Omit<Invoice, 'id'>) => {
+  const addInvoice = async (newInvoice: Omit<Invoice, 'id'>, totalDiscount: number) => {
     setIsSaving(true);
     if (!firestore || !user) {
         toast({
@@ -87,35 +87,45 @@ export default function CreateSalePage() {
         const product = products?.find(p => p.productName === item.description);
         if (!product || !distributor) return;
 
-        commissionRules?.forEach(rule => {
-            const ruleAppliesToProduct = rule.appliesTo.includes(product.productName);
-            const ruleAppliesToDistributor = rule.appliesTo.includes(distributor.name);
-            const ruleAppliesToTier = rule.appliesTo.includes(distributor.tier);
+        let totalRate = 0;
+        const appliedRules: {ruleId: string, ruleName: string, rate: number}[] = [];
 
-            if (ruleAppliesToProduct || ruleAppliesToDistributor || ruleAppliesToTier) {
-                const saleAmount = item.quantity * item.unitPrice;
-                const commissionAmount = rule.type === 'Percentage'
-                    ? saleAmount * (rule.rate / 100)
-                    : rule.rate;
-                
-                const commissionDoc: Omit<SalesCommission, 'id'> = {
-                    salespersonId: user.uid, // Assuming the logged-in user is the salesperson
-                    productId: product.id,
-                    distributionChannelId: distributor.id,
-                    commissionRate: rule.rate,
-                    saleDate: newInvoice.date,
-                    saleAmount: saleAmount,
-                    commissionAmount: commissionAmount,
-                    invoiceId: invoiceRef.id,
-                    ruleId: rule.id,
-                    ruleName: rule.ruleName,
-                    commissionType: rule.type,
-                };
-                
-                const commissionRef = doc(collection(firestore, 'sales_commissions'));
-                batch.set(commissionRef, commissionDoc);
+        commissionRules?.forEach(rule => {
+            if (rule.type === 'Percentage') {
+                const ruleAppliesToProduct = rule.appliesTo.includes(product.productName);
+                const ruleAppliesToDistributor = rule.appliesTo.includes(distributor.name);
+                const ruleAppliesToTier = rule.appliesTo.includes(distributor.tier);
+
+                if (ruleAppliesToProduct || ruleAppliesToDistributor || ruleAppliesToTier) {
+                    totalRate += rule.rate;
+                    appliedRules.push({ruleId: rule.id, ruleName: rule.ruleName, rate: rule.rate});
+                }
             }
         });
+        
+        const saleAmount = item.quantity * item.unitPrice;
+        const discountAmount = saleAmount * (totalRate / 100);
+        const netSaleAmount = saleAmount - discountAmount;
+        const commissionAmount = netSaleAmount * 0.01; // Example: 1% commission for salesperson on net amount
+
+        const commissionDoc: Omit<SalesCommission, 'id'> = {
+            salespersonId: user.uid,
+            productId: product.id,
+            distributionChannelId: distributor.id,
+            commissionRate: totalRate, // This now represents total discount rate
+            saleDate: newInvoice.date,
+            saleAmount: saleAmount,
+            discountAmount: discountAmount,
+            netSaleAmount: netSaleAmount,
+            commissionAmount: commissionAmount,
+            invoiceId: invoiceRef.id,
+            ruleId: appliedRules.map(r => r.ruleId).join(','),
+            ruleName: appliedRules.map(r => r.ruleName).join(','),
+            commissionType: 'Percentage',
+        };
+        
+        const commissionRef = doc(collection(firestore, 'sales_commissions'));
+        batch.set(commissionRef, commissionDoc);
     });
 
 
@@ -147,13 +157,14 @@ export default function CreateSalePage() {
           <CardHeader>
             <CardTitle>Create Sale</CardTitle>
             <CardDescription>
-              Select a distributor and add products to generate a new invoice. Commissions will be calculated automatically.
+              Select a distributor and add products to generate a new invoice. Discounts will be calculated automatically.
             </CardDescription>
           </CardHeader>
           <CardContent>
               <CreateInvoiceDialog 
                 distributors={distributors || []}
                 products={products || []}
+                commissionRules={commissionRules || []}
                 onCreateInvoice={addInvoice}
                 isLoading={isLoading || isSaving}
               />

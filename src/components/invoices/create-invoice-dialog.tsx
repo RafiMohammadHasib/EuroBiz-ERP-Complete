@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Distributor } from '@/lib/data';
+import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Distributor, Commission } from '@/lib/data';
 import { useSettings } from '@/context/settings-context';
 import { PlusCircle } from 'lucide-react';
 import { Separator } from '../ui/separator';
@@ -16,23 +16,20 @@ import { InvoiceItemForm } from './invoice-item-form';
 interface CreateInvoiceFormProps {
   distributors: Distributor[];
   products: FinishedGood[];
-  onCreateInvoice: (invoice: Omit<Invoice, 'id'>) => void;
+  commissionRules: Commission[];
+  onCreateInvoice: (invoice: Omit<Invoice, 'id'>, totalDiscount: number) => void;
   isLoading: boolean;
 }
 
-export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, isLoading }: CreateInvoiceFormProps) {
+export function CreateInvoiceDialog({ distributors, products, commissionRules, onCreateInvoice, isLoading }: CreateInvoiceFormProps) {
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
   
   const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [status, setStatus] = useState<'Paid' | 'Unpaid' | 'Overdue'>('Unpaid');
   const [items, setItems] = useState<Omit<InvoiceItemType, 'id' | 'total'>[]>([]);
-
-  useEffect(() => {
-    const selectedDistributor = distributors.find(d => d.name === customerName);
-    setCustomerEmail(selectedDistributor?.email || '');
-  }, [customerName, distributors]);
+  const [paidAmount, setPaidAmount] = useState('');
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Card' | 'Bank Transfer'>('Cash');
 
 
   const handleItemChange = (index: number, updatedItem: Omit<InvoiceItemType, 'id' | 'total'>) => {
@@ -49,7 +46,40 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
     setItems(items.filter((_, i) => i !== index));
   };
   
-  const subTotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+  const { subTotal, totalDiscount, grandTotal } = useState(() => {
+    const distributor = distributors.find(d => d.name === customerName);
+    let subTotal = 0;
+    let totalDiscount = 0;
+
+    items.forEach(item => {
+        const itemTotal = item.quantity * item.unitPrice;
+        subTotal += itemTotal;
+        let itemDiscountRate = 0;
+
+        const product = products.find(p => p.productName === item.description);
+        if (!product || !distributor) return;
+
+        commissionRules.forEach(rule => {
+            if (rule.type === 'Percentage') {
+                const ruleAppliesToProduct = rule.appliesTo.includes(product.productName);
+                const ruleAppliesToDistributor = rule.appliesTo.includes(distributor.name);
+                const ruleAppliesToTier = rule.appliesTo.includes(distributor.tier);
+
+                if (ruleAppliesToProduct || ruleAppliesToDistributor || ruleAppliesToTier) {
+                    itemDiscountRate += rule.rate;
+                }
+            }
+        });
+        
+        if (itemDiscountRate > 0) {
+            totalDiscount += itemTotal * (itemDiscountRate / 100);
+        }
+    });
+
+    const grandTotal = subTotal - totalDiscount;
+    return { subTotal, totalDiscount, grandTotal };
+  }, [items, customerName, distributors, products, commissionRules]);
+
 
   const handleSubmit = () => {
     if (!customerName || items.length === 0 || items.some(i => !i.description || i.quantity <= 0 || i.unitPrice <= 0)) {
@@ -64,12 +94,14 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
     const today = new Date();
     const dueDate = new Date(today);
     dueDate.setDate(today.getDate() + 30);
+    
+    const numericPaidAmount = parseFloat(paidAmount) || 0;
 
     const newInvoice: Omit<Invoice, 'id'> = {
       customer: customerName,
-      customerEmail: customerEmail,
-      amount: subTotal,
-      status,
+      customerEmail: distributors.find(d => d.name === customerName)?.email || '',
+      amount: grandTotal,
+      status: numericPaidAmount >= grandTotal ? 'Paid' : 'Unpaid',
       date: today.toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
       items: items.map((item, index) => ({
@@ -79,13 +111,13 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
       })),
     };
     
-    onCreateInvoice(newInvoice);
+    onCreateInvoice(newInvoice, totalDiscount);
 
     // Reset form
     setCustomerName('');
-    setCustomerEmail('');
     setStatus('Unpaid');
     setItems([]);
+    setPaidAmount('');
   };
 
   return (
@@ -104,18 +136,30 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
                     </SelectContent>
                 </Select>
             </div>
-             <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as 'Paid' | 'Unpaid' | 'Overdue')}>
-                    <SelectTrigger id="status">
-                        <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Unpaid">Unpaid</SelectItem>
-                        <SelectItem value="Paid">Paid</SelectItem>
-                        <SelectItem value="Overdue">Overdue</SelectItem>
-                    </SelectContent>
-                </Select>
+            <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-2">
+                    <Label htmlFor="paidAmount">Amount Paid</Label>
+                    <Input
+                        id="paidAmount"
+                        type="number"
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(e.target.value)}
+                        placeholder="0.00"
+                    />
+                </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="paymentType">Payment Type</Label>
+                    <Select value={paymentType} onValueChange={(value) => setPaymentType(value as any)}>
+                        <SelectTrigger id="paymentType">
+                            <SelectValue placeholder="Select Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                            <SelectItem value="Card">Card</SelectItem>
+                            <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
         </div>
 
@@ -145,6 +189,10 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium">{currencySymbol}{subTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                 <div className="flex justify-between text-destructive">
+                    <span className="text-muted-foreground">Discount</span>
+                    <span className="font-medium">-{currencySymbol}{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax</span>
                     <span className="font-medium">{currencySymbol}0.00</span>
@@ -152,7 +200,7 @@ export function CreateInvoiceDialog({ distributors, products, onCreateInvoice, i
                 <Separator />
                 <div className="flex justify-between">
                     <span className="font-bold text-lg">Total</span>
-                    <span className="font-bold text-lg">{currencySymbol}{subTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-lg">{currencySymbol}{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
             </div>
         </div>
