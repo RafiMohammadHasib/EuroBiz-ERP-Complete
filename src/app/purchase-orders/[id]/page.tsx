@@ -1,31 +1,54 @@
+
 'use client';
 import { notFound, useRouter } from 'next/navigation';
-import { purchaseOrders, companyDetails, type PurchaseOrder, suppliers } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, Landmark, ArrowLeft } from 'lucide-react';
+import { Printer, Landmark, ArrowLeft, Loader2 } from 'lucide-react';
 import { useSettings } from '@/context/settings-context';
-import { useMemo } from 'react';
+import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
+import type { PurchaseOrder, RawMaterial, Supplier } from '@/lib/data';
+import { companyDetails } from '@/lib/data';
 
 export default function PurchaseOrderPage({ params }: { params: { id: string } }) {
   const { currencySymbol } = useSettings();
   const router = useRouter();
+  const firestore = useFirestore();
 
-  // In a real app, you would fetch this data from Firestore
-  const po = useMemo(() => purchaseOrders.find((p) => p.id === params.id), [params.id]);
-  const supplier = useMemo(() => suppliers.find(s => s.name === po?.supplier), [po]);
+  const poRef = useMemoFirebase(() => doc(firestore, 'purchaseOrders', params.id), [firestore, params.id]);
+  const { data: po, isLoading: poLoading } = useDoc<PurchaseOrder>(poRef);
 
+  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+  const { data: rawMaterials, isLoading: materialsLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
+  
+  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
+  const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
 
-  if (!po) {
+  const supplier = suppliers?.find(s => s.name === po?.supplier);
+  const isLoading = poLoading || materialsLoading || suppliersLoading;
+
+  if (!po && !isLoading) {
     notFound();
   }
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (isLoading) {
+      return (
+          <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+      )
+  }
+  
+  if (!po) {
+      return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -93,14 +116,16 @@ export default function PurchaseOrderPage({ params }: { params: { id: string } }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {po.items.map((item) => (
+              {po.items.map((item) => {
+                const materialName = rawMaterials?.find(rm => rm.id === item.rawMaterialId)?.name || item.rawMaterialId;
+                return (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.rawMaterialId}</TableCell>
+                  <TableCell className="font-medium">{materialName}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell className="text-right">{currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
                   <TableCell className="text-right">{currencySymbol}{(item.quantity * item.unitCost).toFixed(2)}</TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
 
@@ -110,7 +135,7 @@ export default function PurchaseOrderPage({ params }: { params: { id: string } }
             <div className="grid gap-2 w-full sm:w-[250px]">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{currencySymbol}{(po.amount + po.discount - po.tax).toFixed(2)}</span>
+                    <span>{currencySymbol}{(po.amount - po.tax + po.discount).toFixed(2)}</span>
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Discount</span>

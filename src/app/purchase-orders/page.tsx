@@ -128,14 +128,6 @@ export default function PurchaseOrdersPage() {
     }
   }
 
-  const handleGenerateInvoice = (orderId: string) => {
-      toast({
-        title: "Invoice Generation (Simulated)",
-        description: `An invoice for Purchase Order ${orderId} would be generated here.`,
-      });
-  }
-
-
   const renderPurchaseOrderTable = (orders: PurchaseOrder[]) => (
     <Card>
       <CardHeader>
@@ -191,7 +183,6 @@ export default function PurchaseOrdersPage() {
                         {order.status === 'Pending' && (
                             <DropdownMenuItem onClick={() => handleMarkAsReceived(order.id)}>Mark as Received</DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleGenerateInvoice(order.id)}>Generate Invoice</DropdownMenuItem>
                         <DropdownMenuItem>Cancel</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
