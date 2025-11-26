@@ -162,7 +162,7 @@ service cloud.firestore {
     }
     
     match /salaries/{salaryId} {
-        allow read, write: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     match /sales_returns/{returnId} {
@@ -321,3 +321,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
