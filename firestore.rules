@@ -165,6 +165,10 @@ service cloud.firestore {
         allow get, list: if isSignedIn();
         allow write: if isAdmin();
     }
+    
+    match /sales_commissions/{commissionId} {
+        allow read, write: if isSignedIn();
+    }
 
     match /invoices/{invoiceId} {
         allow get, list: if isSignedIn();

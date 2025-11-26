@@ -1,5 +1,6 @@
 
 
+
 export type Invoice = {
   id: string;
   customer: string;
@@ -127,6 +128,22 @@ export type Commission = {
     type: 'Percentage' | 'Fixed';
     rate: number;
 }
+
+export type SalesCommission = {
+    id: string;
+    salespersonId: string;
+    productId: string;
+    distributionChannelId: string;
+    commissionRate: number;
+    saleDate: string;
+    saleAmount: number;
+    commissionAmount: number;
+    invoiceId: string;
+    ruleId: string;
+    ruleName: string;
+    commissionType: 'Percentage' | 'Fixed';
+};
+
 
 export const commissions: Commission[] = [
     { id: 'COM-01', ruleName: 'Standard Sales', appliesTo: ['All Products'], type: 'Percentage', rate: 5 },
