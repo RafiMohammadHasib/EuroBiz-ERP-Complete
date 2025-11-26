@@ -45,8 +45,9 @@ export default function ProductionPage() {
     const isLoading = poLoading || fgLoading || rmLoading;
 
     const addProductionOrder = async (newOrder: Omit<ProductionOrder, 'id' | 'createdAt'>) => {
+      if (!firestore) return;
       try {
-        await addDoc(productionOrdersCollection.firestore, { ...newOrder, createdAt: serverTimestamp() });
+        await addDoc(collection(firestore, 'productionOrders'), { ...newOrder, createdAt: serverTimestamp() });
         toast({
           title: 'Production Order Created',
           description: `New order for ${newOrder.quantity} units of ${newOrder.productName} has been created.`,
