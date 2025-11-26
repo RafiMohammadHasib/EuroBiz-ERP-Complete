@@ -17,8 +17,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, PieChart, Search } from 'lucide-react';
+import { Bell, PieChart, Search, Circle } from 'lucide-react';
 import Link from 'next/link';
+import { notifications as initialNotifications } from '@/lib/data';
+import type { Notification } from '@/lib/data';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+
 
 interface HeaderProps {
     searchQuery: string;
@@ -27,6 +33,13 @@ interface HeaderProps {
 
 export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   const userAvatar = placeholder.placeholderImages.find(p => p.id === 'user-avatar') as ImagePlaceholder | undefined;
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleMarkAllRead = () => {
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+  };
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
@@ -49,37 +62,45 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button variant="ghost" size="icon" className="rounded-full relative">
             <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+            )}
             <span className="sr-only">Toggle notifications</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[320px]">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-[350px]">
+            <div className="flex items-center justify-between p-2">
+                <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                {unreadCount > 0 && <Badge variant="secondary">{unreadCount} New</Badge>}
+            </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="flex-col items-start gap-1">
-            <p className="font-medium">New invoice #INV-005 created</p>
-            <p className="text-xs text-muted-foreground">
-              A new invoice for Queen Consolidated has been added.
-            </p>
-          </DropdownMenuItem>
-           <DropdownMenuItem className="flex-col items-start gap-1">
-            <p className="font-medium text-destructive">Invoice #INV-004 is overdue</p>
-            <p className="text-xs text-muted-foreground">
-              Invoice for Cyberdyne Systems is past its due date.
-            </p>
-          </DropdownMenuItem>
-           <DropdownMenuItem className="flex-col items-start gap-1">
-            <p className="font-medium">Production order completed</p>
-            <p className="text-xs text-muted-foreground">
-              Order #PROD-001 for Premium Wall Paint is complete.
-            </p>
-          </DropdownMenuItem>
+            <div className="max-h-80 overflow-y-auto">
+            {notifications.map(notification => (
+                 <DropdownMenuItem key={notification.id} className="flex items-start gap-3 p-2 cursor-default" onSelect={(e) => e.preventDefault()}>
+                    {!notification.read && <Circle className="h-2 w-2 mt-1.5 flex-shrink-0 fill-blue-500 text-blue-500" />}
+                    <div className={cn("flex-grow space-y-1", notification.read && "pl-5")}>
+                        <p className={cn("font-medium text-sm", notification.type === 'warning' && 'text-destructive')}>{notification.title}</p>
+                        <p className="text-xs text-muted-foreground">{notification.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(notification.datetime), { addSuffix: true })}</p>
+                    </div>
+                </DropdownMenuItem>
+            ))}
+            </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-center">
-            <Link href="/notifications" className="text-sm text-primary">
-              View all notifications
-            </Link>
+          <DropdownMenuItem className="p-0">
+             <Button
+                variant="link"
+                className="w-full text-sm text-primary"
+                onClick={handleMarkAllRead}
+                disabled={unreadCount === 0}
+              >
+                Mark all as read
+            </Button>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

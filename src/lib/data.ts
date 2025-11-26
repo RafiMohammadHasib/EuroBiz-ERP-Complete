@@ -279,40 +279,71 @@ export const suppliers: Supplier[] = [
 ]
 
 export type Notification = {
+    id: string;
     title: string;
     description: string;
     type: 'info' | 'warning';
+    datetime: string;
+    read: boolean;
 };
+
+// Getting current date and subtracting days to make datetimes dynamic
+const now = new Date();
+const yesterday = new Date(now);
+yesterday.setDate(now.getDate() - 1);
+const twoDaysAgo = new Date(now);
+twoDaysAgo.setDate(now.getDate() - 2);
+const lastWeek = new Date(now);
+lastWeek.setDate(now.getDate() - 7);
+
 
 export const notifications: Notification[] = [
   {
+    id: 'notif-1',
     title: "New invoice #INV-005 created",
     description: "A new invoice for Queen Consolidated has been added.",
     type: "info",
+    datetime: now.toISOString(),
+    read: false,
   },
   {
+    id: 'notif-2',
     title: "Invoice #INV-004 is overdue",
     description: "Invoice for Cyberdyne Systems is past its due date.",
     type: "warning",
+    datetime: yesterday.toISOString(),
+    read: false,
   },
   {
+    id: 'notif-3',
     title: "Production order completed",
     description: "Order #PROD-001 for Premium Wall Paint is complete.",
     type: "info",
+    datetime: twoDaysAgo.toISOString(),
+    read: false,
   },
     {
+    id: 'notif-4',
     title: "Raw material stock low",
     description: "Titanium Dioxide (RM-001) is below the reorder threshold.",
     type: "warning",
+    datetime: twoDaysAgo.toISOString(),
+    read: true,
   },
     {
+    id: 'notif-5',
     title: "New distributor signed",
     description: "Rajshahi Paint Hub has been added to your distributor network.",
     type: "info",
+    datetime: lastWeek.toISOString(),
+    read: true,
   },
     {
+    id: 'notif-6',
     title: "PO-003 has been delivered",
     description: "Purchase order from Advanced Polymers has been marked as completed.",
     type: "info",
+    datetime: lastWeek.toISOString(),
+    read: true,
   },
 ];
