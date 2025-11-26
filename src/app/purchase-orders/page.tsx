@@ -121,7 +121,7 @@ export default function PurchaseOrdersPage() {
 
             toast({
                 title: "Purchase Order Received",
-                description: `Order ${orderId} marked as received. Stock has been updated.`
+                description: `Order ${orderId} marked as received. Stock quantity and value have been updated.`
             });
         } catch(error) {
             console.error("Error receiving PO: ", error);
