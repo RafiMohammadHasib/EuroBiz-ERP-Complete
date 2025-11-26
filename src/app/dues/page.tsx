@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { invoices as initialInvoices, purchaseOrders as initialPurchaseOrders } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -24,47 +23,75 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { DollarSign, Landmark } from 'lucide-react';
 import { useSettings } from '@/context/settings-context';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import type { Invoice, PurchaseOrder } from '@/lib/data';
 
 export default function DuesPage() {
-  const [invoices, setInvoices] = useState(initialInvoices);
-  const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    const handleDataUpdate = (event: Event) => {
-        const customEvent = event as CustomEvent;
-        if (customEvent.detail.localInvoices) {
-            setInvoices(customEvent.detail.localInvoices);
-        }
-    };
+  // Firestore collections
+  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
+  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
 
-    window.addEventListener('data-updated', handleDataUpdate);
+  // Data hooks
+  const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
+  const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
 
-    return () => {
-        window.removeEventListener('data-updated', handleDataUpdate);
-    };
-  }, []);
-
-  const outstandingInvoices = invoices.filter((i) => i.status !== 'Paid' && i.amount > 0);
+  const outstandingInvoices = invoices?.filter((i) => i.status !== 'Paid' && i.amount > 0) || [];
   const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.amount, 0);
 
-  const pendingPurchaseOrders = purchaseOrders.filter((po) => po.status === 'Pending');
-  const totalPurchaseDue = pendingPurchaseOrders.reduce((acc, po) => acc + po.amount, 0);
+  const pendingPurchaseOrders = purchaseOrders?.filter((po) => po.status === 'Pending' || po.status === 'Received') || [];
+  const totalPurchaseDue = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
 
-  const handleRecordPayment = (invoiceId: string) => {
-    toast({
-        title: 'Payment Recorded (Simulated)',
-        description: `A payment for Invoice ${invoiceId} has been recorded.`,
-      });
+  const handleRecordPayment = async (invoiceId: string) => {
+    if (!firestore) return;
+    try {
+        const invoiceRef = doc(firestore, 'invoices', invoiceId);
+        await updateDoc(invoiceRef, { status: 'Paid' });
+        toast({
+            title: 'Payment Recorded',
+            description: `Invoice ${invoiceId} has been marked as Paid.`,
+        });
+    } catch (error) {
+        console.error("Error recording payment:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not record the payment.',
+        });
+    }
   }
 
-  const handleMakePayment = (poId: string) => {
-    toast({
-        title: 'Payment Made (Simulated)',
-        description: `A payment for Purchase Order ${poId} has been made.`,
-      });
+  const handleMakePayment = async (poId: string) => {
+    if (!firestore) return;
+    const poToUpdate = purchaseOrders?.find(po => po.id === poId);
+    if (!poToUpdate) return;
+
+    try {
+        const poRef = doc(firestore, 'purchaseOrders', poId);
+        await updateDoc(poRef, { 
+            status: 'Completed',
+            paidAmount: poToUpdate.amount,
+            dueAmount: 0
+        });
+        toast({
+            title: 'Payment Made',
+            description: `Payment for Purchase Order ${poId} has been made.`,
+        });
+    } catch (error) {
+        console.error("Error making payment:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not make the payment.',
+        });
+    }
   }
+  
+  const isLoading = invoicesLoading || poLoading;
 
   return (
     <div className="space-y-6">
@@ -100,7 +127,7 @@ export default function DuesPage() {
             <CardHeader>
                 <CardTitle>Sales Dues</CardTitle>
                 <CardDescription>
-                Monitor and manage all outstanding payments from customers. This will update if a sales return is processed.
+                Monitor and manage all outstanding payments from customers.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -115,7 +142,13 @@ export default function DuesPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {outstandingInvoices.length > 0 ? (
+                    {isLoading ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                Loading...
+                            </TableCell>
+                        </TableRow>
+                    ) : outstandingInvoices.length > 0 ? (
                     outstandingInvoices.map((invoice) => (
                         <TableRow key={invoice.id}>
                         <TableCell className="font-medium">{invoice.customer}</TableCell>
@@ -130,7 +163,7 @@ export default function DuesPage() {
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                            {invoice.amount.toLocaleString('en-US')}
+                            {invoice.amount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-center">
                             <Button size="sm" onClick={() => handleRecordPayment(invoice.id)}>Record Payment</Button>
@@ -169,16 +202,22 @@ export default function DuesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {pendingPurchaseOrders.length > 0 ? (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : pendingPurchaseOrders.length > 0 ? (
                         pendingPurchaseOrders.map((po) => (
                             <TableRow key={po.id}>
                             <TableCell className="font-medium">{po.supplier}</TableCell>
                             <TableCell>{po.id}</TableCell>
                             <TableCell>
-                                <Badge variant="outline">{po.status}</Badge>
+                                <Badge variant={po.status === 'Pending' ? 'outline' : 'default'}>{po.status}</Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                {po.amount.toLocaleString('en-US')}
+                                {po.dueAmount.toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
                                 <Button size="sm" onClick={() => handleMakePayment(po.id)}>Make Payment</Button>
@@ -187,7 +226,7 @@ export default function DuesPage() {
                         ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">
+                                <TableCell colSpan={5} className="h-24 text-center">
                                     No outstanding purchase dues.
                                 </TableCell>
                             </TableRow>
