@@ -145,7 +145,7 @@ export default function FinishedGoodsPage() {
                   </TableRow>
               ) : (
                 safeFinishedGoods.map((item) => (
-                   <Collapsible key={item.id} asChild>
+                  <Collapsible asChild key={item.id}>
                     <>
                       <TableRow>
                         <TableCell>
