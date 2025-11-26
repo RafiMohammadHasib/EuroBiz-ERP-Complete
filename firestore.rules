@@ -177,7 +177,8 @@ service cloud.firestore {
     }
 
     match /finishedGoods/{goodId} {
-      allow read, write: if isSignedIn();
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
     
     match /productionOrders/{productionOrderId} {
@@ -191,7 +192,7 @@ service cloud.firestore {
 
     match /notifications/{notificationId} {
       allow get, list, update: if isSignedIn();
-      allow create, delete: if isAdmin();
+      allow create, delete: if false;
     }
 
 
