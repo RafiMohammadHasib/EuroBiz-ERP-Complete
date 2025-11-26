@@ -95,7 +95,7 @@ export const navGroups: NavGroup[] = [
 
 const bottomNavItems: NavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "#", label: "Support", icon: LifeBuoy },
+  { href: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 interface SidebarNavProps {
@@ -210,5 +210,3 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
     </>
   );
 }
-
-    
