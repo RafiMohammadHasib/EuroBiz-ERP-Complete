@@ -80,6 +80,11 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
     return { subTotal, totalDiscount, grandTotal };
   }, [items, customerName, distributors, products, commissionRules]);
 
+  const dueAmount = useMemo(() => {
+    const numericPaidAmount = parseFloat(paidAmount) || 0;
+    return grandTotal - numericPaidAmount;
+  }, [grandTotal, paidAmount]);
+
 
   const handleSubmit = () => {
     if (!customerName || items.length === 0 || items.some(i => !i.description || i.quantity <= 0 || i.unitPrice <= 0)) {
@@ -136,31 +141,6 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
                     </SelectContent>
                 </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                 <div className="grid gap-2">
-                    <Label htmlFor="paidAmount">Amount Paid</Label>
-                    <Input
-                        id="paidAmount"
-                        type="number"
-                        value={paidAmount}
-                        onChange={(e) => setPaidAmount(e.target.value)}
-                        placeholder="0.00"
-                    />
-                </div>
-                 <div className="grid gap-2">
-                    <Label htmlFor="paymentType">Payment Type</Label>
-                    <Select value={paymentType} onValueChange={(value) => setPaymentType(value as any)}>
-                        <SelectTrigger id="paymentType">
-                            <SelectValue placeholder="Select Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Cash">Cash</SelectItem>
-                            <SelectItem value="Card">Card</SelectItem>
-                            <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
         </div>
 
         <div className="space-y-4">
@@ -190,7 +170,7 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
                     <span className="font-medium">{currencySymbol}{subTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between text-destructive">
-                    <span className="text-muted-foreground">Discount</span>
+                    <span className="text-muted-foreground">Commission</span>
                     <span className="font-medium">-{currencySymbol}{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between">
@@ -201,6 +181,36 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
                 <div className="flex justify-between">
                     <span className="font-bold text-lg">Total</span>
                     <span className="font-bold text-lg">{currencySymbol}{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="grid grid-cols-2 gap-4 pt-4">
+                     <div className="grid gap-2">
+                        <Label htmlFor="paidAmount">Amount Paid</Label>
+                        <Input
+                            id="paidAmount"
+                            type="number"
+                            value={paidAmount}
+                            onChange={(e) => setPaidAmount(e.target.value)}
+                            placeholder="0.00"
+                        />
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="paymentType">Payment Type</Label>
+                        <Select value={paymentType} onValueChange={(value) => setPaymentType(value as any)}>
+                            <SelectTrigger id="paymentType">
+                                <SelectValue placeholder="Select Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                                <SelectItem value="Card">Card</SelectItem>
+                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                 <Separator />
+                 <div className="flex justify-between font-bold text-lg text-destructive">
+                    <span>Due Amount</span>
+                    <span>{currencySymbol}{dueAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
             </div>
         </div>
