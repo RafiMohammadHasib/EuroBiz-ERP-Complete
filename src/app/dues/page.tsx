@@ -26,11 +26,14 @@ import { useSettings } from '@/context/settings-context';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import type { Invoice, PurchaseOrder } from '@/lib/data';
+import { MakePaymentDialog } from '@/components/dues/make-payment-dialog';
 
 export default function DuesPage() {
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
   const firestore = useFirestore();
+
+  const [paymentPo, setPaymentPo] = useState<PurchaseOrder | null>(null);
 
   // Firestore collections
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
@@ -65,22 +68,27 @@ export default function DuesPage() {
     }
   }
 
-  const handleMakePayment = async (poId: string) => {
+  const handleMakePayment = async (poId: string, paymentAmount: number) => {
     if (!firestore) return;
     const poToUpdate = purchaseOrders?.find(po => po.id === poId);
     if (!poToUpdate) return;
 
+    const newPaidAmount = poToUpdate.paidAmount + paymentAmount;
+    const newDueAmount = poToUpdate.amount - newPaidAmount;
+    const newStatus = newDueAmount <= 0 ? 'Completed' : 'Received';
+
     try {
         const poRef = doc(firestore, 'purchaseOrders', poId);
         await updateDoc(poRef, { 
-            status: 'Completed',
-            paidAmount: poToUpdate.amount,
-            dueAmount: 0
+            status: newStatus,
+            paidAmount: newPaidAmount,
+            dueAmount: newDueAmount < 0 ? 0 : newDueAmount,
         });
         toast({
             title: 'Payment Made',
-            description: `Payment for Purchase Order ${poId} has been made.`,
+            description: `${currencySymbol}${paymentAmount.toLocaleString()} paid for PO ${poId}. Remaining due: ${currencySymbol}${newDueAmount.toLocaleString()}`,
         });
+        setPaymentPo(null); // Close dialog on success
     } catch (error) {
         console.error("Error making payment:", error);
         toast({
@@ -94,6 +102,7 @@ export default function DuesPage() {
   const isLoading = invoicesLoading || poLoading;
 
   return (
+    <>
     <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -220,7 +229,7 @@ export default function DuesPage() {
                                 {po.dueAmount.toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
-                                <Button size="sm" onClick={() => handleMakePayment(po.id)}>Make Payment</Button>
+                                <Button size="sm" onClick={() => setPaymentPo(po)}>Make Payment</Button>
                             </TableCell>
                             </TableRow>
                         ))
@@ -238,5 +247,14 @@ export default function DuesPage() {
         </TabsContent>
         </Tabs>
     </div>
+    {paymentPo && (
+      <MakePaymentDialog 
+        isOpen={!!paymentPo}
+        onOpenChange={(isOpen) => !isOpen && setPaymentPo(null)}
+        purchaseOrder={paymentPo}
+        onConfirmPayment={handleMakePayment}
+      />
+    )}
+    </>
   );
 }
