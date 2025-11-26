@@ -199,7 +199,7 @@ service cloud.firestore {
     }
 
     match /salary_payments/{paymentId} {
-        allow read, write: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // ---------------------------
@@ -325,5 +325,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
