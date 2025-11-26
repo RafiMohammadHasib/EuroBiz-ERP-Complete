@@ -190,8 +190,8 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-        allow read, update: if isSignedIn();
-        allow create, delete: if isAdmin();
+      allow get, list, update: if isSignedIn();
+      allow create, delete: if isAdmin();
     }
 
 
@@ -318,9 +318,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
-
-    
-
-    
