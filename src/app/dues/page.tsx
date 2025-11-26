@@ -46,7 +46,7 @@ export default function DuesPage() {
   const outstandingInvoices = invoices?.filter((i) => i.status !== 'Paid' && i.amount > 0) || [];
   const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.amount, 0);
 
-  const pendingPurchaseOrders = purchaseOrders?.filter((po) => po.status === 'Pending' || po.status === 'Received') || [];
+  const pendingPurchaseOrders = purchaseOrders?.filter((po) => po.paymentStatus !== 'Paid') || [];
   const totalPurchaseDue = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
 
   const handleRecordPayment = async (invoiceId: string) => {
@@ -75,18 +75,22 @@ export default function DuesPage() {
 
     const newPaidAmount = poToUpdate.paidAmount + paymentAmount;
     const newDueAmount = poToUpdate.amount - newPaidAmount;
-    const newStatus = newDueAmount <= 0 ? 'Completed' : 'Received';
+    
+    let newPaymentStatus: PurchaseOrder['paymentStatus'] = 'Partially Paid';
+    if (newDueAmount <= 0) {
+      newPaymentStatus = 'Paid';
+    }
 
     try {
         const poRef = doc(firestore, 'purchaseOrders', poId);
         await updateDoc(poRef, { 
-            status: newStatus,
+            paymentStatus: newPaymentStatus,
             paidAmount: newPaidAmount,
             dueAmount: newDueAmount < 0 ? 0 : newDueAmount,
         });
         toast({
             title: 'Payment Made',
-            description: `${currencySymbol}${paymentAmount.toLocaleString()} paid for PO ${poId}. Remaining due: ${currencySymbol}${newDueAmount.toLocaleString()}`,
+            description: `${currencySymbol}${paymentAmount.toLocaleString()} paid for PO ${poId}.`,
         });
         setPaymentPo(null); // Close dialog on success
     } catch (error) {
@@ -205,7 +209,7 @@ export default function DuesPage() {
                         <TableRow>
                         <TableHead>Supplier</TableHead>
                         <TableHead>PO ID</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Payment Status</TableHead>
                         <TableHead className="text-right">Amount Due ({currencySymbol})</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
@@ -223,7 +227,7 @@ export default function DuesPage() {
                             <TableCell className="font-medium">{po.supplier}</TableCell>
                             <TableCell>{po.id}</TableCell>
                             <TableCell>
-                                <Badge variant={po.status === 'Pending' ? 'outline' : 'default'}>{po.status}</Badge>
+                                <Badge variant={po.paymentStatus === 'Partially Paid' ? 'default' : 'outline'}>{po.paymentStatus}</Badge>
                             </TableCell>
                             <TableCell className="text-right">
                                 {po.dueAmount.toLocaleString()}

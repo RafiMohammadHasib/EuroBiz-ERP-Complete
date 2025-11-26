@@ -32,7 +32,8 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
   const [supplier, setSupplier] = useState('');
-  const [status, setStatus] = useState<PurchaseOrder['status']>('Pending');
+  const [deliveryStatus, setDeliveryStatus] = useState<PurchaseOrder['deliveryStatus']>('Pending');
+  const [paymentStatus, setPaymentStatus] = useState<PurchaseOrder['paymentStatus']>('Unpaid');
   const [items, setItems] = useState<Omit<PurchaseOrderItem, 'id'>[]>([]);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
@@ -70,7 +71,8 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
 
   const resetForm = () => {
     setSupplier('');
-    setStatus('Pending');
+    setDeliveryStatus('Pending');
+    setPaymentStatus('Unpaid');
     setItems([]);
     setDiscount(0);
     setTax(0);
@@ -95,7 +97,8 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
     onCreate({
       supplier,
       amount: grandTotal,
-      status,
+      deliveryStatus,
+      paymentStatus,
       date: new Date().toISOString().split('T')[0],
       items: newOrderItems,
       discount,
@@ -138,15 +141,15 @@ export function CreatePurchaseOrderDialog({ isOpen, onOpenChange, onCreate, supp
                 </Select>
             </div>
              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as PurchaseOrder['status'])}>
-                    <SelectTrigger id="status">
+                <Label htmlFor="deliveryStatus">Delivery Status</Label>
+                <Select value={deliveryStatus} onValueChange={(value) => setDeliveryStatus(value as PurchaseOrder['deliveryStatus'])}>
+                    <SelectTrigger id="deliveryStatus">
                         <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Shipped">Shipped</SelectItem>
                         <SelectItem value="Received">Received</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
                         <SelectItem value="Cancelled">Cancelled</SelectItem>
                     </SelectContent>
                 </Select>

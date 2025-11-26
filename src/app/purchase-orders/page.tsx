@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Package, ShoppingCart, List, CheckCircle } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Package, ShoppingCart, List, CheckCircle, Truck, CreditCard } from "lucide-react"
 import { type PurchaseOrder, type Supplier, type RawMaterial } from "@/lib/data"
 import {
   DropdownMenu,
@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreatePurchaseOrderDialog } from "@/components/purchase-orders/create-purchase-order-dialog";
@@ -35,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { useSettings } from "@/context/settings-context";
+import { MakePaymentDialog } from "@/components/dues/make-payment-dialog";
 
 
 export default function PurchaseOrdersPage() {
@@ -51,15 +53,16 @@ export default function PurchaseOrdersPage() {
   const { data: rawMaterials, isLoading: materialsLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
 
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const [paymentPo, setPaymentPo] = useState<PurchaseOrder | null>(null);
 
   const safePOs = purchaseOrders || [];
   const safeSuppliers = suppliers || [];
   const safeRawMaterials = rawMaterials || [];
 
   const totalPOValue = safePOs.reduce((sum, order) => sum + order.amount, 0);
-  const pendingPOValue = safePOs.filter(o => o.status === 'Pending').reduce((sum, order) => sum + order.amount, 0);
+  const pendingShipment = safePOs.filter(o => o.deliveryStatus === 'Pending').length;
   const totalOrders = safePOs.length;
-  const completedOrders = safePOs.filter(o => o.status === 'Completed').length;
+  const totalPaid = safePOs.reduce((sum, order) => sum + order.paidAmount, 0);
 
   const addPurchaseOrder = async (newOrder: Omit<PurchaseOrder, 'id'>) => {
     try {
@@ -84,12 +87,9 @@ export default function PurchaseOrdersPage() {
     if (orderToUpdate) {
         try {
             const batch = writeBatch(firestore);
-
-            // 1. Update PO status to 'Received'
             const poRef = doc(firestore, 'purchaseOrders', orderId);
-            batch.update(poRef, { status: 'Received' });
+            batch.update(poRef, { deliveryStatus: 'Received' });
 
-            // 2. Update raw material stock and unit cost
             orderToUpdate.items.forEach(item => {
                 const material = safeRawMaterials.find(rm => rm.id === item.rawMaterialId);
                 if (material) {
@@ -99,7 +99,6 @@ export default function PurchaseOrdersPage() {
                     const newItemsValue = item.quantity * item.unitCost;
                     const newTotalQuantity = material.quantity + item.quantity;
                     
-                    // Calculate weighted-average cost. Avoid division by zero.
                     const newUnitCost = newTotalQuantity > 0
                         ? (oldTotalValue + newItemsValue) / newTotalQuantity
                         : item.unitCost;
@@ -128,6 +127,60 @@ export default function PurchaseOrdersPage() {
     }
   }
 
+  const handleMakePayment = async (poId: string, paymentAmount: number) => {
+    if (!firestore) return;
+    const poToUpdate = purchaseOrders?.find(po => po.id === poId);
+    if (!poToUpdate) return;
+
+    const newPaidAmount = poToUpdate.paidAmount + paymentAmount;
+    const newDueAmount = poToUpdate.amount - newPaidAmount;
+    
+    let newPaymentStatus: PurchaseOrder['paymentStatus'] = 'Partially Paid';
+    if (newDueAmount <= 0) {
+      newPaymentStatus = 'Paid';
+    }
+
+    try {
+        const poRef = doc(firestore, 'purchaseOrders', poId);
+        await updateDoc(poRef, { 
+            paymentStatus: newPaymentStatus,
+            paidAmount: newPaidAmount,
+            dueAmount: newDueAmount < 0 ? 0 : newDueAmount,
+        });
+        toast({
+            title: 'Payment Made',
+            description: `${currencySymbol}${paymentAmount.toLocaleString()} paid for PO ${poId}.`,
+        });
+        setPaymentPo(null); // Close dialog on success
+    } catch (error) {
+        console.error("Error making payment:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not make the payment.',
+        });
+    }
+  }
+  
+  const getPaymentStatusVariant = (status: PurchaseOrder['paymentStatus']) => {
+    switch (status) {
+        case 'Paid': return 'secondary';
+        case 'Partially Paid': return 'default';
+        case 'Unpaid': return 'outline';
+        default: return 'outline';
+    }
+  }
+
+  const getDeliveryStatusVariant = (status: PurchaseOrder['deliveryStatus']) => {
+    switch (status) {
+        case 'Received': return 'secondary';
+        case 'Shipped': return 'default';
+        case 'Pending': return 'outline';
+        case 'Cancelled': return 'destructive'
+        default: return 'outline';
+    }
+  }
+
   const renderPurchaseOrderTable = (orders: PurchaseOrder[]) => (
     <Card>
       <CardHeader>
@@ -142,8 +195,8 @@ export default function PurchaseOrdersPage() {
             <TableRow>
               <TableHead>Order ID</TableHead>
               <TableHead>Supplier</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Payment Status</TableHead>
+              <TableHead>Delivery Status</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -161,11 +214,15 @@ export default function PurchaseOrdersPage() {
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>{order.supplier}</TableCell>
                     <TableCell>
-                    <Badge variant={order.status === 'Completed' ? 'secondary' : order.status === 'Pending' ? 'outline' : 'default'}>
-                        {order.status}
-                    </Badge>
+                      <Badge variant={getPaymentStatusVariant(order.paymentStatus)}>
+                        {order.paymentStatus}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={getDeliveryStatusVariant(order.deliveryStatus)}>
+                        {order.deliveryStatus}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">{currencySymbol}{order.amount.toLocaleString()}</TableCell>
                     <TableCell>
                     <DropdownMenu>
@@ -176,14 +233,19 @@ export default function PurchaseOrdersPage() {
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/purchase-orders/${order.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        {order.status === 'Pending' && (
-                            <DropdownMenuItem onClick={() => handleMarkAsReceived(order.id)}>Mark as Received</DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem>Cancel</DropdownMenuItem>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/purchase-orders/${order.id}`}>View Details</Link>
+                          </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setPaymentPo(order)} disabled={order.paymentStatus === 'Paid'}>
+                            Make Payment
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleMarkAsReceived(order.id)} disabled={order.deliveryStatus === 'Received' || order.deliveryStatus === 'Cancelled'}>
+                            Mark as Received
+                          </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">Cancel Order</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     </TableCell>
@@ -212,32 +274,32 @@ export default function PurchaseOrdersPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending PO Value</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currencySymbol}{pendingPOValue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">For all pending orders</p>
+            <div className="text-2xl font-bold">{currencySymbol}{totalPaid.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Across all purchase orders</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Shipments</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingShipment}</div>
+            <p className="text-xs text-muted-foreground">Orders awaiting delivery</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <List className="h-4 w-4 text-muted-foreground" />
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="text-xs text-muted-foreground">Across all statuses</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedOrders}</div>
-            <p className="text-xs text-muted-foreground">Successfully fulfilled POs</p>
           </CardContent>
         </Card>
       </div>
@@ -247,7 +309,7 @@ export default function PurchaseOrdersPage() {
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="received">Received</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="paid">Paid</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
             <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
@@ -262,13 +324,13 @@ export default function PurchaseOrdersPage() {
           {renderPurchaseOrderTable(safePOs)}
         </TabsContent>
         <TabsContent value="pending" className="mt-4">
-          {renderPurchaseOrderTable(safePOs.filter(o => o.status === 'Pending'))}
+          {renderPurchaseOrderTable(safePOs.filter(o => o.deliveryStatus === 'Pending'))}
         </TabsContent>
         <TabsContent value="received" className="mt-4">
-          {renderPurchaseOrderTable(safePOs.filter(o => o.status === 'Received'))}
+          {renderPurchaseOrderTable(safePOs.filter(o => o.deliveryStatus === 'Received'))}
         </TabsContent>
-        <TabsContent value="completed" className="mt-4">
-          {renderPurchaseOrderTable(safePOs.filter(o => o.status === 'Completed'))}
+        <TabsContent value="paid" className="mt-4">
+          {renderPurchaseOrderTable(safePOs.filter(o => o.paymentStatus === 'Paid'))}
         </TabsContent>
       </Tabs>
     </div>
@@ -279,6 +341,14 @@ export default function PurchaseOrdersPage() {
         suppliers={safeSuppliers}
         rawMaterials={safeRawMaterials}
     />
+    {paymentPo && (
+      <MakePaymentDialog 
+        isOpen={!!paymentPo}
+        onOpenChange={(isOpen) => !isOpen && setPaymentPo(null)}
+        purchaseOrder={paymentPo}
+        onConfirmPayment={handleMakePayment}
+      />
+    )}
     </>
   );
 }

@@ -38,12 +38,33 @@ export default function PurchaseOrderPage({ params }: { params: { id: string } }
     window.print();
   };
 
+  const getPaymentStatusVariant = (status?: PurchaseOrder['paymentStatus']) => {
+    if (!status) return 'outline';
+    switch (status) {
+        case 'Paid': return 'secondary';
+        case 'Partially Paid': return 'default';
+        case 'Unpaid': return 'outline';
+        default: return 'outline';
+    }
+  }
+
+  const getDeliveryStatusVariant = (status?: PurchaseOrder['deliveryStatus']) => {
+    if (!status) return 'outline';
+    switch (status) {
+        case 'Received': return 'secondary';
+        case 'Shipped': return 'default';
+        case 'Pending': return 'outline';
+        case 'Cancelled': return 'destructive'
+        default: return 'outline';
+    }
+  }
+
   if (isLoading) {
-      return (
-          <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-      )
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
   }
   
   if (!po) {
@@ -77,12 +98,20 @@ export default function PurchaseOrderPage({ params }: { params: { id: string } }
                 <div className="text-right">
                     <h3 className="text-3xl font-bold tracking-tight">PURCHASE ORDER</h3>
                     <p className="text-muted-foreground text-sm mt-1">{po.id}</p>
-                    <Badge 
-                        variant={po.status === 'Completed' ? 'secondary' : po.status === 'Pending' ? 'outline' : 'default'}
-                        className="mt-4 text-lg"
-                    >
-                        {po.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-2 mt-4">
+                      <Badge 
+                          variant={getPaymentStatusVariant(po.paymentStatus)}
+                          className="text-md"
+                      >
+                          {po.paymentStatus}
+                      </Badge>
+                      <Badge 
+                          variant={getDeliveryStatusVariant(po.deliveryStatus)}
+                          className="text-md"
+                      >
+                          {po.deliveryStatus}
+                      </Badge>
+                    </div>
                 </div>
             </div>
         </CardHeader>
