@@ -120,7 +120,7 @@ export default function FinishedGoodsPage() {
                 safeFinishedGoods.map((item) => (
                   <Collapsible key={item.id} asChild>
                     <React.Fragment>
-                      <TableRow className="cursor-pointer">
+                      <TableRow>
                         <TableCell>
                           <CollapsibleTrigger asChild>
                             <Button variant="ghost" size="sm" className="w-9 p-0 data-[state=open]:-rotate-180">
