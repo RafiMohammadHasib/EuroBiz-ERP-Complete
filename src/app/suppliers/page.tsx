@@ -16,8 +16,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { CreateSupplierDialog } from "@/components/suppliers/create-supplier-dialog";
+import { EditSupplierDialog } from "@/components/suppliers/edit-supplier-dialog";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -34,6 +35,7 @@ export default function SuppliersPage() {
 
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
     const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+    const [supplierToEdit, setSupplierToEdit] = useState<Supplier | null>(null);
     const { toast } = useToast();
 
     const supplierData = useMemo(() => {
@@ -71,6 +73,29 @@ export default function SuppliersPage() {
             });
         }
     }
+
+    const handleUpdateSupplier = async (updatedSupplier: Supplier) => {
+        if (!updatedSupplier) return;
+        try {
+            const supplierRef = doc(firestore, 'suppliers', updatedSupplier.id);
+            await updateDoc(supplierRef, {
+                name: updatedSupplier.name,
+                category: updatedSupplier.category,
+                status: updatedSupplier.status,
+            });
+            toast({
+                title: 'Supplier Updated',
+                description: `Supplier "${updatedSupplier.name}" has been updated.`,
+            });
+        } catch (error) {
+            console.error("Error updating supplier:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not update the supplier.',
+            });
+        }
+    };
 
     const handleDeleteSupplier = async () => {
         if (!supplierToDelete) return;
@@ -192,7 +217,7 @@ export default function SuppliersPage() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem disabled>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setSupplierToEdit(supplier)}>Edit</DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="text-destructive"
                                             onClick={() => setSupplierToDelete(supplier)}
@@ -215,6 +240,14 @@ export default function SuppliersPage() {
         onOpenChange={setCreateDialogOpen}
         onCreate={addSupplier}
     />
+    {supplierToEdit && (
+        <EditSupplierDialog
+            isOpen={!!supplierToEdit}
+            onOpenChange={(open) => !open && setSupplierToEdit(null)}
+            supplier={supplierToEdit}
+            onUpdate={handleUpdateSupplier}
+        />
+    )}
      <AlertDialog open={!!supplierToDelete} onOpenChange={(open) => !open && setSupplierToDelete(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
