@@ -38,6 +38,7 @@ import {
   ChevronDown,
   Percent,
   Bell,
+  LifeBuoy,
 } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -97,6 +98,7 @@ export const navGroups: NavGroup[] = [
 
 const bottomNavItems: NavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "#", label: "Support", icon: LifeBuoy },
 ];
 
 interface SidebarNavProps {
@@ -162,7 +164,7 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
         <div className="flex flex-col gap-2">
         {groupsToRender.map((group) => (
             <SidebarGroup key={group.label} className="pt-0">
-                <SidebarGroupLabel className="h-7 group-data-[collapsible=icon]:-mt-6">{group.label}</SidebarGroupLabel>
+                <SidebarGroupLabel className="h-7 group-data-[collapsible=icon]:-mt-6 group-data-[collapsible=icon]:hidden">{group.label}</SidebarGroupLabel>
                 <SidebarMenu>
                     {group.items.map((item) => (
                          <SidebarMenuItem key={item.href}>
