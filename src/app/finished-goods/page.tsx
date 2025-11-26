@@ -119,7 +119,7 @@ export default function FinishedGoodsPage() {
               ) : (
                 safeFinishedGoods.map((item) => (
                   <Collapsible key={item.id} asChild>
-                    <>
+                    <React.Fragment>
                       <TableRow className="cursor-pointer">
                         <TableCell>
                           <CollapsibleTrigger asChild>
@@ -174,7 +174,7 @@ export default function FinishedGoodsPage() {
                           </td>
                         </tr>
                       </CollapsibleContent>
-                    </>
+                    </React.Fragment>
                   </Collapsible>
                 ))
               )}
