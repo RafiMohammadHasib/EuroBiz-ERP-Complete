@@ -30,7 +30,6 @@ type BusinessSettings = {
     logoUrl: string;
     language: string;
     currency: 'BDT' | 'USD';
-    vatTax: number;
 };
 
 export default function SettingsPage() {
@@ -66,7 +65,6 @@ export default function SettingsPage() {
       logoUrl: initialCompanyDetails.logoUrl,
       language: 'English', 
       currency: 'BDT', 
-      vatTax: 0,
   });
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -154,8 +152,7 @@ export default function SettingsPage() {
 
     const handleBusinessDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
-        const isNumeric = id === 'vatTax';
-        setBusinessSettings(prev => ({ ...prev, [id]: isNumeric ? Number(value) : value }));
+        setBusinessSettings(prev => ({ ...prev, [id]: value }));
     }
 
     const handleSettingsSelectChange = (field: keyof BusinessSettings, value: string) => {
@@ -272,7 +269,7 @@ export default function SettingsPage() {
                     <CardDescription>Manage system-wide preferences like localization and taxes.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                   <div className="grid md:grid-cols-3 gap-4">
+                   <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="language">Language</Label>
                             <Select value={businessSettings.language} onValueChange={(value) => handleSettingsSelectChange('language', value)}>
@@ -296,10 +293,6 @@ export default function SettingsPage() {
                                     <SelectItem value="USD">USD ($)</SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="vatTax">VAT / Tax (%)</Label>
-                            <Input id="vatTax" type="number" value={businessSettings.vatTax} onChange={handleBusinessDetailsChange} />
                         </div>
                     </div>
                 </CardContent>
