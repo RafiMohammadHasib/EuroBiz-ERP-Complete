@@ -81,7 +81,6 @@ export const navGroups: NavGroup[] = [
         items: [
             { href: "/dues", label: "Outstanding Dues", icon: Landmark },
             { href: "/commissions", label: "Commissions", icon: Percent },
-            { href: "/salaries", label: "Salaries", icon: UsersIcon },
         ]
     },
     {

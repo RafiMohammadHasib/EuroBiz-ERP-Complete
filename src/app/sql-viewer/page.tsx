@@ -14,7 +14,6 @@ import {
   salesData,
   commissions,
   purchaseOrders,
-  salaries,
   salesReturns,
   rawMaterials,
   finishedGoods,
@@ -151,7 +150,6 @@ export default function SqlExporterPage() {
       ]),
       generateSqlForTable('commissions', commissions),
       generateSqlForTable('sales_data', salesData),
-      generateSqlForTable('salaries', salaries),
       generateSqlForTable('sales_returns', salesReturns, [
           { column: 'invoiceId', referencesTable: 'invoices', referencesColumn: 'id' }
       ]),

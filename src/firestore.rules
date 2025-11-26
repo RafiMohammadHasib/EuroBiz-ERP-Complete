@@ -194,15 +194,6 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    match /employees/{employeeId} {
-      allow read, write: if isAdmin();
-    }
-    
-    match /salary_payments/{paymentId} {
-      allow read, write: if isAdmin();
-    }
-
-
     // ---------------------------
     // --- User Profiles ---
     // ---------------------------
@@ -326,3 +317,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

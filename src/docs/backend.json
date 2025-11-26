@@ -1,0 +1,592 @@
+
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "Price of the product per unit."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "unitPrice"
+      ]
+    },
+    "DistributionChannel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DistributionChannel",
+      "type": "object",
+      "description": "Represents a distribution channel through which products are sold.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the distribution channel."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the distribution channel."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the distribution channel."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "SalesCommission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalesCommission",
+      "type": "object",
+      "description": "Represents a sales commission earned by a salesperson.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sales commission."
+        },
+        "salespersonId": {
+          "type": "string",
+          "description": "Reference to Salesperson. (Relationship: Salesperson 1:N SalesCommission)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N SalesCommission)"
+        },
+        "distributionChannelId": {
+          "type": "string",
+          "description": "Reference to DistributionChannel. (Relationship: DistributionChannel 1:N SalesCommission)"
+        },
+        "commissionRate": {
+          "type": "number",
+          "description": "The commission rate applied to the sale."
+        },
+        "saleDate": {
+          "type": "string",
+          "description": "The date of the sale.",
+          "format": "date-time"
+        },
+        "saleAmount": {
+          "type": "number",
+          "description": "The total amount of the sale."
+        },
+        "discountAmount": {
+          "type": "number",
+          "description": "The calculated discount amount for the sale item."
+        },
+        "netSaleAmount": {
+          "type": "number",
+          "description": "The sale amount after discount."
+        },
+        "commissionAmount": {
+          "type": "number",
+          "description": "The calculated commission amount for the sale."
+        },
+        "invoiceId": {
+          "type": "string",
+          "description": "Reference to the associated SalesInvoice."
+        },
+        "ruleId": {
+            "type": "string",
+            "description": "The ID of the commission rule that was applied."
+        },
+        "ruleName": {
+            "type": "string",
+            "description": "The name of the commission rule that was applied."
+        },
+        "commissionType": {
+            "type": "string",
+            "enum": ["Percentage", "Fixed"],
+            "description": "The type of commission rule applied."
+        }
+      },
+      "required": [
+        "id",
+        "salespersonId",
+        "productId",
+        "distributionChannelId",
+        "commissionRate",
+        "saleDate",
+        "saleAmount",
+        "discountAmount",
+        "netSaleAmount",
+        "commissionAmount",
+        "invoiceId",
+        "ruleId",
+        "ruleName",
+        "commissionType"
+      ]
+    },
+    "SalesInvoice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalesInvoice",
+      "type": "object",
+      "description": "Represents a sales invoice.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sales invoice."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N SalesInvoice)"
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "description": "Invoice number."
+        },
+        "invoiceDate": {
+          "type": "string",
+          "description": "Date the invoice was issued.",
+          "format": "date-time"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Date the invoice is due.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount of the invoice."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the invoice (e.g., paid, unpaid, overdue)."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "invoiceNumber",
+        "invoiceDate",
+        "dueDate",
+        "totalAmount",
+        "status"
+      ]
+    },
+    "SalesReturn": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalesReturn",
+      "type": "object",
+      "description": "Represents a sales return.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sales return."
+        },
+        "invoiceId": {
+          "type": "string",
+          "description": "Reference to SalesInvoice. (Relationship: SalesInvoice 1:N SalesReturn)"
+        },
+        "returnDate": {
+          "type": "string",
+          "description": "Date the return was processed.",
+          "format": "date-time"
+        },
+        "returnAmount": {
+          "type": "number",
+          "description": "Amount returned to the customer."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for the return."
+        }
+      },
+      "required": [
+        "id",
+        "invoiceId",
+        "returnDate",
+        "returnAmount",
+        "reason"
+      ]
+    },
+    "OutstandingDue": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OutstandingDue",
+      "type": "object",
+      "description": "Represents an outstanding due amount from a customer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the outstanding due."
+        },
+        "invoiceId": {
+          "type": "string",
+          "description": "Reference to SalesInvoice. (Relationship: SalesInvoice 1:1 OutstandingDue)"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Date the payment is due.",
+          "format": "date-time"
+        },
+        "amountDue": {
+          "type": "number",
+          "description": "Amount currently due."
+        },
+        "lastReminderDate": {
+          "type": "string",
+          "description": "Date the last reminder was sent to the customer.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "invoiceId",
+        "dueDate",
+        "amountDue"
+      ]
+    },
+    "Salesperson": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Salesperson",
+      "type": "object",
+      "description": "Represents a salesperson.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the salesperson."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the salesperson."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the salesperson."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the salesperson.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the salesperson."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Represents a customer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the customer."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the customer."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the customer."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the customer.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the customer."
+        },
+        "address": {
+          "type": "string",
+          "description": "Address of the customer."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "UserRole": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserRole",
+      "type": "object",
+      "description": "Defines the role for a user.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role assigned to the user (e.g., 'admin').",
+          "enum": [
+            "admin",
+            "salesperson",
+            "customer"
+          ]
+        }
+      },
+      "required": [
+        "uid",
+        "role"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/distribution_channels/{distributionChannelId}",
+        "definition": {
+          "entityName": "DistributionChannel",
+          "schema": {
+            "$ref": "#/backend/entities/DistributionChannel"
+          },
+          "description": "Stores distribution channel information.",
+          "params": [
+            {
+              "name": "distributionChannelId",
+              "description": "Unique identifier for the distribution channel."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/salespeople/{salespersonId}",
+        "definition": {
+          "entityName": "Salesperson",
+          "schema": {
+            "$ref": "#/backend/entities/Salesperson"
+          },
+          "description": "Stores salesperson information.",
+          "params": [
+            {
+              "name": "salespersonId",
+              "description": "Unique identifier for the salesperson."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}",
+        "definition": {
+          "entityName": "Customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Stores customer information.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "Unique identifier for the customer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_roles/{uid}",
+        "definition": {
+          "entityName": "UserRole",
+          "schema": {
+            "$ref": "#/backend/entities/UserRole"
+          },
+          "description": "Stores roles for users.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The user's unique ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales_commissions/{commissionId}",
+        "definition": {
+            "entityName": "SalesCommission",
+            "schema": {
+                "$ref": "#/backend/entities/SalesCommission"
+            },
+            "description": "Stores all generated sales commissions from sales events.",
+            "params": [
+                {
+                    "name": "commissionId",
+                    "description": "Unique identifier for the sales commission record."
+                }
+            ]
+        }
+      },
+      {
+        "path": "/salespeople/{salespersonId}/commissions/{commissionId}",
+        "definition": {
+          "entityName": "SalesCommission",
+          "schema": {
+            "$ref": "#/backend/entities/SalesCommission"
+          },
+          "description": "Stores sales commissions for each salesperson. Includes denormalized 'salespersonId' for authorization independence.",
+          "params": [
+            {
+              "name": "salespersonId",
+              "description": "Unique identifier for the salesperson."
+            },
+            {
+              "name": "commissionId",
+              "description": "Unique identifier for the sales commission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}/commissions/{commissionId}",
+        "definition": {
+          "entityName": "SalesCommission",
+          "schema": {
+            "$ref": "#/backend/entities/SalesCommission"
+          },
+          "description": "Stores sales commissions associated with each product. Includes denormalized 'productId' for authorization independence.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            },
+            {
+              "name": "commissionId",
+              "description": "Unique identifier for the sales commission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/distribution_channels/{distributionChannelId}/commissions/{commissionId}",
+        "definition": {
+          "entityName": "SalesCommission",
+          "schema": {
+            "$ref": "#/backend/entities/SalesCommission"
+          },
+          "description": "Stores sales commissions related to each distribution channel. Includes denormalized 'distributionChannelId' for authorization independence.",
+          "params": [
+            {
+              "name": "distributionChannelId",
+              "description": "Unique identifier for the distribution channel."
+            },
+            {
+              "name": "commissionId",
+              "description": "Unique identifier for the sales commission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}/invoices/{invoiceId}",
+        "definition": {
+          "entityName": "SalesInvoice",
+          "schema": {
+            "$ref": "#/backend/entities/SalesInvoice"
+          },
+          "description": "Stores sales invoices for each customer. Includes denormalized 'customerId' for authorization independence.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "Unique identifier for the customer."
+            },
+            {
+              "name": "invoiceId",
+              "description": "Unique identifier for the sales invoice."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}/invoices/{invoiceId}/returns/{returnId}",
+        "definition": {
+          "entityName": "SalesReturn",
+          "schema": {
+            "$ref": "#/backend/entities/SalesReturn"
+          },
+          "description": "Stores sales returns for each invoice. Includes denormalized 'invoiceId' for authorization independence.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "Unique identifier for the customer."
+            },
+            {
+              "name": "invoiceId",
+              "description": "Unique identifier for the sales invoice."
+            },
+            {
+              "name": "returnId",
+              "description": "Unique identifier for the sales return."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}/invoices/{invoiceId}/outstanding_dues/{outstandingDueId}",
+        "definition": {
+          "entityName": "OutstandingDue",
+          "schema": {
+            "$ref": "#/backend/entities/OutstandingDue"
+          },
+          "description": "Stores outstanding dues for each invoice. Includes denormalized 'invoiceId' for authorization independence.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "Unique identifier for the customer."
+            },
+            {
+              "name": "invoiceId",
+              "description": "Unique identifier for the sales invoice."
+            },
+            {
+              "name": "outstandingDueId",
+              "description": "Unique identifier for the outstanding due."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the BizFin Sales ERP application, focusing on commission management, invoice handling, sales return processing, and outstanding dues monitoring. The structure prioritizes Authorization Independence by avoiding hierarchical `get()` calls in security rules. It uses Structural Segregation to ensure that all documents within a collection share the same security requirements. Access Modeling follows consistent patterns: path-based ownership for user-related data and membership maps for collaborative data if needed in the future. Data clarity and predictability are maintained through explicit state modeling and consistent naming conventions.\n\nThe core entities (Product, DistributionChannel, Salesperson, Customer) are stored in top-level collections. SalesCommission, SalesInvoice, SalesReturn, and OutstandingDue are structured as subcollections under their respective parent entities to reflect the relationships described in the entities section. This approach enables efficient querying and management of related data while maintaining security and scalability. For example, sales commissions are nested under Salesperson, Product, and DistributionChannel to enable complex commission reporting and management based on these dimensions. SalesReturns are nested under SalesInvoices, and OutstandingDues are also related to SalesInvoices, reflecting their direct relationship.\n\nAuthorization Independence is achieved by potentially denormalizing relevant authorization data into each document in the subcollections if access control depends on parent document attributes, though this is not explicitly required by the current schema. The structure supports QAPs by enabling secure list operations, leveraging Structural Segregation to ensure consistent security requirements within each collection and subcollection. A 'user_roles' collection has been added to manage role-based access control, allowing for flexible admin privileges."
+  }
+}

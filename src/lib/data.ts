@@ -194,37 +194,6 @@ export const purchaseOrders: PurchaseOrder[] = [
     { id: 'PO-004', supplier: 'Chemical Supply Inc.', date: '2023-12-01', amount: 18000, deliveryStatus: 'Pending', paymentStatus: 'Partially Paid', items: [{ id: 'po-item-4', rawMaterialId: 'RM-001', quantity: 120, unitCost: 150}], discount: 500, tax: 200, paidAmount: 10000, dueAmount: 7700 },
 ];
 
-export type Employee = {
-    id: string;
-    name: string;
-    position: string;
-    salary: number;
-    status: 'Active' | 'Inactive';
-    joiningDate: string;
-};
-
-export const employees: Employee[] = [
-    { id: 'EMP-001', name: 'Alice Johnson', position: 'CEO', salary: 150000, status: 'Active', joiningDate: '2020-01-15' },
-    { id: 'EMP-002', name: 'Bob Williams', position: 'Sales Director', salary: 90000, status: 'Active', joiningDate: '2021-03-10' },
-    { id: 'EMP-003', name: 'Charlie Brown', position: 'Production Manager', salary: 75000, status: 'Active', joiningDate: '2020-07-22' },
-    { id: 'EMP-004', name: 'Diana Prince', position: 'Accountant', salary: 60000, status: 'Inactive', joiningDate: '2022-05-01' },
-];
-
-export type SalaryPayment = {
-    id: string;
-    employeeName: string;
-    position: string;
-    paymentDate: string;
-    amount: number;
-};
-
-export const salaryPayments: SalaryPayment[] = [
-    { id: 'SP-001', employeeName: 'Alice Johnson', position: 'CEO', paymentDate: '2023-11-30', amount: 165000 },
-    { id: 'SP-002', employeeName: 'Bob Williams', position: 'Sales Director', paymentDate: '2023-11-30', amount: 93000 },
-    { id: 'SP-003', employeeName: 'Charlie Brown', position: 'Production Manager', paymentDate: '2023-11-30', amount: 73500 },
-];
-
-
 export type SalesReturn = {
     id: string;
     invoiceId: string;
@@ -353,3 +322,41 @@ const twoDaysAgo = new Date(now);
 twoDaysAgo.setDate(now.getDate() - 2);
 const lastWeek = new Date(now);
 lastWeek.setDate(now.getDate() - 7);
+
+export type Notification = {
+    id: string;
+    title: string;
+    description: string;
+    datetime: Date;
+    read: boolean;
+};
+export const notifications: Notification[] = [
+    { 
+        id: 'NOTIF-01',
+        title: 'New PO #PO-004 Created',
+        description: 'A new purchase order has been created for Chemical Supply Inc. for an amount of BDT 18,000.',
+        datetime: now,
+        read: false,
+    },
+    { 
+        id: 'NOTIF-02',
+        title: 'Invoice #INV-003 is due tomorrow!',
+        description: 'The invoice for Oscorp (BDT 3,200.00) is due tomorrow. Consider sending a reminder.',
+        datetime: yesterday,
+        read: false,
+    },
+    { 
+        id: 'NOTIF-03',
+        title: 'Production Order #PROD-001 Completed',
+        description: '500 units of "Premium Wall Paint" have been added to inventory.',
+        datetime: twoDaysAgo,
+        read: true,
+    },
+    { 
+        id: 'NOTIF-04',
+        title: 'Low Stock Warning: Water',
+        description: 'Inventory for "Water" is running low. Current stock: 1000 litre.',
+        datetime: lastWeek,
+        read: true,
+    },
+];
