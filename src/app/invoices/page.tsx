@@ -168,7 +168,7 @@ export default function SalesPage() {
                         filteredInvoices.map((invoice) => (
                             <TableRow key={invoice.id}>
                             <TableCell className="font-medium">{invoice.customer}</TableCell>
-                            <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
+                            <TableCell>{new Date(invoice.date).toLocaleString()}</TableCell>
                             <TableCell>
                                 <Badge
                                 variant={getStatusVariant(invoice.status)}

@@ -120,7 +120,7 @@ export function CreateInvoiceDialog({ distributors, products, commissionRules, o
       paidAmount: numericPaidAmount,
       dueAmount: grandTotal - numericPaidAmount,
       status: invoiceStatus,
-      date: today.toISOString().split('T')[0],
+      date: today.toISOString(),
       dueDate: dueDate.toISOString().split('T')[0],
       items: items.map((item, index) => ({
           ...item,
