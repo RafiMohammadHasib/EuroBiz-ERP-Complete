@@ -51,7 +51,7 @@ export default function Home() {
   const uniqueCustomers = new Set(safeInvoices.map(i => i.customer)).size;
   const totalReturns = safeReturns.length;
   
-  const pendingPurchaseOrders = safePOs.filter(p => p.status === 'Pending').length;
+  const pendingPurchaseOrders = safePOs.filter(p => p.deliveryStatus === 'Pending').length;
   const totalPurchaseValue = safePOs.reduce((acc, p) => acc + p.amount, 0);
   const totalSuppliers = new Set(safeSuppliers.map(p => p.name)).size;
   const totalDistributors = new Set(safeDistributors.map(d => d.name)).size;
