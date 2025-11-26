@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -13,105 +14,101 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import type { Invoice, FinishedGood, Customer } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import { CreateInvoiceDialog } from "@/components/invoices/create-invoice-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { PlusCircle } from "lucide-react"
+import { useSettings } from "@/context/settings-context";
+
 
 export default function SalesPage() {
   const firestore = useFirestore();
-  const { toast } = useToast();
-  
+  const { currencySymbol } = useSettings();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
-  const customersCollection = useMemoFirebase(() => collection(firestore, 'customers'), [firestore]);
+  const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
   
-  const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
-  const { data: customers, isLoading: customersLoading } = useCollection<Customer>(customersCollection);
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  const addInvoice = async (newInvoice: Omit<Invoice, 'id'>) => {
-    setIsSaving(true);
-    if (!firestore) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Database connection not found.",
-        });
-        setIsSaving(false);
-        return;
-    }
-
-    const batch = writeBatch(firestore);
-
-    // 1. Add the new invoice
-    const invoiceWithTimestamp = {
-      ...newInvoice,
-      createdAt: serverTimestamp(),
-    };
-    const invoiceRef = doc(collection(firestore, "invoices"));
-    batch.set(invoiceRef, invoiceWithTimestamp);
-    
-    // 2. Decrement stock for each item in the invoice
-    let stockError = false;
-    for (const item of newInvoice.items) {
-        const product = products?.find(p => p.productName === item.description);
-        if (product) {
-            const productRef = doc(firestore, 'finishedGoods', product.id);
-            const newQuantity = product.quantity - item.quantity;
-            if (newQuantity < 0) {
-                stockError = true;
-                toast({
-                    variant: "destructive",
-                    title: "Insufficient Stock",
-                    description: `Not enough stock for ${product.productName}. Only ${product.quantity} available.`,
-                });
-                break; // Exit the loop if one item is out of stock
-            }
-            batch.update(productRef, { quantity: newQuantity });
-        }
-    }
-
-    if (stockError) {
-        setIsSaving(false);
-        return; // Do not commit the batch if there's a stock error
-    }
-
-    try {
-      await batch.commit();
-      toast({
-        title: "Invoice Created",
-        description: `A new invoice for ${newInvoice.customer} has been saved successfully.`,
-      });
-    } catch(error) {
-      console.error("Error creating invoice and updating stock: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not create the invoice or update stock.",
-      });
-    } finally {
-        setIsSaving(false);
-    }
-  }
-
-  const isLoading = productsLoading || customersLoading;
+  const safeInvoices = invoices || [];
 
   return (
     <>
     <div className="space-y-6">
        <Card>
           <CardHeader>
-            <CardTitle>Create Sale</CardTitle>
-            <CardDescription>
-              Select a customer and add products to generate a new invoice.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Invoices</CardTitle>
+                    <CardDescription>
+                      View and manage all your sales invoices.
+                    </CardDescription>
+                </div>
+                 <Link href="/sales/create" passHref>
+                    <Button size="sm" className="h-8 gap-1">
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Create Sale
+                        </span>
+                    </Button>
+                </Link>
+            </div>
           </CardHeader>
           <CardContent>
-              <CreateInvoiceDialog 
-                customers={customers || []}
-                products={products || []}
-                onCreateInvoice={addInvoice}
-                isLoading={isLoading || isSaving}
-              />
+              <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-center">Action</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {isLoading ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                Loading...
+                            </TableCell>
+                        </TableRow>
+                    ) : safeInvoices.length > 0 ? (
+                    safeInvoices.map((invoice) => (
+                        <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.customer}</TableCell>
+                        <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                            <Badge
+                            variant={
+                                invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Overdue' ? 'destructive' : 'outline'
+                            }
+                            >
+                            {invoice.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {currencySymbol}{invoice.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-center">
+                             <Link href={`/invoices/${invoice.id}`} passHref>
+                                <Button size="sm" variant="outline">View Invoice</Button>
+                            </Link>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center h-24">
+                                No invoices found.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+                </Table>
           </CardContent>
         </Card>
     </div>
