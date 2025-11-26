@@ -7,6 +7,12 @@
       "imageHint": "person face"
     },
     {
+      "id": "login-illustration",
+      "description": "Illustration for the new EuroBiz login page",
+      "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdyZWVuJTIwZ3JhZGllbnR8ZW58MHx8fHwxNzY0NTI0OTgyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract green gradient"
+    },
+    {
       "id": "auth-illustration",
       "description": "Illustration for login and signup pages",
       "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkYXNoYm9hcmQlMjBpbnRlcmZhY2V8ZW58MHx8fHwxNzYzMDY2NTg0fDA&ixlib=rb-4.1.0&q=80&w=1080",
