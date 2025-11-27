@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -50,6 +49,7 @@ export default function ReturnsPage() {
     
     let totalReturnAmount = 0;
     const batch = writeBatch(firestore);
+    const productUpdates: {ref: any, payload: any}[] = [];
 
     // 1. Update inventory and calculate total return value
     for (const item of returnItems) {
@@ -59,9 +59,9 @@ export default function ReturnsPage() {
             totalReturnAmount += returnAmountForItem;
 
             const productRef = doc(firestore, 'finishedGoods', product.id);
-            batch.update(productRef, {
-                quantity: product.quantity + item.quantity
-            });
+            const updatePayload = { quantity: product.quantity + item.quantity };
+            batch.update(productRef, updatePayload);
+            productUpdates.push({ ref: productRef, payload: updatePayload });
         }
     }
     
@@ -107,9 +107,7 @@ export default function ReturnsPage() {
             description: `Return for invoice ${invoice.id} has been processed successfully.`,
         });
         return true; // Indicate success
-    }).catch((error) => {
-        console.error("Intercepted error during return processing:", error);
-
+    }).catch((serverError) => {
         // This is a batch write, so it's hard to pinpoint the exact failing operation.
         // We will construct a generic error message for the batch.
         errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -117,15 +115,12 @@ export default function ReturnsPage() {
             operation: 'write',
             requestResourceData: {
                 invoiceUpdate: { id: invoice.id, payload: invoiceUpdatePayload },
+                productUpdates: productUpdates.map(p => ({id: p.ref.id, payload: p.payload})),
                 returnRecord: { id: returnRef.id, payload: newReturn },
             }
         }));
 
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not process the return due to a permission issue.',
-        });
+        // Do not use a toast here; the global error listener will handle it.
         return false; // Indicate failure
     });
   };
