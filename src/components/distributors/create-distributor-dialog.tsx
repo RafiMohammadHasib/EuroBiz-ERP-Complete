@@ -41,13 +41,15 @@ export function CreateDistributorDialog({ isOpen, onOpenChange, onCreate }: Crea
       return;
     }
 
-    onCreate({
+    const distributorData: Omit<Distributor, 'id' | 'totalSales'> = {
       name,
       location,
       tier,
-      email: email || undefined,
-      phone: phone || undefined,
-    });
+      ...(email && { email }),
+      ...(phone && { phone }),
+    };
+
+    onCreate(distributorData);
     
     setName('');
     setLocation('');
