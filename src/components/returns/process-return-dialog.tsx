@@ -50,7 +50,13 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
 
   const handleAddItem = () => {
     if (!selectedInvoice) return;
-    setReturnItems([...returnItems, { productId: selectedInvoice.items[0]?.description || '', quantity: 1 }]);
+    const firstInvoiceItem = selectedInvoice.items[0];
+    if (!firstInvoiceItem) return;
+
+    const product = products.find(p => p.productName === firstInvoiceItem.description);
+    if (!product) return;
+
+    setReturnItems([...returnItems, { productId: product.id || '', quantity: 1 }]);
   };
 
   const handleItemChange = (index: number, field: 'productId' | 'quantity', value: string | number) => {
@@ -58,7 +64,7 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
     const item = newItems[index];
 
     if (field === 'productId') {
-        const product = products.find(p => p.productName === value);
+        const product = products.find(p => p.id === value);
         if(product) {
             item.productId = product.id;
         }
@@ -149,7 +155,7 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
             </div>
              {selectedInvoice && (
                 <div className="flex items-center justify-center bg-muted/50 p-2 rounded-md text-sm">
-                    <p>Amount Due: <span className="font-bold">{currencySymbol}{selectedInvoice.dueAmount.toLocaleString()}</span></p>
+                    <p>Amount Due: <span className="font-bold">{currencySymbol}{selectedInvoice.dueAmount?.toLocaleString()}</span></p>
                 </div>
              )}
           </div>
@@ -166,7 +172,7 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
                   return (
                     <div key={index} className="grid grid-cols-[2fr_1fr_auto] gap-2 items-center">
                       <Select
-                        value={getProductFromId(item.productId)?.productName}
+                        value={item.productId}
                         onValueChange={(value) => handleItemChange(index, 'productId', value)}
                         disabled={isProcessing}
                       >
@@ -174,9 +180,12 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
                           <SelectValue placeholder="Select Item" />
                         </SelectTrigger>
                         <SelectContent>
-                          {selectedInvoice.items.map(invItem => (
-                            <SelectItem key={invItem.id} value={invItem.description}>{invItem.description}</SelectItem>
-                          ))}
+                          {selectedInvoice.items.map(invItem => {
+                              const product = products.find(p => p.productName === invItem.description);
+                              return product ? (
+                                <SelectItem key={invItem.id} value={product.id}>{invItem.description}</SelectItem>
+                              ) : null;
+                          })}
                         </SelectContent>
                       </Select>
                       <Input
