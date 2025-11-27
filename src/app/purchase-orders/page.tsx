@@ -31,10 +31,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CreatePurchaseOrderDialog } from "@/components/purchase-orders/create-purchase-order-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { useSettings } from "@/context/settings-context";
 import { MakePaymentDialog } from "@/components/dues/make-payment-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -53,7 +52,6 @@ export default function PurchaseOrdersPage() {
   const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
   const { data: rawMaterials, isLoading: materialsLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
 
-  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
   const [paymentPo, setPaymentPo] = useState<PurchaseOrder | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<PurchaseOrder | null>(null);
 
@@ -71,22 +69,6 @@ export default function PurchaseOrdersPage() {
   const totalOrders = sortedPOs.length;
   const totalPaid = sortedPOs.reduce((sum, order) => sum + order.paidAmount, 0);
 
-  const addPurchaseOrder = async (newOrder: Omit<PurchaseOrder, 'id'>) => {
-    try {
-      await addDoc(purchaseOrdersCollection, newOrder);
-      toast({
-        title: "Purchase Order Created",
-        description: `New PO for ${newOrder.supplier} has been added.`,
-      });
-    } catch(error) {
-       console.error("Error adding purchase order: ", error);
-       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not create purchase order."
-       });
-    }
-  }
 
   const handleMarkAsReceived = async (orderId: string) => {
     const orderToUpdate = sortedPOs.find(po => po.id === orderId);
@@ -351,12 +333,14 @@ export default function PurchaseOrdersPage() {
             <TabsTrigger value="paid">Paid</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Create Purchase Order
-              </span>
-            </Button>
+            <Link href="/purchase-orders/create">
+              <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Create Purchase Order
+                </span>
+              </Button>
+            </Link>
           </div>
         </div>
         <TabsContent value="all" className="mt-4">
@@ -373,13 +357,6 @@ export default function PurchaseOrdersPage() {
         </TabsContent>
       </Tabs>
     </div>
-    <CreatePurchaseOrderDialog
-        isOpen={isCreateDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onCreate={addPurchaseOrder}
-        suppliers={safeSuppliers}
-        rawMaterials={safeRawMaterials}
-    />
     {paymentPo && (
       <MakePaymentDialog 
         isOpen={!!paymentPo}
@@ -410,5 +387,3 @@ export default function PurchaseOrdersPage() {
     </>
   );
 }
-
-    
