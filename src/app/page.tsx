@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import SalesChart from "@/components/dashboard/sales-chart"
-import { DollarSign, CreditCard, Users, Truck, ShoppingCart, Building, Package } from "lucide-react"
+import { DollarSign, CreditCard, Users, Truck, ShoppingCart, Building, Package, FileText } from "lucide-react"
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { Invoice, Distributor, Supplier, PurchaseOrder } from "@/lib/data";
