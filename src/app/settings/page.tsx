@@ -52,7 +52,6 @@ export default function SettingsPage() {
   const { setCurrency } = useSettings();
 
   // --- Firestore References ---
-  const profileSettingsDocRef = useMemoFirebase(() => user ? doc(firestore, 'settings', user.uid) : null, [firestore, user]);
   const systemSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'system'), [firestore]);
   const businessSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
   
@@ -66,7 +65,6 @@ export default function SettingsPage() {
 
   
   // --- Data Hooks ---
-  const { data: profileSettingsData, isLoading: profileLoading } = useDoc<ProfileSettings>(profileSettingsDocRef);
   const { data: systemSettingsData, isLoading: systemLoading } = useDoc<SystemSettings>(systemSettingsDocRef);
   const { data: businessSettingsData, isLoading: businessLoading } = useDoc<BusinessSettings>(businessSettingsDocRef);
   
@@ -80,7 +78,6 @@ export default function SettingsPage() {
 
 
   // --- Component State ---
-  const [profileSettings, setProfileSettings] = useState<ProfileSettings>({ displayName: '' });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -94,7 +91,6 @@ export default function SettingsPage() {
       logoUrl: initialCompanyDetails.logoUrl,
   });
 
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
@@ -105,15 +101,6 @@ export default function SettingsPage() {
 
 
   // --- Effects to sync state with data from hooks ---
-  useEffect(() => {
-    if (user && user.displayName) {
-        setProfileSettings(prev => ({...prev, displayName: user.displayName!}));
-    }
-    if (profileSettingsData) {
-      setProfileSettings(profileSettingsData);
-    }
-  }, [user, profileSettingsData]);
-
   useEffect(() => {
     if (systemSettingsData) {
       setSystemSettings(systemSettingsData);
@@ -129,30 +116,6 @@ export default function SettingsPage() {
 
 
   // --- Handlers ---
-  const handleProfileSave = async () => {
-    if (!user || !profileSettingsDocRef) return;
-    setIsSavingProfile(true);
-    try {
-      await updateProfile(user, { displayName: profileSettings.displayName });
-      
-      const dataToSave = {
-        uid: user.uid, // Ensure UID is part of the document
-        ...profileSettings,
-      };
-      
-      await setDoc(profileSettingsDocRef, dataToSave, { merge: true });
-      
-      toast({
-        title: 'Profile Updated',
-        description: 'Your display name has been successfully updated.',
-      });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error updating profile', description: error.message });
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
-
   const handlePasswordUpdate = async () => {
     if (!user || !auth?.currentUser) return;
     if (newPassword !== confirmPassword) {
@@ -208,11 +171,6 @@ export default function SettingsPage() {
         setIsSavingBusiness(false);
     }
   };
-
-    const handleProfileDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setProfileSettings(prev => ({ ...prev, [id]: value }));
-    }
 
     const handleSystemSettingsChange = (field: keyof SystemSettings, value: string) => {
         setSystemSettings(prev => ({...prev, [field]: value as any}));
@@ -408,23 +366,14 @@ export default function SettingsPage() {
                   <Card>
                       <CardHeader>
                           <CardTitle>User Profile</CardTitle>
-                          <CardDescription>Update your personal information.</CardDescription>
+                          <CardDescription>Your user account details.</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                              <Label htmlFor="displayName">Display Name</Label>
-                              <Input id="displayName" value={profileSettings.displayName} onChange={handleProfileDetailsChange} />
-                          </div>
                           <div className="space-y-2">
                               <Label htmlFor="email">Email Address</Label>
                               <Input id="email" type="email" value={user?.email || ''} disabled />
                           </div>
                       </CardContent>
-                      <CardFooter>
-                          <Button onClick={handleProfileSave} disabled={isSavingProfile}>
-                              {isSavingProfile ? 'Saving...' : 'Save Profile'}
-                          </Button>
-                      </CardFooter>
                   </Card>
                   <Card>
                       <CardHeader>
@@ -658,3 +607,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
