@@ -37,22 +37,22 @@ service cloud.firestore {
     }
     // A user can read and write to their OWN settings document.
     match /settings/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isOwner(userId) && request.resource.data.uid == userId;
     }
 
 
     // --- Business-Wide Data ---
     // Admins have full read/write access. All other signed-in users have read-only access.
-    match /commissions/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /distributors/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /finishedGoods/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /invoices/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /productionOrders/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /purchaseOrders/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /rawMaterials/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /salary_payments/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /sales_commissions/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
-    match /suppliers/{docId} { allow get, list: if isSignedIn(); allow write: if isAdmin(); }
+    match /commissions/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /distributors/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /finishedGoods/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /invoices/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /productionOrders/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /purchaseOrders/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /rawMaterials/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /salary_payments/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /sales_commissions/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
+    match /suppliers/{docId} { allow read, write: if isAdmin(); allow get, list: if isSignedIn(); }
 
 
     // --- User Profiles & Nested Data ---
