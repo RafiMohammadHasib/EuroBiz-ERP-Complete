@@ -80,12 +80,6 @@ export const navGroups: NavGroup[] = [
             { href: "/dues", label: "Outstanding Dues", icon: Landmark },
         ]
     },
-    {
-        label: "Analysis & Tools",
-        items: [
-            { href: "/forecast", label: "AI Forecast", icon: BrainCircuit },
-        ]
-    }
 ]
 
 const bottomNavItems: NavItem[] = [
