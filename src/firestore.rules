@@ -22,22 +22,28 @@ service cloud.firestore {
     match /user_roles/{uid} {
       allow read, write: if isAdmin();
     }
+    
+    // --- Settings ---
+    match /settings/business { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /settings/system { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
 
     // --- Business-Wide Data ---
     // Admins have full access. All other authenticated users have read-only access.
     match /products/{productId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /settings/{settingId} { allow read, write: if isSignedIn(); }
     match /distribution_channels/{dcId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /distributors/{distributorId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /suppliers/{supplierId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /purchaseOrders/{poId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /sales_commissions/{commissionId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /invoices/{invoiceId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /rawMaterials/{materialId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /finishedGoods/{goodId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /productionOrders/{prodId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /commissions/{commissionId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /salary_payments/{paymentId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /distributors/{distributorId} { allow read, write: if isAdmin(); }
+    match /suppliers/{supplierId} { allow read, write: if isAdmin(); }
+    match /purchaseOrders/{poId} { allow read, write: if isAdmin(); }
+    match /sales_commissions/{commissionId} { allow read, write: if isAdmin(); }
+    match /invoices/{invoiceId} { allow read, write: if isAdmin(); }
+    match /rawMaterials/{materialId} { allow read, write: if isAdmin(); }
+    match /finishedGoods/{goodId} { allow read, write: if isAdmin(); }
+    match /productionOrders/{prodId} { allow read, write: if isAdmin(); }
+    match /commissions/{commissionId} { allow read, write: if isAdmin(); }
+    match /salary_payments/{paymentId} { allow read, write: if isAdmin(); }
 
 
     // --- User Profiles & Nested Data ---

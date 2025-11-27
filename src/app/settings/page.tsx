@@ -52,7 +52,7 @@ export default function SettingsPage() {
   const { setCurrency } = useSettings();
 
   // --- Firestore References ---
-  const profileSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'profile'), [firestore]);
+  const profileSettingsDocRef = useMemoFirebase(() => user ? doc(firestore, 'settings', user.uid) : null, [firestore, user]);
   const systemSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'system'), [firestore]);
   const businessSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
   
@@ -130,7 +130,7 @@ export default function SettingsPage() {
 
   // --- Handlers ---
   const handleProfileSave = async () => {
-    if (!user) return;
+    if (!user || !profileSettingsDocRef) return;
     setIsSavingProfile(true);
     try {
       await updateProfile(user, { displayName: profileSettings.displayName });
