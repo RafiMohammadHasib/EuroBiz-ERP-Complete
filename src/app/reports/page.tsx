@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Card,
   CardContent,
@@ -10,7 +12,8 @@ import SalesChart from "@/components/dashboard/sales-chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PurchaseAnalysisChart from "@/components/reports/purchase-analysis-chart"
 import InventoryValueChart from "@/components/reports/inventory-value-chart"
-import CommissionChart from "@/components/reports/commission-chart"
+import CommissionReport from "@/components/reports/commission-chart"
+import FinancialsChart from "@/components/reports/financials-chart"
 
 export default function ReportsPage() {
   return (
@@ -79,15 +82,14 @@ export default function ReportsPage() {
         <TabsContent value="financials">
             <Card>
             <CardHeader>
-                <CardTitle>Financial Reports</CardTitle>
+                <CardTitle>Financial Summary</CardTitle>
                 <CardDescription>
                 Overview of accounts receivable vs. accounts payable.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-[400px]">
-                    <h3 className="text-xl font-semibold">Financial reports coming soon</h3>
-                    <p className="text-muted-foreground mt-2">Check back later for detailed financial analysis.</p>
+                <div className="h-[400px]">
+                    <FinancialsChart />
                 </div>
             </CardContent>
             </Card>
@@ -95,14 +97,14 @@ export default function ReportsPage() {
         <TabsContent value="commissions">
             <Card>
             <CardHeader>
-                <CardTitle>Commission Report</CardTitle>
+                <CardTitle>Distributor Commission Report</CardTitle>
                 <CardDescription>
-                Distribution of commission types across your sales rules.
+                Total commission generated per distributor.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-[400px]">
-                    <CommissionChart />
+                    <CommissionReport />
                 </div>
             </CardContent>
             </Card>
