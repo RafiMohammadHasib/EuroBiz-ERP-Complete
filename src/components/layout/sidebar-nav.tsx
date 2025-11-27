@@ -61,7 +61,7 @@ export const navGroups: NavGroup[] = [
     {
         label: "Sales & Purchasing",
         items: [
-            { href: "/invoices", label: "Sales", icon: DollarSign },
+            { href: "/sales", label: "Sales", icon: DollarSign },
             { href: "/purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
             { href: "/distributors", label: "Distributors", icon: Truck },
             { href: "/suppliers", label: "Suppliers", icon: Building },
@@ -165,7 +165,7 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
                          <SidebarMenuItem key={item.href}>
                             <Link href={item.href}>
                                 <SidebarMenuButton
-                                isActive={pathname === item.href}
+                                isActive={pathname.startsWith(item.href)}
                                 tooltip={item.label}
                                 size="sm"
                                 >

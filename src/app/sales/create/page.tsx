@@ -135,7 +135,7 @@ export default function CreateSalePage() {
         title: "Invoice & Commissions Created",
         description: `A new invoice for ${newInvoice.customer} has been saved and commissions have been calculated.`,
       });
-      router.push('/invoices'); // Redirect to invoices list on success
+      router.push('/sales'); // Redirect to sales list on success
     } catch(error) {
       console.error("Error creating invoice and commissions: ", error);
       toast({

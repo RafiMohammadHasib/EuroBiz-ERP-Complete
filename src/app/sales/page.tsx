@@ -180,7 +180,7 @@ export default function SalesPage() {
                                 {currencySymbol}{(invoice.totalAmount ?? invoice.amount ?? 0).toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
-                                <Link href={`/invoices/${invoice.id}`} passHref>
+                                <Link href={`/sales/${invoice.id}`} passHref>
                                     <Button size="sm" variant="outline">View Invoice</Button>
                                 </Link>
                             </TableCell>
