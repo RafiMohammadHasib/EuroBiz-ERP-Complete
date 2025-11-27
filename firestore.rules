@@ -112,12 +112,11 @@ service cloud.firestore {
      */
     match /products/{productId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
     
     match /settings/{settingId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -157,13 +156,11 @@ service cloud.firestore {
     }
     
     match /purchaseOrders/{purchaseOrderId} {
-        allow get, list: if isSignedIn();
-        allow write: if isAdmin();
+        allow read, write: if isAdmin();
     }
 
     match /sales_returns/{returnId} {
-        allow get, list: if isSignedIn();
-        allow write: if isAdmin();
+        allow read, write: if isAdmin();
     }
     
     match /sales_commissions/{commissionId} {
@@ -171,18 +168,16 @@ service cloud.firestore {
     }
 
     match /invoices/{invoiceId} {
-        allow get, list: if isSignedIn();
-        allow write: if isAdmin();
+        allow read, write: if isAdmin();
     }
 
     match /rawMaterials/{materialId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /finishedGoods/{goodId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
     
     match /productionOrders/{productionOrderId} {
