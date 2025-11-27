@@ -18,6 +18,8 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { ProcessReturnDialog } from '@/components/returns/process-return-dialog';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function ReturnsPage() {
   const { toast } = useToast();
@@ -44,7 +46,7 @@ export default function ReturnsPage() {
   const totalUnitsReturned = safeReturns.reduce((acc, r) => acc + (r.returnedUnits || 0), 0);
 
   const handleProcessReturn = async (invoice: Invoice, returnItems: { productId: string; quantity: number }[], reason: string) => {
-    if (!firestore) return;
+    if (!firestore) return false;
     
     let totalReturnAmount = 0;
     const batch = writeBatch(firestore);
@@ -66,22 +68,25 @@ export default function ReturnsPage() {
     // 2. Update the invoice
     const invoiceRef = doc(firestore, 'invoices', invoice.id);
     const newTotalAmount = invoice.totalAmount - totalReturnAmount;
-    const newDueAmount = newTotalAmount - invoice.paidAmount;
+    const newDueAmount = Math.max(0, newTotalAmount - invoice.paidAmount);
 
     let newStatus: Invoice['status'] = invoice.status;
-    if (newDueAmount <= 0.001) {
+    if (newDueAmount <= 0.001 && newTotalAmount > 0) {
         newStatus = 'Paid';
-    } else if (invoice.paidAmount > 0) {
+    } else if (invoice.paidAmount > 0 && newDueAmount > 0) {
         newStatus = 'Partially Paid';
-    } else {
+    } else if (newDueAmount > 0){
         newStatus = 'Unpaid';
+    } else {
+        newStatus = 'Paid'; // If due amount is 0, it's paid.
     }
     
-    batch.update(invoiceRef, {
-        totalAmount: newTotalAmount < 0 ? 0 : newTotalAmount,
-        dueAmount: newDueAmount < 0 ? 0 : newDueAmount,
-        status: newStatus,
-    });
+    const invoiceUpdatePayload = {
+      totalAmount: newTotalAmount < 0 ? 0 : newTotalAmount,
+      dueAmount: newDueAmount,
+      status: newStatus,
+    };
+    batch.update(invoiceRef, invoiceUpdatePayload);
 
 
     // 3. Create a new return record
@@ -96,22 +101,33 @@ export default function ReturnsPage() {
     };
     batch.set(returnRef, newReturn);
     
-    try {
-        await batch.commit();
+    return batch.commit().then(() => {
         toast({
             title: 'Return Processed',
             description: `Return for invoice ${invoice.id} has been processed successfully.`,
         });
         return true; // Indicate success
-    } catch (error) {
-        console.error("Error processing return: ", error);
+    }).catch((error) => {
+        console.error("Intercepted error during return processing:", error);
+
+        // This is a batch write, so it's hard to pinpoint the exact failing operation.
+        // We will construct a generic error message for the batch.
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `BATCHED_WRITE (invoices, finishedGoods, sales_returns)`,
+            operation: 'write',
+            requestResourceData: {
+                invoiceUpdate: { id: invoice.id, payload: invoiceUpdatePayload },
+                returnRecord: { id: returnRef.id, payload: newReturn },
+            }
+        }));
+
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Could not process the return.',
+            description: 'Could not process the return due to a permission issue.',
         });
         return false; // Indicate failure
-    }
+    });
   };
 
   return (
