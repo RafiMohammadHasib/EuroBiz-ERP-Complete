@@ -176,7 +176,7 @@ service cloud.firestore {
 
     match /rawMaterials/{materialId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /finishedGoods/{goodId} {
