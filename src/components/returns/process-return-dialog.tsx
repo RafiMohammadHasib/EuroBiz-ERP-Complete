@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -154,7 +155,7 @@ export function ProcessReturnDialog({ isOpen, onOpenChange, invoices, products, 
             </div>
              {selectedInvoice && (
                 <div className="flex items-center justify-center bg-muted/50 p-2 rounded-md text-sm">
-                    <p>Amount Due: <span className="font-bold">{currencySymbol}{selectedInvoice.dueAmount?.toLocaleString()}</span></p>
+                    <p>Amount Paid: <span className="font-bold">{currencySymbol}{selectedInvoice.paidAmount?.toLocaleString()}</span></p>
                 </div>
              )}
           </div>
