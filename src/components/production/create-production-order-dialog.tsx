@@ -18,6 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ProductionOrder, FinishedGood, RawMaterial } from '@/lib/data';
 import { Separator } from '../ui/separator';
 import { useSettings } from '@/context/settings-context';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CreateProductionOrderDialogProps {
   isOpen: boolean;
@@ -38,18 +41,20 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
   const [otherCosts, setOtherCosts] = useState('');
   const [status, setStatus] = useState<'In Progress' | 'Completed' | 'Pending'>('Pending');
 
-  const { materialCost, totalCost, unitCost, productName } = useMemo(() => {
+  const { materialCost, totalCost, unitCost, productName, requiredMaterials, isStockAvailable } = useMemo(() => {
     const selectedProduct = products.find(p => p.id === productId);
     const numericQuantity = parseInt(quantity, 10) || 0;
     
     if (!selectedProduct || !rawMaterials.length || numericQuantity <= 0) {
-      return { materialCost: 0, totalCost: 0, unitCost: 0, productName: '' };
+      return { materialCost: 0, totalCost: 0, unitCost: 0, productName: '', requiredMaterials: [], isStockAvailable: false };
     }
 
-    const materialCost = selectedProduct.components.reduce((acc, component) => {
+    const materialCostPerUnit = selectedProduct.components.reduce((acc, component) => {
       const material = rawMaterials.find(rm => rm.id === component.materialId);
       return acc + (material ? material.unitCost * component.quantity : 0);
-    }, 0) * numericQuantity;
+    }, 0);
+
+    const materialCost = materialCostPerUnit * numericQuantity;
     
     const numericLabourCost = parseFloat(labourCost) || 0;
     const numericWastageValue = parseFloat(wastageValue) || 0;
@@ -58,7 +63,22 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
     const totalCost = materialCost + numericLabourCost + numericWastageValue + numericOtherCosts;
     const unitCost = totalCost / numericQuantity;
 
-    return { materialCost, totalCost, unitCost, productName: selectedProduct.productName };
+    const requiredMaterials = selectedProduct.components.map(component => {
+        const material = rawMaterials.find(rm => rm.id === component.materialId);
+        const required = component.quantity * numericQuantity;
+        const available = material?.quantity || 0;
+        return {
+            name: material?.name || 'Unknown Material',
+            required,
+            available,
+            unit: material?.unit || '',
+            isAvailable: available >= required,
+        };
+    });
+
+    const isStockAvailable = requiredMaterials.every(m => m.isAvailable);
+
+    return { materialCost, totalCost, unitCost, productName: selectedProduct.productName, requiredMaterials, isStockAvailable };
   }, [productId, quantity, products, rawMaterials, labourCost, wastageValue, otherCosts]);
 
   const resetForm = () => {
@@ -79,6 +99,15 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
         description: 'Please select a product and enter a valid quantity.',
       });
       return;
+    }
+    
+    if (!isStockAvailable) {
+        toast({
+            variant: 'destructive',
+            title: 'Insufficient Stock',
+            description: 'Cannot create order due to unavailable raw materials.',
+        });
+        return;
     }
 
     onCreate({
@@ -138,7 +167,30 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
                 />
             </div>
           </div>
-        
+          
+           {requiredMaterials.length > 0 && (
+            <div>
+              <Label className="text-sm font-medium">Required Materials</Label>
+              <div className="mt-2 space-y-2 rounded-md border p-2">
+                {requiredMaterials.map((mat, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm">
+                        <div className="flex items-center">
+                            {mat.isAvailable ? (
+                                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                            ) : (
+                                <AlertCircle className="h-4 w-4 mr-2 text-destructive" />
+                            )}
+                            <span>{mat.name}</span>
+                        </div>
+                        <span className={cn('font-mono text-xs', !mat.isAvailable && 'text-destructive')}>
+                            {mat.required.toLocaleString()} / {mat.available.toLocaleString()} {mat.unit}
+                        </span>
+                    </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
                 <Label htmlFor="material-cost">Material Cost</Label>
@@ -210,7 +262,9 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleSubmit} disabled={!productId || !quantity}>Create Order</Button>
+          <Button type="submit" onClick={handleSubmit} disabled={!productId || !quantity || !isStockAvailable}>
+            Create Order
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
