@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -13,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Copy, Check, Download } from 'lucide-react';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
-import type { Commission, FinishedGood, RawMaterial, Distributor, PurchaseOrder, SalesCommission } from '@/lib/data';
+import type { Commission, FinishedGood, RawMaterial, Distributor, PurchaseOrder, SalesCommission, Supplier } from '@/lib/data';
 import { CreateCommissionRuleDialog } from '@/components/commissions/create-commission-rule-dialog';
 import { CreateFormulaDialog } from '@/components/settings/create-formula-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -63,6 +62,7 @@ export default function SettingsPage() {
   const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
   const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
+  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
 
   
   // --- Data Hooks ---
@@ -76,6 +76,7 @@ export default function SettingsPage() {
   const { data: distributors, isLoading: distLoading } = useCollection<Distributor>(distributorsCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
   const { data: salesCommissions, isLoading: scLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
+  const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
 
 
   // --- Component State ---
@@ -349,13 +350,13 @@ export default function SettingsPage() {
     };
   
     const allSql = useMemo(() => [
-        generateSqlForTable('suppliers', suppliers),
-        generateSqlForTable('distributors', distributors),
-        generateSqlForTable('raw_materials', rawMaterials),
-        generateSqlForTable('finished_goods', finishedGoods),
-        generateSqlForTable('purchase_orders', purchaseOrders),
-        generateSqlForTable('commissions', commissions),
-        generateSqlForTable('sales_commissions', salesCommissions),
+        generateSqlForTable('suppliers', suppliers || []),
+        generateSqlForTable('distributors', distributors || []),
+        generateSqlForTable('raw_materials', rawMaterials || []),
+        generateSqlForTable('finished_goods', finishedGoods || []),
+        generateSqlForTable('purchase_orders', purchaseOrders || []),
+        generateSqlForTable('commissions', commissions || []),
+        generateSqlForTable('sales_commissions', salesCommissions || []),
     ].join('\n\n'), [suppliers, distributors, rawMaterials, finishedGoods, purchaseOrders, commissions, salesCommissions]);
 
 
