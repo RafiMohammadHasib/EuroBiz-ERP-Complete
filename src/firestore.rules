@@ -116,7 +116,8 @@ service cloud.firestore {
     }
     
     match /settings/{settingId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     /**
@@ -323,3 +324,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
