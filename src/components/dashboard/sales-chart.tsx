@@ -45,11 +45,11 @@ export default function SalesChart({ dateRange }: { dateRange?: DateRange }) {
     });
 
     filteredInvoices?.forEach(invoice => {
-      if (invoice.status === 'Paid' || invoice.status === 'Partially Paid') {
+      if (invoice.status !== 'Cancelled') {
         const date = new Date(invoice.date);
         const month = monthOrder[date.getMonth()];
         if (month) {
-            monthlyRevenue[month] += invoice.paidAmount;
+            monthlyRevenue[month] += invoice.totalAmount;
         }
       }
     });
