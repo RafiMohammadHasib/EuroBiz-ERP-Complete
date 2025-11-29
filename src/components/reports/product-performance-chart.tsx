@@ -30,7 +30,7 @@ export default function ProductPerformanceChart() {
     const productRevenue: { [key: string]: number } = {};
 
     invoices.forEach(inv => {
-        if(inv.status === 'Paid') {
+        if(inv.status === 'Paid' || inv.status === 'Partially Paid') {
             inv.items.forEach(item => {
                 if(!productRevenue[item.description]) {
                     productRevenue[item.description] = 0;
@@ -76,4 +76,5 @@ export default function ProductPerformanceChart() {
       </ChartContainer>
   );
 }
+
 
