@@ -41,9 +41,9 @@ export default function SalesPage() {
   const safeInvoices = invoices || [];
 
   const kpiData = useMemo(() => {
+    // Correctly calculate total revenue by summing all paid amounts across ALL invoices
     const totalRevenue = safeInvoices
-      .filter(inv => inv.status === 'Paid')
-      .reduce((acc, inv) => acc + (inv.totalAmount ?? 0), 0);
+      .reduce((acc, inv) => acc + (inv.paidAmount ?? 0), 0);
 
     const outstandingDues = safeInvoices
       .filter(inv => inv.status !== 'Paid')
