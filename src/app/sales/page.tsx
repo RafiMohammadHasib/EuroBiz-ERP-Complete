@@ -182,7 +182,7 @@ export default function SalesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{currencySymbol}{kpiData.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Total amount received from paid invoices</p>
+              <p className="text-xs text-muted-foreground">Total amount received from sales</p>
             </CardContent>
           </Card>
           <Card>
@@ -283,9 +283,11 @@ export default function SalesPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Details</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Sale Details</DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/sales/${invoice.id}`}>View Invoice</Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem disabled>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem disabled>Generate Invoice</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem 
                                         className="text-destructive" 
