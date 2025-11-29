@@ -35,8 +35,12 @@ export function FinancialsDataTable() {
     const isLoading = l1 || l2;
 
     const kpiData = useMemo(() => {
-        const accountsReceivable = (invoices || []).reduce((acc, inv) => acc + inv.dueAmount, 0);
-        const accountsPayable = (purchaseOrders || []).reduce((acc, po) => acc + po.dueAmount, 0);
+        const outstandingInvoices = (invoices || []).filter((i) => i.status !== 'Paid' && i.dueAmount > 0);
+        const accountsReceivable = outstandingInvoices.reduce((acc, inv) => acc + inv.dueAmount, 0);
+
+        const pendingPurchaseOrders = (purchaseOrders || []).filter((po) => po.paymentStatus !== 'Paid');
+        const accountsPayable = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
+
         return { accountsReceivable, accountsPayable };
     }, [invoices, purchaseOrders]);
 
