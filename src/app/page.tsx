@@ -27,7 +27,6 @@ import type { Invoice, Distributor, Supplier, PurchaseOrder } from "@/lib/data";
 import { useSettings } from "@/context/settings-context";
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { cn } from '@/lib/utils';
-import SalesChart from '@/components/dashboard/sales-chart';
 import ProductPerformanceChart from '@/components/reports/product-performance-chart';
 import BalanceChart from '@/components/dashboard/balance-chart';
 
@@ -224,17 +223,8 @@ export default function Home() {
         </Card>
       </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle>Sales Overview</CardTitle>
-                    <CardDescription>A summary of sales revenue for the selected period.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[350px]">
-                    <SalesChart dateRange={dateRange} />
-                </CardContent>
-            </Card>
-            <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6">
+            <Card>
                 <CardHeader>
                     <CardTitle>Recent Invoices</CardTitle>
                     <CardDescription>Your most recent sales activity.</CardDescription>

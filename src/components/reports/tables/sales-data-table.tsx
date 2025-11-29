@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Download, Search, ChevronDown, DollarSign, FileText, TrendingUp } from "lucide-react";
 import { useSettings } from "@/context/settings-context";
-import SalesChart from "@/components/dashboard/sales-chart";
 import ProductPerformanceChart from "../product-performance-chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRange } from "react-day-picker";
@@ -156,15 +155,7 @@ export function SalesDataTable({ dateRange }: { dateRange?: DateRange }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Sales Overview</CardTitle>
-                    <CardContent className="h-[300px] p-0 pt-4">
-                        <SalesChart />
-                    </CardContent>
-                </CardHeader>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Product Performance</CardTitle>
+                    <CardTitle>Top Performing Products</CardTitle>
                     <CardContent className="h-[300px] p-0 pt-4">
                         <ProductPerformanceChart />
                     </CardContent>
