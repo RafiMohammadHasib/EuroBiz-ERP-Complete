@@ -21,6 +21,7 @@ import { useSettings } from '@/context/settings-context';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface CreateProductionOrderDialogProps {
   isOpen: boolean;
@@ -171,23 +172,25 @@ export function CreateProductionOrderDialog({ isOpen, onOpenChange, onCreate, pr
            {requiredMaterials.length > 0 && (
             <div>
               <Label className="text-sm font-medium">Required Materials</Label>
-              <div className="mt-2 space-y-2 rounded-md border p-2">
-                {requiredMaterials.map((mat, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm">
-                        <div className="flex items-center">
-                            {mat.isAvailable ? (
-                                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                            ) : (
-                                <AlertCircle className="h-4 w-4 mr-2 text-destructive" />
-                            )}
-                            <span>{mat.name}</span>
-                        </div>
-                        <span className={cn('font-mono text-xs', !mat.isAvailable && 'text-destructive')}>
-                            {mat.required.toLocaleString()} / {mat.available.toLocaleString()} {mat.unit}
-                        </span>
-                    </div>
-                ))}
-              </div>
+              <ScrollArea className="h-40 w-full rounded-md border">
+                <div className="p-2 space-y-2">
+                  {requiredMaterials.map((mat, index) => (
+                      <div key={index} className="flex justify-between items-center text-sm px-2">
+                          <div className="flex items-center">
+                              {mat.isAvailable ? (
+                                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                              ) : (
+                                  <AlertCircle className="h-4 w-4 mr-2 text-destructive" />
+                              )}
+                              <span>{mat.name}</span>
+                          </div>
+                          <span className={cn('font-mono text-xs', !mat.isAvailable && 'text-destructive')}>
+                              {mat.required.toLocaleString()} / {mat.available.toLocaleString()} {mat.unit}
+                          </span>
+                      </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           )}
 
