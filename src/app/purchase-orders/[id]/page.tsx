@@ -1,6 +1,6 @@
 
 'use client';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,12 +13,14 @@ import { doc, collection } from 'firebase/firestore';
 import type { PurchaseOrder, RawMaterial, Supplier } from '@/lib/data';
 import { companyDetails } from '@/lib/data';
 
-export default function PurchaseOrderPage({ params }: { params: { id: string } }) {
+export default function PurchaseOrderPage() {
   const { currencySymbol } = useSettings();
   const router = useRouter();
   const firestore = useFirestore();
+  const params = useParams();
+  const id = params.id as string;
 
-  const poRef = useMemoFirebase(() => doc(firestore, 'purchaseOrders', params.id), [firestore, params.id]);
+  const poRef = useMemoFirebase(() => doc(firestore, 'purchaseOrders', id), [firestore, id]);
   const { data: po, isLoading: poLoading } = useDoc<PurchaseOrder>(poRef);
 
   const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);

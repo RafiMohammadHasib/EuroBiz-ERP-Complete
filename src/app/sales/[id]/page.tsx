@@ -1,6 +1,6 @@
 
 'use client';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,11 +13,12 @@ import { doc } from 'firebase/firestore';
 import type { Invoice } from '@/lib/data';
 import { companyDetails } from '@/lib/data';
 
-export default function InvoicePage({ params }: { params: { id: string } }) {
+export default function InvoicePage() {
   const { currencySymbol } = useSettings();
   const router = useRouter();
   const firestore = useFirestore();
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
 
   const invoiceRef = useMemoFirebase(() => {
     if (!id || !firestore) return null;
