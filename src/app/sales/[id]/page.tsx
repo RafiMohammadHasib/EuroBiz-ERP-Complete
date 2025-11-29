@@ -18,7 +18,11 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const firestore = useFirestore();
 
-  const invoiceRef = useMemoFirebase(() => doc(firestore, 'invoices', params.id), [firestore, params.id]);
+  const invoiceRef = useMemoFirebase(() => {
+    if (!params.id || !firestore) return null;
+    return doc(firestore, 'invoices', params.id);
+  }, [firestore, params.id]);
+
   const { data: invoice, isLoading } = useDoc<Invoice>(invoiceRef);
 
   const handlePrint = () => {
