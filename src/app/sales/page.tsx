@@ -11,8 +11,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection } from "firebase/firestore";
-import type { Invoice, SalesCommission, UserRole } from "@/lib/data";
+import { collection, doc, writeBatch } from "firebase/firestore";
+import type { Invoice, SalesCommission, UserRole, FinishedGood } from "@/lib/data";
 import {
   Table,
   TableBody,
@@ -36,28 +36,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SalesDetailsDialog } from "@/components/sales/sales-details-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function SalesPage() {
   const firestore = useFirestore();
   const { currencySymbol } = useSettings();
+  const { toast } = useToast();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
   const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
   const usersCollection = useMemoFirebase(() => collection(firestore, 'salespeople'), [firestore]);
+  const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
   
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: salesCommissions, isLoading: commissionsLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
   const { data: users, isLoading: usersLoading } = useCollection<UserRole>(usersCollection);
+  const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [invoiceToCancel, setInvoiceToCancel] = useState<Invoice | null>(null);
 
   const safeInvoices = invoices || [];
   const safeCommissions = salesCommissions || [];
   const safeUsers = users || [];
   
-  const isLoading = invoicesLoading || commissionsLoading || usersLoading;
+  const isLoading = invoicesLoading || commissionsLoading || usersLoading || productsLoading;
 
   const invoiceWithSalesperson = useMemo(() => {
     return safeInvoices.map(invoice => {
@@ -71,14 +77,16 @@ export default function SalesPage() {
   }, [safeInvoices, safeCommissions, safeUsers]);
 
   const kpiData = useMemo(() => {
-    const totalRevenue = safeInvoices
+    const relevantInvoices = safeInvoices.filter(inv => inv.status !== 'Cancelled');
+    
+    const totalRevenue = relevantInvoices
       .reduce((acc, inv) => acc + (inv.paidAmount ?? 0), 0);
 
-    const outstandingDues = safeInvoices
+    const outstandingDues = relevantInvoices
       .filter(inv => inv.status !== 'Paid')
       .reduce((acc, inv) => acc + (inv.dueAmount ?? 0), 0);
 
-    const totalInvoices = safeInvoices.length;
+    const totalInvoices = relevantInvoices.length;
 
     return { totalRevenue, outstandingDues, totalInvoices };
   }, [safeInvoices]);
@@ -104,8 +112,51 @@ export default function SalesPage() {
         case 'Paid': return 'secondary';
         case 'Overdue': return 'destructive';
         case 'Partially Paid': return 'default';
+        case 'Cancelled': return 'destructive';
         case 'Unpaid':
         default: return 'outline';
+    }
+  }
+
+  const handleCancelSale = async () => {
+    if (!invoiceToCancel || !firestore || !products) return;
+    
+    const batch = writeBatch(firestore);
+
+    // 1. Update invoice status to 'Cancelled'
+    const invoiceRef = doc(firestore, 'invoices', invoiceToCancel.id);
+    batch.update(invoiceRef, { 
+        status: 'Cancelled',
+        dueAmount: 0, // No longer due
+    });
+
+    // 2. Restock items
+    for (const item of invoiceToCancel.items) {
+        const product = products.find(p => p.productName === item.description);
+        if (product) {
+            const productRef = doc(firestore, 'finishedGoods', product.id);
+            const newQuantity = product.quantity + item.quantity;
+            batch.update(productRef, { quantity: newQuantity });
+        }
+    }
+
+    // 3. Optional: Cancel related commissions (can be complex, for now we leave them for audit trail)
+
+    try {
+        await batch.commit();
+        toast({
+            title: 'Sale Cancelled',
+            description: `Invoice ${invoiceToCancel.id} has been cancelled and items have been restocked.`
+        });
+    } catch (error) {
+        console.error("Error cancelling sale: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not cancel the sale.'
+        });
+    } finally {
+        setInvoiceToCancel(null);
     }
   }
 
@@ -140,7 +191,7 @@ export default function SalesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{kpiData.totalInvoices}</div>
-              <p className="text-xs text-muted-foreground">Total invoices generated</p>
+              <p className="text-xs text-muted-foreground">Total non-cancelled invoices generated</p>
             </CardContent>
           </Card>
         </div>
@@ -153,6 +204,7 @@ export default function SalesPage() {
                     <TabsTrigger value="partially-paid">Partially Paid</TabsTrigger>
                     <TabsTrigger value="paid">Paid</TabsTrigger>
                     <TabsTrigger value="overdue">Overdue</TabsTrigger>
+                    <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
                 </TabsList>
                  <div className="flex-1 w-full md:w-auto relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -221,10 +273,14 @@ export default function SalesPage() {
                                     <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Details</DropdownMenuItem>
-                                    <DropdownMenuItem disabled>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem disabled={invoice.status === 'Paid' || invoice.status === 'Cancelled'}>Edit</DropdownMenuItem>
                                     <DropdownMenuItem disabled>Generate Invoice</DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive" disabled>
+                                    <DropdownMenuItem 
+                                        className="text-destructive" 
+                                        disabled={invoice.status === 'Paid' || invoice.status === 'Cancelled'}
+                                        onClick={() => setInvoiceToCancel(invoice)}
+                                    >
                                         Cancel Sale
                                     </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -252,6 +308,22 @@ export default function SalesPage() {
             invoice={selectedInvoice}
         />
     )}
+     <AlertDialog open={!!invoiceToCancel} onOpenChange={(open) => !open && setInvoiceToCancel(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action will cancel the invoice #{invoiceToCancel?.id} and restock the items. This cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Back</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCancelSale} className="bg-destructive hover:bg-destructive/90">
+                    Confirm Cancellation
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

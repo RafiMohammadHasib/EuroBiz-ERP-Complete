@@ -10,7 +10,7 @@ export type Invoice = {
   totalAmount: number;
   paidAmount: number;
   dueAmount: number;
-  status: 'Paid' | 'Unpaid' | 'Overdue' | 'Partially Paid';
+  status: 'Paid' | 'Unpaid' | 'Overdue' | 'Partially Paid' | 'Cancelled';
   items: InvoiceItem[];
 };
 
