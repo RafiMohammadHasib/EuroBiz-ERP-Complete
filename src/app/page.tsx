@@ -42,7 +42,7 @@ export default function Home() {
   const safeDistributors = distributors || [];
   const safeSuppliers = suppliers || [];
 
-  const totalRevenue = safeInvoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + (i.totalAmount ?? 0), 0);
+  const totalRevenue = safeInvoices.reduce((acc, i) => acc + (i.paidAmount ?? 0), 0);
   const outstandingDues = safeInvoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + (i.dueAmount ?? 0), 0);
   const paidInvoices = safeInvoices.filter(i => i.status === 'Paid').length;
   const uniqueCustomers = new Set(safeInvoices.map(i => i.customer)).size;
@@ -64,7 +64,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{currencySymbol}{totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Based on {paidInvoices} paid invoices</p>
+            <p className="text-xs text-muted-foreground">Total amount received from sales</p>
           </CardContent>
         </Card>
         <Card>
