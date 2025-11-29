@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
+import { useMemo } from "react";
 
 interface NavItem {
     href: string;
@@ -94,11 +95,10 @@ const bottomNavItems: NavItem[] = [
 ];
 
 interface SidebarNavProps {
-    navItems: NavItem[]; // This will now be used for the core items like Dashboard
-    navGroups: NavGroup[];
+    searchQuery: string;
 }
 
-export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsToRender }: SidebarNavProps) {
+export default function SidebarNav({ searchQuery }: SidebarNavProps) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -112,6 +112,16 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
   };
 
   const isLoginPage = pathname === '/login';
+  
+  const filteredNavItems = useMemo(() => navItems.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  ), [searchQuery]);
+
+  const filteredNavGroups = useMemo(() => navGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
+  })).filter(group => group.items.length > 0), [searchQuery]);
+
 
   if (isUserLoading) {
       return null;
@@ -137,7 +147,7 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {itemsToRender.map((item) => (
+          {filteredNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href}>
                 <SidebarMenuButton
@@ -154,7 +164,7 @@ export default function SidebarNav({ navItems: itemsToRender, navGroups: groupsT
         </SidebarMenu>
 
         <div className="flex flex-col gap-2">
-        {groupsToRender.map((group) => (
+        {filteredNavGroups.map((group) => (
             <SidebarGroup key={group.label} className="pt-0">
                 <SidebarGroupLabel className="h-7 group-data-[collapsible=icon]:hidden">{group.label}</SidebarGroupLabel>
                 <SidebarMenu>
