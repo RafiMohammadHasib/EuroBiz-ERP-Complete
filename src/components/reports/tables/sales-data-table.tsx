@@ -220,9 +220,9 @@ export function SalesDataTable() {
                                 {visibleColumns.customer && <TableCell>{invoice.customer}</TableCell>}
                                 {visibleColumns.date && <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>}
                                 {visibleColumns.status && <TableCell><Badge variant={invoice.status === 'Paid' ? 'secondary' : 'outline'}>{invoice.status}</Badge></TableCell>}
-                                {visibleColumns.totalAmount && <TableCell className="text-right">{currencySymbol}{invoice.totalAmount.toLocaleString()}</TableCell>}
-                                {visibleColumns.paidAmount && <TableCell className="text-right">{currencySymbol}{invoice.paidAmount.toLocaleString()}</TableCell>}
-                                {visibleColumns.dueAmount && <TableCell className="text-right">{currencySymbol}{invoice.dueAmount.toLocaleString()}</TableCell>}
+                                {visibleColumns.totalAmount && <TableCell className="text-right">{currencySymbol}{(invoice.totalAmount ?? 0).toLocaleString()}</TableCell>}
+                                {visibleColumns.paidAmount && <TableCell className="text-right">{currencySymbol}{(invoice.paidAmount ?? 0).toLocaleString()}</TableCell>}
+                                {visibleColumns.dueAmount && <TableCell className="text-right">{currencySymbol}{(invoice.dueAmount ?? 0).toLocaleString()}</TableCell>}
                             </TableRow>
                         ))}
                     </TableBody>
