@@ -349,6 +349,15 @@ export const notifications: Notification[] = [
     },
 ];
 
+export type SalaryPayment = {
+    id: string;
+    employeeName: string;
+    position: string;
+    paymentDate: string;
+    amount: number;
+};
+
+
 export type Expense = {
     id: string;
     category: string;

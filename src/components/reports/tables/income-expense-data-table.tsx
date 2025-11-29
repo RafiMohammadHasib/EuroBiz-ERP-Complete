@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
-import type { Invoice, PurchaseOrder, ProductionOrder, SalesCommission, SalaryPayment } from "@/lib/data";
+import type { Invoice, PurchaseOrder, ProductionOrder, SalesCommission, SalaryPayment, Expense } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -24,14 +24,17 @@ export function IncomeExpenseDataTable() {
     const prodCol = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
     const salaryCol = useMemoFirebase(() => collection(firestore, 'salary_payments'), [firestore]);
     const commissionCol = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
+    const expenseCol = useMemoFirebase(() => collection(firestore, 'expenses'), [firestore]);
+
 
     const { data: invoices, isLoading: l1 } = useCollection<Invoice>(invoicesCol);
     const { data: purchaseOrders, isLoading: l2 } = useCollection<PurchaseOrder>(poCol);
     const { data: productionOrders, isLoading: l3 } = useCollection<ProductionOrder>(prodCol);
     const { data: salaryPayments, isLoading: l4 } = useCollection<SalaryPayment>(salaryCol);
     const { data: salesCommissions, isLoading: l5 } = useCollection<SalesCommission>(commissionCol);
+    const { data: expenses, isLoading: l6 } = useCollection<Expense>(expenseCol);
 
-    const isLoading = l1 || l2 || l3 || l4 || l5;
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6;
 
     const incomeData = useMemo(() => (invoices || []).filter(i => i.paidAmount > 0).map(i => ({
         id: i.id,
@@ -70,9 +73,16 @@ export function IncomeExpenseDataTable() {
             amount: c.commissionAmount,
             type: 'Expense'
         }));
+        const generalExpenses = (expenses || []).map(e => ({
+            id: e.id,
+            date: e.date,
+            source: `${e.category}: ${e.description}`,
+            amount: e.amount,
+            type: 'Expense'
+        }));
 
-        return [...poExpenses, ...prodExpenses, ...salaryExpenses, ...commissionExpenses];
-    }, [purchaseOrders, productionOrders, salaryPayments, salesCommissions]);
+        return [...poExpenses, ...prodExpenses, ...salaryExpenses, ...commissionExpenses, ...generalExpenses];
+    }, [purchaseOrders, productionOrders, salaryPayments, salesCommissions, expenses]);
 
     const kpiData = useMemo(() => {
         const totalIncome = incomeData.reduce((acc, item) => acc + item.amount, 0);

@@ -293,6 +293,77 @@
         "email"
       ]
     },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single business expense record.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the expense (e.g., Rent, Utilities, Marketing)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the expense."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the expense was incurred.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The total amount of the expense."
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "date",
+        "amount"
+      ]
+    },
+    "SalaryPayment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalaryPayment",
+      "type": "object",
+      "description": "Represents a single salary payment to an employee.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the salary payment."
+        },
+        "employeeName": {
+          "type": "string",
+          "description": "Name of the employee who received the payment."
+        },
+        "position": {
+          "type": "string",
+          "description": "The position or role of the employee."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "The date the salary was paid.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The total amount paid."
+        }
+      },
+      "required": [
+        "id",
+        "employeeName",
+        "position",
+        "paymentDate",
+        "amount"
+      ]
+    },
     "UserRole": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserRole",
@@ -420,6 +491,38 @@
                     "description": "Unique identifier for the sales commission record."
                 }
             ]
+        }
+      },
+      {
+        "path": "/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores records of business expenses.",
+          "params": [
+            {
+              "name": "expenseId",
+              "description": "Unique identifier for the expense record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/salary_payments/{paymentId}",
+        "definition": {
+          "entityName": "SalaryPayment",
+          "schema": {
+            "$ref": "#/backend/entities/SalaryPayment"
+          },
+          "description": "Stores records of salary payments to employees.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "Unique identifier for the salary payment record."
+            }
+          ]
         }
       },
       {

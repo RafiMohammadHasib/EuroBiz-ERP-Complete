@@ -7,7 +7,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
 import { useSettings } from "@/context/settings-context";
 import { collection } from "firebase/firestore";
-import type { Invoice, PurchaseOrder, ProductionOrder, SalesCommission, SalaryPayment } from "@/lib/data";
+import type { Invoice, PurchaseOrder, ProductionOrder, SalesCommission, SalaryPayment, Expense } from "@/lib/data";
 import { Skeleton } from "../ui/skeleton";
 
 const chartConfig = {
@@ -30,14 +30,16 @@ export default function IncomeExpenseChart() {
   const prodCol = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
   const commissionCol = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
   const salaryCol = useMemoFirebase(() => collection(firestore, 'salary_payments'), [firestore]);
+  const expenseCol = useMemoFirebase(() => collection(firestore, 'expenses'), [firestore]);
 
   const { data: invoices, isLoading: l1 } = useCollection<Invoice>(invoicesCol);
   const { data: purchaseOrders, isLoading: l2 } = useCollection<PurchaseOrder>(poCol);
   const { data: productionOrders, isLoading: l3 } = useCollection<ProductionOrder>(prodCol);
   const { data: salesCommissions, isLoading: l4 } = useCollection<SalesCommission>(commissionCol);
   const { data: salaryPayments, isLoading: l5 } = useCollection<SalaryPayment>(salaryCol);
+  const { data: expenses, isLoading: l6 } = useCollection<Expense>(expenseCol);
   
-  const isLoading = l1 || l2 || l3 || l4 || l5;
+  const isLoading = l1 || l2 || l3 || l4 || l5 || l6;
 
   const data = useMemo(() => {
     const monthlyData: { [key: string]: { income: number, expense: number } } = {};
@@ -55,35 +57,18 @@ export default function IncomeExpenseChart() {
     });
 
     // Calculate Expenses
-    (purchaseOrders || []).forEach(po => {
-        if (po.paidAmount > 0) {
-            const month = new Date(po.date).toLocaleString('default', { month: 'short' });
-            if(monthlyData[month]) {
-                monthlyData[month].expense += po.paidAmount;
-            }
-        }
-    });
+    const allExpenses = [
+      ...(purchaseOrders || []).filter(p => p.paidAmount > 0).map(p => ({ date: p.date, amount: p.paidAmount })),
+      ...(productionOrders || []).map(p => ({ date: p.startDate, amount: p.labourCost + p.otherCosts })),
+      ...(salesCommissions || []).map(s => ({ date: s.saleDate, amount: s.commissionAmount })),
+      ...(salaryPayments || []).map(s => ({ date: s.paymentDate, amount: s.amount })),
+      ...(expenses || []).map(e => ({ date: e.date, amount: e.amount })),
+    ];
 
-    (productionOrders || []).forEach(prod => {
-        if (prod.status === 'Completed') {
-            const month = new Date(prod.startDate).toLocaleString('default', { month: 'short' });
-            if(monthlyData[month]) {
-                monthlyData[month].expense += prod.labourCost + prod.otherCosts + prod.wastageValue;
-            }
-        }
-    });
-    
-    (salesCommissions || []).forEach(sc => {
-        const month = new Date(sc.saleDate).toLocaleString('default', { month: 'short' });
+    allExpenses.forEach(exp => {
+        const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
         if(monthlyData[month]) {
-            monthlyData[month].expense += sc.commissionAmount;
-        }
-    });
-    
-    (salaryPayments || []).forEach(sp => {
-        const month = new Date(sp.paymentDate).toLocaleString('default', { month: 'short' });
-        if(monthlyData[month]) {
-            monthlyData[month].expense += sp.amount;
+            monthlyData[month].expense += exp.amount;
         }
     });
     
@@ -93,7 +78,7 @@ export default function IncomeExpenseChart() {
         expense: monthlyData[month].expense,
     }));
 
-  }, [invoices, purchaseOrders, productionOrders, salesCommissions, salaryPayments]);
+  }, [invoices, purchaseOrders, productionOrders, salesCommissions, salaryPayments, expenses]);
 
   if (isLoading) {
     return <Skeleton className="h-full w-full" />;
