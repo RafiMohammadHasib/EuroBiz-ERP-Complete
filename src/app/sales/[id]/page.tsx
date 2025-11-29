@@ -1,4 +1,5 @@
 
+
 'use client';
 import { notFound, useParams } from 'next/navigation';
 import { invoices, companyDetails, type Invoice } from '@/lib/data';
