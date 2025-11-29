@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { PurchaseOrder } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import PurchaseAnalysisChart from "../purchase-analysis-chart";
 import SupplierSpendChart from "../supplier-spend-chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRange } from "react-day-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SortKey = keyof PurchaseOrder;
 
@@ -36,6 +37,8 @@ export function PurchasingDataTable({ dateRange }: { dateRange?: DateRange }) {
         paymentStatus: true,
         amount: true,
     });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const filteredPOs = useMemo(() => {
         let items = purchaseOrders || [];
@@ -68,6 +71,14 @@ export function PurchasingDataTable({ dateRange }: { dateRange?: DateRange }) {
         }
         return sortableItems.filter(po => po.supplier.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [filteredPOs, sortConfig, searchTerm]);
+
+    const paginatedPOs = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return sortedPOs.slice(startIndex, endIndex);
+    }, [sortedPOs, currentPage, rowsPerPage]);
+
+    const totalPages = Math.ceil(sortedPOs.length / rowsPerPage);
 
     const requestSort = (key: SortKey) => {
         let direction: 'asc' | 'desc' = 'asc';
@@ -205,7 +216,7 @@ export function PurchasingDataTable({ dateRange }: { dateRange?: DateRange }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {sortedPOs.map(po => (
+                        {paginatedPOs.map(po => (
                             <TableRow key={po.id}>
                                 {visibleColumns.supplier && <TableCell>{po.supplier}</TableCell>}
                                 {visibleColumns.date && <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>}
@@ -217,6 +228,55 @@ export function PurchasingDataTable({ dateRange }: { dateRange?: DateRange }) {
                     </TableBody>
                 </Table>
             </CardContent>
+             <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedPOs.length}</strong> of <strong>{sortedPOs.length}</strong> orders
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
         </>
     );

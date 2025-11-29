@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { Invoice, PurchaseOrder, ProductionOrder, SalesCommission, SalaryPayment, Expense } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import IncomeExpenseChart from "../income-expense-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRange } from "react-day-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function IncomeExpenseDataTable({ dateRange }: { dateRange?: DateRange }) {
     const firestore = useFirestore();
@@ -34,6 +35,9 @@ export function IncomeExpenseDataTable({ dateRange }: { dateRange?: DateRange })
     const { data: salaryPayments, isLoading: l4 } = useCollection<SalaryPayment>(salaryCol);
     const { data: salesCommissions, isLoading: l5 } = useCollection<SalesCommission>(commissionCol);
     const { data: expenses, isLoading: l6 } = useCollection<Expense>(expenseCol);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const isLoading = l1 || l2 || l3 || l4 || l5 || l6;
 
@@ -96,9 +100,16 @@ export function IncomeExpenseDataTable({ dateRange }: { dateRange?: DateRange })
         if (dateRange?.to) {
             allItems = allItems.filter(item => new Date(item.date) <= dateRange.to!);
         }
-        return allItems;
+        return allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [invoices, purchaseOrders, productionOrders, salaryPayments, salesCommissions, expenses, dateRange]);
 
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return filteredData.slice(startIndex, endIndex);
+    }, [filteredData, currentPage, rowsPerPage]);
+
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
     const kpiData = useMemo(() => {
         const totalIncome = filteredData.filter(i => i.type === 'Income').reduce((acc, item) => acc + item.amount, 0);
@@ -164,7 +175,7 @@ export function IncomeExpenseDataTable({ dateRange }: { dateRange?: DateRange })
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(item => (
+                            {paginatedData.map(item => (
                                 <TableRow key={`${item.type}-${item.id}`}>
                                     <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
                                     <TableCell>{item.source}</TableCell>
@@ -177,6 +188,55 @@ export function IncomeExpenseDataTable({ dateRange }: { dateRange?: DateRange })
                         </TableBody>
                     </Table>
                 </CardContent>
+                 <CardFooter className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                        Showing <strong>{paginatedData.length}</strong> of <strong>{filteredData.length}</strong> transactions
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                             <p className="text-xs font-medium">Rows per page</p>
+                             <Select
+                                value={`${rowsPerPage}`}
+                                onValueChange={(value) => {
+                                setRowsPerPage(Number(value));
+                                setCurrentPage(1);
+                                }}
+                            >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                <SelectValue placeholder={rowsPerPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                                    {pageSize}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="text-xs font-medium">
+                            Page {currentPage} of {totalPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
         </div>
     );

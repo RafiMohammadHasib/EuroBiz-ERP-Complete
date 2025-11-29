@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { FinishedGood, RawMaterial } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { useSettings } from "@/context/settings-context";
 import InventoryValueChart from "../inventory-value-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SortKeyFg = keyof FinishedGood;
 type SortKeyRm = keyof RawMaterial;
@@ -32,6 +33,10 @@ export function InventoryDataTable() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortConfigFg, setSortConfigFg] = useState<{ key: SortKeyFg, direction: 'asc' | 'desc' } | null>(null);
     const [sortConfigRm, setSortConfigRm] = useState<{ key: SortKeyRm, direction: 'asc' | 'desc' } | null>(null);
+    const [currentPageFg, setCurrentPageFg] = useState(1);
+    const [rowsPerPageFg, setRowsPerPageFg] = useState(10);
+    const [currentPageRm, setCurrentPageRm] = useState(1);
+    const [rowsPerPageRm, setRowsPerPageRm] = useState(10);
 
     const isLoading = l1 || l2;
 
@@ -56,6 +61,13 @@ export function InventoryDataTable() {
         }
         return sortableItems.filter(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [safeFg, sortConfigFg, searchTerm]);
+
+    const paginatedFg = useMemo(() => {
+        const startIndex = (currentPageFg - 1) * rowsPerPageFg;
+        const endIndex = startIndex + rowsPerPageFg;
+        return sortedFg.slice(startIndex, endIndex);
+    }, [sortedFg, currentPageFg, rowsPerPageFg]);
+    const totalPagesFg = Math.ceil(sortedFg.length / rowsPerPageFg);
     
     const sortedRm = useMemo(() => {
         let sortableItems = [...safeRm];
@@ -69,6 +81,13 @@ export function InventoryDataTable() {
         }
         return sortableItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [safeRm, sortConfigRm, searchTerm]);
+
+    const paginatedRm = useMemo(() => {
+        const startIndex = (currentPageRm - 1) * rowsPerPageRm;
+        const endIndex = startIndex + rowsPerPageRm;
+        return sortedRm.slice(startIndex, endIndex);
+    }, [sortedRm, currentPageRm, rowsPerPageRm]);
+    const totalPagesRm = Math.ceil(sortedRm.length / rowsPerPageRm);
 
 
     const handleExport = (type: 'fg' | 'rm') => {
@@ -171,7 +190,7 @@ export function InventoryDataTable() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {sortedFg.map(item => (
+                                    {paginatedFg.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell>{item.productName}</TableCell>
                                             <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
@@ -182,6 +201,55 @@ export function InventoryDataTable() {
                                 </TableBody>
                             </Table>
                         </CardContent>
+                         <CardFooter className="flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground">
+                                Showing <strong>{paginatedFg.length}</strong> of <strong>{sortedFg.length}</strong> products
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                     <p className="text-xs font-medium">Rows per page</p>
+                                     <Select
+                                        value={`${rowsPerPageFg}`}
+                                        onValueChange={(value) => {
+                                        setRowsPerPageFg(Number(value));
+                                        setCurrentPageFg(1);
+                                        }}
+                                    >
+                                        <SelectTrigger className="h-8 w-[70px]">
+                                        <SelectValue placeholder={rowsPerPageFg} />
+                                        </SelectTrigger>
+                                        <SelectContent side="top">
+                                        {[10, 20, 30, 40, 50].map((pageSize) => (
+                                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                                            {pageSize}
+                                            </SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="text-xs font-medium">
+                                    Page {currentPageFg} of {totalPagesFg}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPageFg(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPageFg === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPageFg(prev => Math.min(prev + 1, totalPagesFg))}
+                                        disabled={currentPageFg === totalPagesFg}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
                  <TabsContent value="raw-materials">
@@ -206,7 +274,7 @@ export function InventoryDataTable() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                     {sortedRm.map(item => (
+                                     {paginatedRm.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell>{item.name}</TableCell>
                                             <TableCell>{item.category}</TableCell>
@@ -218,6 +286,55 @@ export function InventoryDataTable() {
                                 </TableBody>
                             </Table>
                         </CardContent>
+                         <CardFooter className="flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground">
+                                Showing <strong>{paginatedRm.length}</strong> of <strong>{sortedRm.length}</strong> materials
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                     <p className="text-xs font-medium">Rows per page</p>
+                                     <Select
+                                        value={`${rowsPerPageRm}`}
+                                        onValueChange={(value) => {
+                                        setRowsPerPageRm(Number(value));
+                                        setCurrentPageRm(1);
+                                        }}
+                                    >
+                                        <SelectTrigger className="h-8 w-[70px]">
+                                        <SelectValue placeholder={rowsPerPageRm} />
+                                        </SelectTrigger>
+                                        <SelectContent side="top">
+                                        {[10, 20, 30, 40, 50].map((pageSize) => (
+                                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                                            {pageSize}
+                                            </SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="text-xs font-medium">
+                                    Page {currentPageRm} of {totalPagesRm}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPageRm(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPageRm === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPageRm(prev => Math.min(prev + 1, totalPagesRm))}
+                                        disabled={currentPageRm === totalPagesRm}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
             </Tabs>
