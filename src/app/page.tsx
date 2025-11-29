@@ -80,6 +80,17 @@ export default function Home() {
 
   const isLoading = invoicesLoading || poLoading || distributorsLoading || suppliersLoading;
 
+  const getStatusVariant = (status: Invoice['status']) => {
+    switch (status) {
+        case 'Paid': return 'secondary';
+        case 'Overdue': return 'destructive';
+        case 'Partially Paid': return 'default';
+        case 'Cancelled': return 'destructive';
+        case 'Unpaid':
+        default: return 'outline';
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -189,6 +200,7 @@ export default function Home() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -196,7 +208,7 @@ export default function Home() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={4} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
@@ -209,9 +221,13 @@ export default function Home() {
                               {invoice.customerEmail}
                           </div>
                       </TableCell>
+                       <TableCell>
+                        <div className="font-medium">{new Date(invoice.date).toLocaleDateString()}</div>
+                        <div className="text-sm text-muted-foreground">{new Date(invoice.date).toLocaleTimeString()}</div>
+                      </TableCell>
                       <TableCell>{currencySymbol}{(invoice.totalAmount ?? 0).toLocaleString()}</TableCell>
                       <TableCell>
-                          <Badge variant={invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Unpaid' ? 'outline' : 'destructive'}>
+                          <Badge variant={getStatusVariant(invoice.status)}>
                             {invoice.status}
                           </Badge>
                       </TableCell>
