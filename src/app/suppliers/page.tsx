@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck } from "lucide-react"
@@ -22,6 +23,7 @@ import { collection, addDoc, doc, deleteDoc, updateDoc } from "firebase/firestor
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 export default function SuppliersPage() {
@@ -37,6 +39,8 @@ export default function SuppliersPage() {
     const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
     const [supplierToEdit, setSupplierToEdit] = useState<Supplier | null>(null);
     const { toast } = useToast();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const supplierData = useMemo(() => {
         if (!suppliers || !purchaseOrders) return [];
@@ -49,6 +53,14 @@ export default function SuppliersPage() {
             }
         });
     }, [suppliers, purchaseOrders]);
+
+    const paginatedSuppliers = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return supplierData.slice(startIndex, endIndex);
+    }, [supplierData, currentPage, rowsPerPage]);
+
+    const totalPages = Math.ceil(supplierData.length / rowsPerPage);
 
     const isLoading = isLoadingSuppliers || isLoadingPOs;
 
@@ -199,7 +211,7 @@ export default function SuppliersPage() {
                             <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                         </TableRow>
                     ) : (
-                        supplierData.map((supplier) => (
+                        paginatedSuppliers.map((supplier) => (
                             <TableRow key={supplier.id}>
                                 <TableCell className="font-medium">{supplier.name}</TableCell>
                                 <TableCell>{supplier.category}</TableCell>
@@ -233,6 +245,55 @@ export default function SuppliersPage() {
                 </TableBody>
             </Table>
         </CardContent>
+         <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedSuppliers.length}</strong> of <strong>{supplierData.length}</strong> suppliers
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
     </div>
     <CreateSupplierDialog

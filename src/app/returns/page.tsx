@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -25,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/context/settings-context';
 import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { CreateSalesReturnDialog } from '@/components/returns/create-sales-return-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SalesReturnPage() {
   const firestore = useFirestore();
@@ -40,10 +42,20 @@ export default function SalesReturnPage() {
   const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
 
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const safeReturns = salesReturns || [];
   const isLoading = returnsLoading || invoicesLoading || productsLoading;
   
+  const paginatedReturns = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return safeReturns.slice(startIndex, endIndex);
+  }, [safeReturns, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(safeReturns.length / rowsPerPage);
+
   const kpiData = useMemo(() => {
     const totalReturnedValue = safeReturns.reduce((acc, r) => acc + r.totalReturnValue, 0);
     const totalReturns = safeReturns.length;
@@ -174,8 +186,8 @@ export default function SalesReturnPage() {
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
-                ) : safeReturns.length > 0 ? (
-                  safeReturns.map((sreturn) => (
+                ) : paginatedReturns.length > 0 ? (
+                  paginatedReturns.map((sreturn) => (
                     <TableRow key={sreturn.id}>
                       <TableCell className="font-medium">{new Date(sreturn.returnDate).toLocaleDateString()}</TableCell>
                       <TableCell>{sreturn.invoiceId}</TableCell>
@@ -194,6 +206,55 @@ export default function SalesReturnPage() {
               </TableBody>
             </Table>
           </CardContent>
+           <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedReturns.length}</strong> of <strong>{safeReturns.length}</strong> returns
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
       </div>
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -33,6 +35,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Expense } from '@/lib/data';
 import { CreateExpenseDialog } from '@/components/expenses/create-expense-dialog';
 import { EditExpenseDialog } from '@/components/expenses/edit-expense-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ExpensesPage() {
   const firestore = useFirestore();
@@ -48,8 +51,18 @@ export default function ExpensesPage() {
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const safeExpenses = expenses || [];
+
+  const paginatedExpenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return safeExpenses.slice(startIndex, endIndex);
+  }, [safeExpenses, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(safeExpenses.length / rowsPerPage);
 
   const kpiData = useMemo(() => {
     const totalExpenses = safeExpenses.reduce((acc, p) => acc + p.amount, 0);
@@ -172,8 +185,8 @@ export default function ExpensesPage() {
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
-                ) : safeExpenses.length > 0 ? (
-                  safeExpenses.map((expense) => (
+                ) : paginatedExpenses.length > 0 ? (
+                  paginatedExpenses.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium">{expense.category}</TableCell>
@@ -204,6 +217,55 @@ export default function ExpensesPage() {
               </TableBody>
             </Table>
           </CardContent>
+           <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedExpenses.length}</strong> of <strong>{safeExpenses.length}</strong> expenses
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
       </div>
 

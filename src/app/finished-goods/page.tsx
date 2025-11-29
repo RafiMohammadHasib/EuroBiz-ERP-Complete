@@ -1,13 +1,14 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -28,6 +29,7 @@ import { useSettings } from '@/context/settings-context';
 import { cn } from '@/lib/utils';
 import { EditSellingPriceDialog } from '@/components/finished-goods/edit-selling-price-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function FinishedGoodsPage() {
   const firestore = useFirestore();
@@ -40,9 +42,19 @@ export default function FinishedGoodsPage() {
   const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
   
   const [itemToEdit, setItemToEdit] = useState<FinishedGood | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const safeFinishedGoods = finishedGoods || [];
   const safeRawMaterials = rawMaterials || [];
+  
+  const paginatedFinishedGoods = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return safeFinishedGoods.slice(startIndex, endIndex);
+  }, [safeFinishedGoods, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(safeFinishedGoods.length / rowsPerPage);
 
   const totalInventoryValue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
   const potentialRevenue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
@@ -143,7 +155,7 @@ export default function FinishedGoodsPage() {
                     <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
               ) : (
-                safeFinishedGoods.map((item) => (
+                paginatedFinishedGoods.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       <Collapsible>
@@ -203,6 +215,55 @@ export default function FinishedGoodsPage() {
               </TableBody>
           </Table>
         </CardContent>
+         <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedFinishedGoods.length}</strong> of <strong>{safeFinishedGoods.length}</strong> products
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
       </Card>
     </div>
     {itemToEdit && (

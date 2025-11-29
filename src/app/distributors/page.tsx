@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award, Mail, Phone, CreditCard, Percent } from "lucide-react"
@@ -19,6 +20,7 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function DistributorsPage() {
     const firestore = useFirestore();
@@ -34,6 +36,8 @@ export default function DistributorsPage() {
     
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
     const { toast } = useToast();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     
     const isLoading = distributorsLoading || invoicesLoading || scLoading;
 
@@ -60,6 +64,13 @@ export default function DistributorsPage() {
         });
     }, [distributors, invoices, salesCommissions]);
 
+    const paginatedDistributors = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return distributorData.slice(startIndex, endIndex);
+    }, [distributorData, currentPage, rowsPerPage]);
+
+    const totalPages = Math.ceil(distributorData.length / rowsPerPage);
 
     const totalDistributors = distributorData.length;
     const totalSales = distributorData.reduce((acc, dist) => acc + dist.totalSales, 0);
@@ -174,7 +185,7 @@ export default function DistributorsPage() {
                         <TableCell colSpan={7} className="h-24 text-center">Loading...</TableCell>
                       </TableRow>
                     ) : (
-                      distributorData.map((dist) => (
+                      paginatedDistributors.map((dist) => (
                         <TableRow key={dist.id}>
                             <TableCell className="font-medium">
                                 <div>{dist.name}</div>
@@ -209,6 +220,55 @@ export default function DistributorsPage() {
                 </TableBody>
             </Table>
         </CardContent>
+        <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedDistributors.length}</strong> of <strong>{distributorData.length}</strong> distributors
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
     </div>
     <CreateDistributorDialog 

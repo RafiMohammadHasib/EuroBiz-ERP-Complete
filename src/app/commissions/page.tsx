@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card"
 import {
   Table,
@@ -34,6 +35,7 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CommissionsPage() {
     const firestore = useFirestore();
@@ -50,9 +52,19 @@ export default function CommissionsPage() {
     const [ruleToEdit, setRuleToEdit] = useState<Commission | null>(null);
     const [ruleToDelete, setRuleToDelete] = useState<Commission | null>(null);
     const { toast } = useToast();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const safeCommissions = commissions || [];
     const isLoading = commissionsLoading || fgLoading || distLoading;
+    
+    const paginatedCommissions = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return safeCommissions.slice(startIndex, endIndex);
+    }, [safeCommissions, currentPage, rowsPerPage]);
+
+    const totalPages = Math.ceil(safeCommissions.length / rowsPerPage);
 
     const totalCommissionValue = safeCommissions.reduce((acc, commission) => {
         if (commission.type === 'Percentage') {
@@ -188,7 +200,7 @@ export default function CommissionsPage() {
                     <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
                 ) : (
-                  safeCommissions.map((commission) => (
+                  paginatedCommissions.map((commission) => (
                   <TableRow key={commission.id}>
                       <TableCell className="font-medium">{commission.ruleName}</TableCell>
                       <TableCell>{Array.isArray(commission.appliesTo) ? commission.appliesTo.join(', ') : commission.appliesTo}</TableCell>
@@ -217,6 +229,55 @@ export default function CommissionsPage() {
             </TableBody>
             </Table>
         </CardContent>
+         <CardFooter className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{paginatedCommissions.length}</strong> of <strong>{safeCommissions.length}</strong> rules
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                         <p className="text-xs font-medium">Rows per page</p>
+                         <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                            setRowsPerPage(Number(value));
+                            setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="text-xs font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
     </div>
     <CreateCommissionRuleDialog 
