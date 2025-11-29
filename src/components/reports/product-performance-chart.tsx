@@ -13,7 +13,7 @@ import { Skeleton } from "../ui/skeleton";
 const chartConfig = {
   revenue: {
     label: "Revenue",
-    color: "hsl(var(--chart-4))",
+    color: "hsl(var(--chart-2))",
   },
 };
 

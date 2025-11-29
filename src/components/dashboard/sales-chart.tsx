@@ -14,7 +14,7 @@ import { DateRange } from "react-day-picker";
 const chartConfig = {
   revenue: {
     label: "Revenue",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-1))",
   },
 };
 
