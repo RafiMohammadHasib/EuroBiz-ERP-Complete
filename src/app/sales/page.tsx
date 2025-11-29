@@ -33,7 +33,7 @@ export default function SalesPage() {
   const firestore = useFirestore();
   const { currencySymbol } = useSettings();
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const { data: invoices, isLoading } = useCollection<Invoice & { amount?: number }>(invoicesCollection);
+  const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -42,9 +42,11 @@ export default function SalesPage() {
 
   const kpiData = useMemo(() => {
     const totalRevenue = safeInvoices
-      .reduce((acc, inv) => acc + (inv.paidAmount ?? 0), 0);
+      .filter(inv => inv.status === 'Paid')
+      .reduce((acc, inv) => acc + (inv.totalAmount ?? 0), 0);
 
     const outstandingDues = safeInvoices
+      .filter(inv => inv.status !== 'Paid')
       .reduce((acc, inv) => acc + (inv.dueAmount ?? 0), 0);
 
     const totalInvoices = safeInvoices.length;
@@ -89,7 +91,7 @@ export default function SalesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{currencySymbol}{kpiData.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Total amount received</p>
+              <p className="text-xs text-muted-foreground">Total amount received from paid invoices</p>
             </CardContent>
           </Card>
           <Card>
@@ -177,7 +179,7 @@ export default function SalesPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                {currencySymbol}{(invoice.totalAmount ?? invoice.amount ?? 0).toLocaleString()}
+                                {currencySymbol}{(invoice.totalAmount ?? 0).toLocaleString()}
                             </TableCell>
                             <TableCell className="text-center">
                                 <Link href={`/sales/${invoice.id}`} passHref>

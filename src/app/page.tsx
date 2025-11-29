@@ -32,7 +32,7 @@ export default function Home() {
   const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
 
-  const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice & { amount?: number }>(invoicesCollection);
+  const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
   const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
   const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
@@ -42,8 +42,8 @@ export default function Home() {
   const safeDistributors = distributors || [];
   const safeSuppliers = suppliers || [];
 
-  const totalRevenue = safeInvoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + (i.totalAmount ?? i.amount ?? 0), 0);
-  const outstandingDues = safeInvoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + (i.dueAmount ?? i.amount ?? 0), 0);
+  const totalRevenue = safeInvoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + (i.totalAmount ?? 0), 0);
+  const outstandingDues = safeInvoices.filter(i => i.status !== 'Paid').reduce((acc, i) => acc + (i.dueAmount ?? 0), 0);
   const paidInvoices = safeInvoices.filter(i => i.status === 'Paid').length;
   const uniqueCustomers = new Set(safeInvoices.map(i => i.customer)).size;
   
@@ -178,7 +178,7 @@ export default function Home() {
                               {invoice.customerEmail}
                           </div>
                       </TableCell>
-                      <TableCell>{currencySymbol}{(invoice.totalAmount ?? invoice.amount ?? 0).toLocaleString()}</TableCell>
+                      <TableCell>{currencySymbol}{(invoice.totalAmount ?? 0).toLocaleString()}</TableCell>
                       <TableCell>
                           <Badge variant={invoice.status === 'Paid' ? 'secondary' : invoice.status === 'Unpaid' ? 'outline' : 'destructive'}>
                             {invoice.status}
