@@ -177,7 +177,7 @@ service cloud.firestore {
     match /salespeople/{salespersonId} {
       allow get, update, delete: if isOwner(salespersonId);
       allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
-      allow list: if false; // Disallow listing of all salespeople for privacy.
+      allow list: if isSignedIn();
     }
 
     /**
