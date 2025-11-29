@@ -25,7 +25,7 @@ export default function SalesChart({ dateRange }: { dateRange?: DateRange }) {
   const { data: invoices, isLoading } = useCollection<Invoice>(invoicesCollection);
   
   const filteredInvoices = useMemo(() => {
-    let items = invoices || [];
+    let items = (invoices || []).filter(inv => inv.status !== 'Cancelled');
     if (dateRange?.from) {
       items = items.filter(item => new Date(item.date) >= dateRange.from!);
     }
@@ -45,12 +45,10 @@ export default function SalesChart({ dateRange }: { dateRange?: DateRange }) {
     });
 
     filteredInvoices?.forEach(invoice => {
-      if (invoice.status !== 'Cancelled') {
-        const date = new Date(invoice.date);
-        const month = monthOrder[date.getMonth()];
-        if (month) {
-            monthlyRevenue[month] += invoice.totalAmount;
-        }
+      const date = new Date(invoice.date);
+      const month = monthOrder[date.getMonth()];
+      if (month) {
+          monthlyRevenue[month] += invoice.totalAmount;
       }
     });
 
