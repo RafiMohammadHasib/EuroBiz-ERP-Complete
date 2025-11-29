@@ -123,11 +123,12 @@ export default function SalesPage() {
     
     const batch = writeBatch(firestore);
 
-    // 1. Update invoice status to 'Cancelled'
+    // 1. Update invoice status to 'Cancelled' and zero out amounts
     const invoiceRef = doc(firestore, 'invoices', invoiceToCancel.id);
     batch.update(invoiceRef, { 
         status: 'Cancelled',
-        dueAmount: 0, // No longer due
+        dueAmount: 0,
+        paidAmount: 0, // Also zero out paid amount
     });
 
     // 2. Restock items
@@ -140,13 +141,11 @@ export default function SalesPage() {
         }
     }
 
-    // 3. Optional: Cancel related commissions (can be complex, for now we leave them for audit trail)
-
     try {
         await batch.commit();
         toast({
             title: 'Sale Cancelled',
-            description: `Invoice ${invoiceToCancel.id} has been cancelled and items have been restocked.`
+            description: `Invoice ${invoiceToCancel.id} has been cancelled and its impact has been reversed.`
         });
     } catch (error) {
         console.error("Error cancelling sale: ", error);
@@ -273,7 +272,7 @@ export default function SalesPage() {
                                     <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Details</DropdownMenuItem>
-                                    <DropdownMenuItem disabled={invoice.status === 'Paid' || invoice.status === 'Cancelled'}>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem disabled>Edit</DropdownMenuItem>
                                     <DropdownMenuItem disabled>Generate Invoice</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem 
@@ -313,7 +312,7 @@ export default function SalesPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action will cancel the invoice #{invoiceToCancel?.id} and restock the items. This cannot be undone.
+                    This will cancel the invoice #{invoiceToCancel?.id}, reverse its financial impact, and restock the items. This cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

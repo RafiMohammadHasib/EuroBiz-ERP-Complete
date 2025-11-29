@@ -37,7 +37,7 @@ export default function Home() {
   const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
   const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
 
-  const safeInvoices = invoices || [];
+  const safeInvoices = invoices?.filter(inv => inv.status !== 'Cancelled') || [];
   const safePOs = purchaseOrders || [];
   const safeDistributors = distributors || [];
   const safeSuppliers = suppliers || [];
