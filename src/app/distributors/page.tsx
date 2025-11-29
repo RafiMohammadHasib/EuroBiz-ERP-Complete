@@ -43,13 +43,13 @@ export default function DistributorsPage() {
             const distributorInvoices = invoices.filter(inv => inv.customer === dist.name);
             const totalSales = distributorInvoices
                 .filter(inv => inv.status === 'Paid')
-                .reduce((acc, inv) => acc + inv.totalAmount, 0);
+                .reduce((acc, inv) => acc + (inv.totalAmount ?? 0), 0);
             
-            const outstandingDues = distributorInvoices.reduce((acc, inv) => acc + inv.dueAmount, 0);
+            const outstandingDues = distributorInvoices.reduce((acc, inv) => acc + (inv.dueAmount ?? 0), 0);
 
             const totalCommission = salesCommissions
                 .filter(sc => sc.distributionChannelId === dist.id)
-                .reduce((acc, sc) => acc + sc.commissionAmount, 0);
+                .reduce((acc, sc) => acc + (sc.commissionAmount ?? 0), 0);
 
             return {
                 ...dist,
