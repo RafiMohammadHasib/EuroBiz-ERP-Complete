@@ -121,14 +121,13 @@ export default function FinishedGoodsPage() {
         <CardHeader>
           <CardTitle>Finished Goods Inventory</CardTitle>
           <CardDescription>
-            Manage your inventory of finished products. Click a row to see its formula.
+            Manage your inventory of finished products. Click the arrow to see a product's formula.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12"></TableHead>
                 <TableHead>Product Name</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Unit Cost</TableHead>
@@ -141,47 +140,24 @@ export default function FinishedGoodsPage() {
               <TableBody>
               {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
+                    <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                   </TableRow>
               ) : (
                 safeFinishedGoods.map((item) => (
-                  <Collapsible key={item.id} asChild>
-                    <>
-                      <TableRow>
-                        <TableCell>
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      <Collapsible>
+                        <div className='flex items-center gap-2'>
                           <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="w-9 p-0 data-[state=open]:-rotate-180">
+                             <Button variant="ghost" size="sm" className="w-9 p-0 data-[state=open]:-rotate-180">
                               <ChevronDown className="h-4 w-4" />
                               <span className="sr-only">Toggle</span>
                             </Button>
                           </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
-                        <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          {item.sellingPrice ? `${currencySymbol}${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => setItemToEdit(item)}>Edit Selling Price</DropdownMenuItem>
-                              <DropdownMenuItem>View History</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                      <CollapsibleContent asChild>
-                        <TableRow className="bg-muted/50">
-                          <TableCell colSpan={6} className="p-0">
-                            <div className="p-4 pl-16">
+                          <span>{item.productName}</span>
+                        </div>
+                        <CollapsibleContent>
+                           <div className="p-4 pl-12 bg-muted/50 rounded-md mt-2">
                               <h4 className="font-semibold text-sm mb-2">Production Formula:</h4>
                               {item.components && item.components.length > 0 ? (
                                 <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
@@ -198,11 +174,30 @@ export default function FinishedGoodsPage() {
                                 <p className="text-sm text-muted-foreground">No formula defined for this product.</p>
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </TableCell>
+                    <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      {item.sellingPrice ? `${currencySymbol}${item.sellingPrice.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setItemToEdit(item)}>Edit Selling Price</DropdownMenuItem>
+                          <DropdownMenuItem>View History</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
               </TableBody>
