@@ -44,7 +44,7 @@ export function InvoiceItemForm({ item, products, onChange, onRemove }: InvoiceI
   const total = item.quantity * item.unitPrice;
 
   return (
-    <div className="grid grid-cols-[3fr_1fr_1fr_1fr_auto] gap-2 items-center">
+    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center p-2 border-b">
       <Select value={item.description} onValueChange={handleProductChange}>
         <SelectTrigger>
           <SelectValue placeholder="Select a product" />
@@ -67,13 +67,12 @@ export function InvoiceItemForm({ item, products, onChange, onRemove }: InvoiceI
         className="text-right"
       />
       <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{currencySymbol}</span>
           <Input
             type="number"
             placeholder="Price"
             value={item.unitPrice}
             onChange={handlePriceChange}
-            className="pl-8 text-right"
+            className="text-right"
           />
       </div>
       <div className="text-right font-medium pr-2">{currencySymbol}{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>

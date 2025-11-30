@@ -298,7 +298,13 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                 </Card>
 
                 <Card className="p-6">
-                    <div className="grid grid-cols-[3fr_1fr_1fr_1fr_auto] gap-2 text-sm font-bold text-blue-800 mb-2">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">Line Items</h3>
+                        <Button variant="default" size="sm" onClick={handleAddItem}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+                        </Button>
+                    </div>
+                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 text-sm font-bold text-muted-foreground mb-2 px-2">
                         <Label>DESCRIPTION</Label>
                         <Label className="text-right">QTY</Label>
                         <Label className="text-right">PRICE</Label>
@@ -316,9 +322,6 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                             />
                         ))}
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-4">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Item
-                    </Button>
                 </Card>
 
 
