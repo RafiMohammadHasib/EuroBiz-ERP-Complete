@@ -286,7 +286,7 @@ export default function SalesPage() {
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Sale Details</DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href={`/sales/${invoice.id}`} passHref>View Invoice</Link>
+                                        <Link href={`/sales/invoice/${invoice.id}`} passHref>View Invoice</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem disabled>Edit</DropdownMenuItem>
                                     <DropdownMenuSeparator />
