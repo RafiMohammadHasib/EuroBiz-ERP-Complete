@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,7 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
           body { font-family: 'Inter', sans-serif; }
           @page { size: A4; margin: 0; }
           .invoice-container { 
-            width: 210mm; 
+            width: 100%; 
             min-height: 297mm; 
             padding: 20mm; 
             margin: 0 auto; 
@@ -55,22 +54,22 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
           }
         </style>
       `;
-      document.body.innerHTML = styles + printContents;
+      document.body.innerHTML = styles + `<div class="invoice-container">${printContents}</div>`;
       window.print();
       document.body.innerHTML = originalContents;
-      window.location.reload();
+      window.location.reload(); // Reload to restore scripts and event handlers
     }
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0">
-        <div id="invoice-preview-content">
-          <DialogHeader className="p-6 print:hidden">
+          <DialogHeader className="p-6 pb-0 print:hidden">
             <DialogTitle className="text-2xl">Invoice Preview</DialogTitle>
           </DialogHeader>
-          <div className="p-6 bg-gray-100">
-            <div className="a4-preview mx-auto p-12 border rounded-lg bg-white text-black shadow-lg">
+          <div className="p-6 overflow-y-auto max-h-[80vh]">
+            <div id="invoice-preview-content" className="p-8 border rounded-lg bg-white text-black shadow-lg">
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-teal-600">INVOICE</h2>
@@ -100,8 +99,8 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                         </tr>
                     </thead>
                     <tbody>
-                        {invoice.items.map((item) => (
-                            <tr key={item.id} className="border-b">
+                        {invoice.items.map((item, index) => (
+                            <tr key={index} className="border-b">
                                 <td className="py-2 px-3">{item.description}</td>
                                 <td className="text-right py-2 px-3">{currencySymbol}{item.unitPrice.toFixed(2)}</td>
                                 <td className="text-right py-2 px-3">{item.quantity}</td>
@@ -121,10 +120,10 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                         
                         {payments.length > 0 && (
                             <div className="pt-2">
-                                <p className="font-semibold mb-1">PAYMENTS RECEIVED</p>
+                                <Separator className="bg-gray-300 my-2"/>
                                 {payments.map((p, i) => (
                                     <div key={i} className="flex justify-between items-center text-gray-500">
-                                        <span>{format(p.date, "PP")} ({p.method})</span>
+                                        <span>Payment ({format(p.date, "PP")})</span>
                                         <span>-{currencySymbol}{p.amount.toFixed(2)}</span>
                                     </div>
                                 ))}
@@ -136,48 +135,13 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                     </div>
                 </div>
 
-                 <div className="mt-8 pt-4 border-t-2 border-teal-600 flex justify-between text-xs text-white bg-teal-600 -m-12 mt-12 px-12 py-2 rounded-b-lg">
-                   <span>{companyDetails.email}</span>
-                   <span>www.deshchemicals.com</span>
-                </div>
+                 <div className="mt-8 pt-4 border-t-2 border-gray-300 text-xs text-gray-500">
+                    <h4 className="font-semibold text-black mb-1">Notes</h4>
+                    <p>{notes}</p>
+                 </div>
             </div>
           </div>
-           <style jsx global>{`
-                .a4-preview {
-                  width: 210mm;
-                  min-height: 297mm;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: space-between;
-                }
-                @media print {
-                    @page {
-                        size: A4;
-                        margin: 0;
-                    }
-                    body {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-                    body * {
-                        visibility: hidden;
-                    }
-                    #invoice-preview-content, #invoice-preview-content * {
-                        visibility: visible;
-                    }
-                    #invoice-preview-content {
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                    }
-                    .a4-preview {
-                        box-shadow: none;
-                        border: none;
-                    }
-                }
-            `}</style>
-        </div>
+       
         <DialogFooter className="p-6 pt-0 print:hidden">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
           <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
