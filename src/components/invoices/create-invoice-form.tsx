@@ -30,6 +30,13 @@ interface CreateInvoiceFormProps {
   isLoading: boolean;
 }
 
+type Payment = {
+  amount: number;
+  date: Date;
+  method: 'Cash' | 'Card' | 'Bank Transfer';
+};
+
+
 function InvoiceItemForm({ item, products, onChange, onRemove }: {
     item: Omit<InvoiceItemType, 'id' | 'total'>;
     products: FinishedGood[];
@@ -111,7 +118,6 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   
   const [customerName, setCustomerName] = useState('');
   const [items, setItems] = useState<Omit<InvoiceItemType, 'id' | 'total'>[]>([]);
-  const [paidAmount, setPaidAmount] = useState('0');
   const [dateIssued, setDateIssued] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>(() => {
     const date = new Date();
@@ -124,8 +130,12 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   const [terms, setTerms] = useState('The origins of the first constellations date back to their beliefs experiences');
   const [saved, setSaved] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  
-  const [isDrawing, setIsDrawing] = useState(false);
+
+  // State for payments
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [newPaymentAmount, setNewPaymentAmount] = useState('');
+  const [newPaymentDate, setNewPaymentDate] = useState<Date | undefined>(new Date());
+  const [newPaymentMethod, setNewPaymentMethod] = useState<'Cash' | 'Card' | 'Bank Transfer'>('Bank Transfer');
 
 
   const handleItemChange = (index: number, updatedItem: Omit<InvoiceItemType, 'id' | 'total'>) => {
@@ -151,10 +161,27 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
     return { subTotal, totalDiscountValue, taxAmount, grandTotal };
   }, [items, discount, taxRate]);
 
+  const totalPaidAmount = useMemo(() => {
+    return payments.reduce((acc, p) => acc + p.amount, 0);
+  }, [payments]);
+
   const dueAmount = useMemo(() => {
-    const numericPaidAmount = parseFloat(paidAmount) || 0;
-    return grandTotal - numericPaidAmount;
-  }, [grandTotal, paidAmount]);
+    return grandTotal - totalPaidAmount;
+  }, [grandTotal, totalPaidAmount]);
+
+  const handleSavePayment = () => {
+    const amount = parseFloat(newPaymentAmount);
+    if (!newPaymentDate || isNaN(amount) || amount <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Payment',
+        description: 'Please enter a valid date and a positive amount.',
+      });
+      return;
+    }
+    setPayments([...payments, { amount, date: newPaymentDate, method: newPaymentMethod }]);
+    setNewPaymentAmount(''); // Reset for next payment
+  };
 
 
   const handleSubmit = () => {
@@ -167,17 +194,15 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
       return;
     }
     
-    const numericPaidAmount = parseFloat(paidAmount) || 0;
-
     let invoiceStatus: Invoice['status'] = 'Unpaid';
-    if (numericPaidAmount > 0) {
-        if (numericPaidAmount < grandTotal) {
+    if (totalPaidAmount > 0) {
+        if (totalPaidAmount < grandTotal) {
             invoiceStatus = 'Partially Paid';
         } else {
             invoiceStatus = 'Paid';
         }
     }
-     if (grandTotal <= 0 && numericPaidAmount <= 0) {
+     if (grandTotal <= 0 && totalPaidAmount <= 0) {
         invoiceStatus = 'Paid'; // Consider it paid if total is 0
     }
 
@@ -185,8 +210,8 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
       customer: customerName,
       customerEmail: distributors.find(d => d.name === customerName)?.email || '',
       totalAmount: grandTotal,
-      paidAmount: numericPaidAmount,
-      dueAmount: grandTotal - numericPaidAmount,
+      paidAmount: totalPaidAmount,
+      dueAmount: grandTotal - totalPaidAmount,
       status: invoiceStatus,
       date: dateIssued.toISOString(),
       dueDate: dueDate.toISOString(),
@@ -205,25 +230,23 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   const selectedDistributor = useMemo(() => distributors.find(d => d.name === customerName), [customerName, distributors]);
   
   const previewInvoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-      
-      const numericPaidAmount = parseFloat(paidAmount) || 0;
-       let invoiceStatus: Invoice['status'] = 'Unpaid';
-        if (numericPaidAmount > 0) {
-            if (numericPaidAmount < grandTotal) {
-                invoiceStatus = 'Partially Paid';
-            } else {
-                invoiceStatus = 'Paid';
-            }
-        }
-        if (grandTotal <= 0 && numericPaidAmount <= 0) {
-            invoiceStatus = 'Paid';
-        }
+      let invoiceStatus: Invoice['status'] = 'Unpaid';
+      if (totalPaidAmount > 0) {
+          if (totalPaidAmount < grandTotal) {
+              invoiceStatus = 'Partially Paid';
+          } else {
+              invoiceStatus = 'Paid';
+          }
+      }
+      if (grandTotal <= 0 && totalPaidAmount <= 0) {
+          invoiceStatus = 'Paid';
+      }
 
       return {
           customer: customerName || "Select a Customer",
           customerEmail: selectedDistributor?.email || '',
           totalAmount: grandTotal,
-          paidAmount: numericPaidAmount,
+          paidAmount: totalPaidAmount,
           dueAmount: dueAmount,
           status: invoiceStatus,
           date: dateIssued ? dateIssued.toISOString() : new Date().toISOString(),
@@ -234,7 +257,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
               total: item.quantity * item.unitPrice,
           })) : [{id: 'placeholder', description: 'Sample Item', quantity: 1, unitPrice: 100, total: 100}],
       };
-  }, [customerName, selectedDistributor, grandTotal, paidAmount, dueAmount, dateIssued, dueDate, items]);
+  }, [customerName, selectedDistributor, grandTotal, totalPaidAmount, dueAmount, dateIssued, dueDate, items]);
 
   return (
     <>
@@ -433,16 +456,23 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
 
                          <div className="space-y-2 p-4 border rounded-lg bg-white">
                             <p className="text-sm font-medium text-muted-foreground">PAYMENTS RECEIVED</p>
-                            <div className="grid grid-cols-2 gap-4 pt-2">
+                             {payments.map((p, i) => (
+                                <div key={i} className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">{format(p.date, "PPP")} ({p.method})</span>
+                                    <span>{currencySymbol}{p.amount.toFixed(2)}</span>
+                                </div>
+                            ))}
+                            <Separator />
+                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="paidAmount">Amount Paid</Label>
+                                    <Label htmlFor="paidAmount">New Payment</Label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currencySymbol}</span>
                                         <Input
                                             id="paidAmount"
                                             type="number"
-                                            value={paidAmount}
-                                            onChange={(e) => setPaidAmount(e.target.value)}
+                                            value={newPaymentAmount}
+                                            onChange={(e) => setNewPaymentAmount(e.target.value)}
                                             placeholder="0.00"
                                             className="pl-7"
                                         />
@@ -450,7 +480,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="paymentType">Payment Type</Label>
-                                    <Select defaultValue="Bank Transfer">
+                                    <Select value={newPaymentMethod} onValueChange={(value) => setNewPaymentMethod(value as any)}>
                                         <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
@@ -460,6 +490,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                     </Select>
                                 </div>
                             </div>
+                            <Button size="sm" className="w-full mt-2" onClick={handleSavePayment}>Save Payment</Button>
                         </div>
                         
                         <div className="flex justify-between font-bold text-lg pt-4">
