@@ -508,7 +508,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                         
                         <div className="flex justify-between font-bold text-lg pt-4">
                             <span>BALANCE DUE</span>
-                            <span>{currencySymbol}{dueAmount.toFixed(2)}</span>
+                            <span className="text-red-600">{currencySymbol}{dueAmount.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -522,6 +522,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
             isOpen={isPreviewOpen}
             onOpenChange={setIsPreviewOpen}
             invoice={previewInvoiceData}
+            distributor={selectedDistributor}
             subTotal={subTotal}
             discount={totalDiscountValue}
             tax={taxAmount}

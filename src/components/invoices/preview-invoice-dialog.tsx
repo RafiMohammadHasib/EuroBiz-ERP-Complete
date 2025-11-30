@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useSettings } from '@/context/settings-context';
-import type { Invoice } from '@/lib/data';
+import type { Invoice, Distributor } from '@/lib/data';
 import { companyDetails } from '@/lib/data';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
@@ -23,6 +24,7 @@ interface PreviewInvoiceDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   invoice: Omit<Invoice, 'id'>;
+  distributor?: Distributor;
   subTotal: number;
   discount: number;
   tax: number;
@@ -31,7 +33,7 @@ interface PreviewInvoiceDialogProps {
   payments: Payment[];
 }
 
-export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, subTotal, discount, tax, notes, terms, payments }: PreviewInvoiceDialogProps) {
+export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributor, subTotal, discount, tax, notes, terms, payments }: PreviewInvoiceDialogProps) {
   const { currencySymbol } = useSettings();
 
   const handlePrint = () => {
@@ -60,8 +62,10 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, subTotal, 
                         <h2 className="text-2xl font-bold text-teal-600">INVOICE</h2>
                         <div className="text-sm text-gray-500">
                             <p>BILL TO</p>
-                            <p className="font-semibold text-black">{invoice.customer}</p>
-                            <p>{invoice.customerEmail}</p>
+                            <p className="font-semibold text-black">{distributor?.name || invoice.customer}</p>
+                            <p>{distributor?.location}</p>
+                            <p>{distributor?.email}</p>
+                            <p>{distributor?.phone}</p>
                         </div>
                     </div>
                     <div className="text-right">
