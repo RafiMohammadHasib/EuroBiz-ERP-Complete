@@ -59,21 +59,22 @@ export function InvoiceItemForm({ item, products, onChange, onRemove }: InvoiceI
       </Select>
       <Input
         type="number"
-        placeholder="Quantity"
+        placeholder="Qty"
         value={item.quantity}
         onChange={handleQuantityChange}
         min="1"
         max={selectedProduct?.quantity}
+        className="text-right"
       />
       <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{currencySymbol}</span>
           <Input
             type="number"
-            placeholder="Unit Price"
+            placeholder="Price"
             value={item.unitPrice}
             onChange={handlePriceChange}
-            className="pl-7"
+            className="pr-8 text-right"
           />
+           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{currencySymbol}</span>
       </div>
       <div className="text-right font-medium pr-2">{currencySymbol}{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
       <Button variant="ghost" size="icon" onClick={onRemove}>

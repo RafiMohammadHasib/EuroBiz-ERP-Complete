@@ -2,13 +2,6 @@
 'use client';
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import type { Invoice, FinishedGood, Distributor, Commission, SalesCommission } from "@/lib/data";
@@ -104,7 +97,7 @@ export default function GenerateInvoicePage() {
         });
         
         const saleAmount = item.quantity * item.unitPrice;
-        const discountAmount = saleAmount * (totalRate / 100);
+        const discountAmount = totalDiscount; // Use the total discount passed
         const netSaleAmount = saleAmount - discountAmount;
         const commissionAmount = netSaleAmount * 0.01; // Example: 1% commission for salesperson on net amount
 
@@ -151,26 +144,12 @@ export default function GenerateInvoicePage() {
   const isLoading = productsLoading || distributorsLoading || commissionsLoading;
 
   return (
-    <>
-    <div className="space-y-6">
-       <Card>
-          <CardHeader>
-            <CardTitle>Generate New Invoice</CardTitle>
-            <CardDescription>
-              Select a distributor and add products to the invoice. Commissions and stock levels will be updated automatically upon generation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <CreateInvoiceForm 
-                distributors={distributors || []}
-                products={products || []}
-                commissionRules={commissionRules || []}
-                onCreateInvoice={addInvoice}
-                isLoading={isLoading || isSaving}
-              />
-          </CardContent>
-        </Card>
-    </div>
-    </>
+    <CreateInvoiceForm 
+        distributors={distributors || []}
+        products={products || []}
+        commissionRules={commissionRules || []}
+        onCreateInvoice={addInvoice}
+        isLoading={isLoading || isSaving}
+    />
   );
 }
