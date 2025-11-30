@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, writeBatch } from "firebase/firestore";
-import type { Invoice, SalesCommission, UserRole, FinishedGood } from "@/lib/data";
+import type { Invoice, SalesCommission, UserRole, FinishedGood, Distributor } from "@/lib/data";
 import {
   Table,
   TableBody,
@@ -41,6 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SalesDetailsDialog } from "@/components/sales/sales-details-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PreviewInvoiceDialog } from "@/components/invoices/preview-invoice-dialog";
 
 
 export default function SalesPage() {
@@ -51,16 +52,19 @@ export default function SalesPage() {
   const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
   const usersCollection = useMemoFirebase(() => collection(firestore, 'salespeople'), [firestore]);
   const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: salesCommissions, isLoading: commissionsLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
   const { data: users, isLoading: usersLoading } = useCollection<UserRole>(usersCollection);
   const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
+  const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceToCancel, setInvoiceToCancel] = useState<Invoice | null>(null);
+  const [invoiceToPreview, setInvoiceToPreview] = useState<Invoice | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -68,7 +72,7 @@ export default function SalesPage() {
   const safeCommissions = salesCommissions || [];
   const safeUsers = users || [];
   
-  const isLoading = invoicesLoading || commissionsLoading || usersLoading || productsLoading;
+  const isLoading = invoicesLoading || commissionsLoading || usersLoading || productsLoading || distributorsLoading;
 
   const invoiceWithSalesperson = useMemo(() => {
     return safeInvoices.map(invoice => {
@@ -171,6 +175,27 @@ export default function SalesPage() {
         setInvoiceToCancel(null);
     }
   }
+
+  const previewInvoiceData = useMemo(() => {
+    if (!invoiceToPreview) return null;
+    
+    const subTotal = invoiceToPreview.items.reduce((acc, item) => acc + item.total, 0);
+    // This is a simplified discount logic for preview. 
+    // The actual discount logic is complex and applied at creation.
+    // For preview, we'll derive it from the total.
+    const derivedDiscount = subTotal - invoiceToPreview.totalAmount;
+
+    return {
+      invoice: invoiceToPreview,
+      distributor: distributors?.find(d => d.name === invoiceToPreview.customer),
+      subTotal: subTotal,
+      discount: derivedDiscount, // This might not be 100% accurate if complex logic was used.
+      tax: 0, // Assuming tax is 0 for now as it's not stored
+      notes: "Thank you for your business!", // Default notes
+      terms: "The origins of the first constellations date back to their beliefs experiences", // Default terms
+      payments: [] // Payment details are not stored on the invoice doc in a way we can list them here.
+    }
+  }, [invoiceToPreview, distributors]);
 
   return (
     <>
@@ -287,9 +312,7 @@ export default function SalesPage() {
                                     <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Sale Details</DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/sales/invoice/${invoice.invoiceNumber}`} passHref>View Invoice</Link>
-                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setInvoiceToPreview(invoice)}>View Invoice</DropdownMenuItem>
                                     <DropdownMenuItem disabled>Edit</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem 
@@ -389,6 +412,20 @@ export default function SalesPage() {
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+    {previewInvoiceData && (
+        <PreviewInvoiceDialog
+            isOpen={!!invoiceToPreview}
+            onOpenChange={() => setInvoiceToPreview(null)}
+            invoice={previewInvoiceData.invoice}
+            distributor={previewInvoiceData.distributor}
+            subTotal={previewInvoiceData.subTotal}
+            discount={previewInvoiceData.discount}
+            tax={previewInvoiceData.tax}
+            notes={previewInvoiceData.notes}
+            terms={previewInvoiceData.terms}
+            payments={previewInvoiceData.payments}
+        />
+    )}
     </>
   );
 }
