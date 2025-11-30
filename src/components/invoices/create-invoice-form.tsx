@@ -232,4 +232,3 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
     </div>
   );
 }
-

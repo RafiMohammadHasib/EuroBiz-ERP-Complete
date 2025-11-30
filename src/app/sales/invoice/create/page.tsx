@@ -13,7 +13,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebas
 import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import type { Invoice, FinishedGood, Distributor, Commission, SalesCommission } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import { CreateInvoiceDialog } from "@/components/invoices/create-invoice-dialog";
+import { CreateInvoiceForm } from "@/components/invoices/create-invoice-form";
 import { useRouter } from "next/navigation";
 
 
@@ -161,7 +161,7 @@ export default function GenerateInvoicePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-              <CreateInvoiceDialog 
+              <CreateInvoiceForm 
                 distributors={distributors || []}
                 products={products || []}
                 commissionRules={commissionRules || []}
