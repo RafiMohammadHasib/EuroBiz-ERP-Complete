@@ -39,25 +39,64 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
     const printContent = document.getElementById('invoice-preview-content');
     if (printContent) {
       const originalContents = document.body.innerHTML;
-      const printContents = printContent.innerHTML;
-      const styles = `
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-          body { font-family: 'Inter', sans-serif; }
-          @page { size: A4; margin: 0; }
-          .invoice-container { 
-            width: 100%; 
-            min-height: 297mm; 
-            padding: 20mm; 
-            margin: 0 auto; 
-            box-sizing: border-box;
+      
+      // Clone the content to avoid altering the live DOM
+      const printClone = printContent.cloneNode(true) as HTMLElement;
+      
+      // Get all stylesheets from the main document
+      const stylesheets = Array.from(document.styleSheets)
+        .map(sheet => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('');
+          } catch (e) {
+            // Some stylesheets may have cross-origin restrictions
+            console.warn('Could not read stylesheet: ', sheet.href);
+            return '';
           }
-        </style>
-      `;
-      document.body.innerHTML = styles + `<div class="invoice-container">${printContents}</div>`;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); // Reload to restore scripts and event handlers
+        })
+        .join('\\n');
+
+      const printWindow = window.open('', '', 'height=800,width=800');
+      if (printWindow) {
+        printWindow.document.write('<html><head><title>Print Invoice</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write(stylesheets);
+        // Add specific print styles
+        printWindow.document.write(`
+          @media print {
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+              margin: 0;
+            }
+            .invoice-print-container {
+              padding: 20mm;
+              box-sizing: border-box;
+              width: 210mm;
+              height: 297mm;
+            }
+          }
+        `);
+        printWindow.document.write('</style></head><body>');
+        printWindow.document.write('<div class="invoice-print-container">');
+        printWindow.document.write(printClone.innerHTML);
+        printWindow.document.write('</div>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Use a timeout to ensure content is loaded before printing
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      }
     }
   };
 
@@ -65,7 +104,7 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0">
-          <DialogHeader className="p-6 pb-0 print:hidden">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle className="text-2xl">Invoice Preview</DialogTitle>
           </DialogHeader>
           <div className="p-6 overflow-y-auto max-h-[80vh]">
@@ -127,10 +166,10 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                                         <span>-{currencySymbol}{p.amount.toFixed(2)}</span>
                                     </div>
                                 ))}
-                                <Separator className="bg-gray-300 mt-2"/>
                             </div>
                         )}
                         
+                        <Separator className="bg-gray-300 mt-2"/>
                         <div className="flex justify-between text-base font-bold mt-2 text-red-600"><span>AMOUNT DUE</span><span>{currencySymbol}{invoice.dueAmount.toFixed(2)}</span></div>
                     </div>
                 </div>
@@ -142,7 +181,7 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
             </div>
           </div>
        
-        <DialogFooter className="p-6 pt-0 print:hidden">
+        <DialogFooter className="p-6 pt-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
           <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
         </DialogFooter>
