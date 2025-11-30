@@ -469,9 +469,9 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                 <Label>SIGNATURE</Label>
                                  <canvas
                                     ref={signatureCanvasRef}
-                                    width="250"
-                                    height="100"
-                                    className="border rounded-md bg-white cursor-crosshair"
+                                    width={250}
+                                    height={100}
+                                    className="border rounded-md bg-white cursor-crosshair w-full"
                                     onMouseDown={startDrawing}
                                     onMouseMove={draw}
                                     onMouseUp={stopDrawing}
