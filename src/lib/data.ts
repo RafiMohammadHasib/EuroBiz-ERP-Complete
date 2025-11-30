@@ -2,6 +2,7 @@
 
 
 
+
 export type Invoice = {
   id: string;
   customer: string;
@@ -38,10 +39,10 @@ export type InvoiceItem = {
 }
 
 export const companyDetails = {
-    name: 'EuroBiz',
-    address: 'House 123, Road 45, Gulshan 2, Dhaka 1212, Bangladesh',
-    email: 'contact@eurobiz.com',
-    phone: '+880 1712 345678',
+    name: 'Desh Chemicals',
+    address: 'Tegharia, West Keraniganj, Dhaka',
+    email: 'info@deshchemicals.com',
+    phone: '+880 1332-854803',
     logoUrl: '/logo.png'
 }
 
