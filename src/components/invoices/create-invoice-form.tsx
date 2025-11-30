@@ -380,7 +380,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                         ))}
                     </div>
                 </Card>
-                
+
                 <Separator className="my-6" />
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -433,23 +433,25 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
 
                          <div className="space-y-2 p-4 border rounded-lg bg-white">
                             <p className="text-sm font-medium text-muted-foreground">PAYMENTS RECEIVED</p>
-                             <Card className="p-4">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-semibold">New Payment</p>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6"><X className="h-4 w-4" /></Button>
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="paidAmount">Amount Paid</Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currencySymbol}</span>
+                                        <Input
+                                            id="paidAmount"
+                                            type="number"
+                                            value={paidAmount}
+                                            onChange={(e) => setPaidAmount(e.target.value)}
+                                            placeholder="0.00"
+                                            className="pl-7"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                     <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" className={cn("font-normal bg-white", !dateIssued && "text-muted-foreground")}>
-                                                {dateIssued ? format(dateIssued, "MM/dd/yy") : <span>Pick a date</span>}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dateIssued} onSelect={setDateIssued} /></PopoverContent>
-                                    </Popover>
-                                     <Select defaultValue="Bank Transfer">
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="paymentType">Payment Type</Label>
+                                    <Select defaultValue="Bank Transfer">
+                                        <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
                                             <SelectItem value="Cash">Cash</SelectItem>
@@ -457,12 +459,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="relative mt-2">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currencySymbol}</span>
-                                    <Input className="pl-7" type="number" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} />
-                                </div>
-                                <Button className="w-full mt-3">Save Payment</Button>
-                            </Card>
+                            </div>
                         </div>
                         
                         <div className="flex justify-between font-bold text-lg pt-4">
