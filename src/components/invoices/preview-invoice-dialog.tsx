@@ -50,7 +50,7 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, subTotal, 
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0">
         <div id="invoice-preview-content">
-          <DialogHeader className="p-6">
+          <DialogHeader className="p-6 print:hidden">
             <DialogTitle className="text-2xl">Invoice Preview</DialogTitle>
           </DialogHeader>
           <div className="p-6">
@@ -124,8 +124,24 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, subTotal, 
                 </div>
             </div>
           </div>
+           <style jsx global>{`
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    #invoice-preview-content, #invoice-preview-content * {
+                        visibility: visible;
+                    }
+                    #invoice-preview-content {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                }
+            `}</style>
         </div>
-        <DialogFooter className="p-6 pt-0">
+        <DialogFooter className="p-6 pt-0 print:hidden">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
           <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
         </DialogFooter>
