@@ -159,7 +159,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
         }
     }
      if (grandTotal <= 0 && numericPaidAmount <= 0) {
-        invoiceStatus = 'Paid';
+        invoiceStatus = 'Paid'; // Consider it paid if total is 0
     }
 
     const newInvoice: Omit<Invoice, 'id'> = {
@@ -186,7 +186,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   const selectedDistributor = useMemo(() => distributors.find(d => d.name === customerName), [customerName, distributors]);
 
   return (
-    <div className="bg-muted/30">
+    <div className="bg-[#f1f3f8]">
         <div className="p-4 border-b bg-background">
              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -207,26 +207,26 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
             <div className="space-y-6">
                 <Card className="p-6">
                     <div className="grid grid-cols-2 gap-6">
-                        <div>
-                             <Label className="text-xs text-muted-foreground">FROM (BUSINESS)</Label>
+                        <div style={{ backgroundColor: '#d0d6e7' }} className="p-4 rounded-md">
+                             <Label className="text-xs text-blue-800 font-semibold">FROM (BUSINESS)</Label>
                             <div className="flex items-start gap-4 mt-4">
-                                <div className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-muted-foreground">
+                                <div className="w-24 h-24 border-2 border-dashed border-gray-400 rounded-md flex flex-col items-center justify-center text-muted-foreground bg-white">
                                     <Image src={companyDetails.logoUrl} alt="logo" width={48} height={48} />
                                     <span className='text-xs mt-1'>Logo</span>
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-lg">{companyDetails.name}</p>
-                                    <p className="text-sm text-muted-foreground">Upload a square or landscape logo.</p>
+                                    <p className="font-semibold text-lg text-gray-800">{companyDetails.name}</p>
+                                    <p className="text-sm text-gray-600">Upload a square or landscape logo.</p>
                                 </div>
                             </div>
-                             <div className="text-sm text-muted-foreground mt-4 space-y-2">
-                                <Separator />
+                             <div className="text-sm text-blue-800 mt-4 space-y-2">
+                                <Separator className="bg-blue-200"/>
                                 <p>{companyDetails.email}</p>
-                                <Separator />
+                                <Separator className="bg-blue-200"/>
                                 <p>{companyDetails.address}</p>
-                                 <Separator />
+                                 <Separator className="bg-blue-200"/>
                                 <p>{companyDetails.phone}</p>
-                                 <Separator />
+                                 <Separator className="bg-blue-200"/>
                                 <p>{companyDetails.name}.com</p>
                             </div>
                         </div>
@@ -410,8 +410,8 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                         </div>
 
                          <div className="mt-8 pt-4 border-t-2 border-teal-600 flex justify-between text-xs text-white bg-teal-600 -m-6 px-6 py-2 rounded-b-lg">
-                           <span>info@marblespa.com</span>
-                           <span>www.marblespa.com</span>
+                           <span>info@deshchemicals.com</span>
+                           <span>www.deshchemicals.com</span>
                         </div>
                     </div>
                 </Card>
