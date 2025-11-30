@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
@@ -463,7 +464,19 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                 </div>
                             ))}
                             <Separator />
-                             <div className="grid grid-cols-2 gap-4 pt-2">
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="paymentDate">Date</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn("font-normal bg-white w-full", !newPaymentDate && "text-muted-foreground")}>
+                                                {newPaymentDate ? format(newPaymentDate, "MM/dd/yy") : <span>Pick a date</span>}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={newPaymentDate} onSelect={setNewPaymentDate} /></PopoverContent>
+                                    </Popover>
+                                </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="paidAmount">New Payment</Label>
                                     <div className="relative">
