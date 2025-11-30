@@ -38,7 +38,7 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
           type="search"
           placeholder="Search..."
           className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
-          value={searchQuery}
+          value={searchQuery ?? ''}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
@@ -69,5 +69,3 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
     </header>
   );
 }
-
-    
