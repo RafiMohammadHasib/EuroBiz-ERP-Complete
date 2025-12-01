@@ -52,7 +52,12 @@ export default function DuesPage() {
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
 
-  const outstandingInvoices = useMemo(() => invoices?.filter((i) => i.status !== 'Paid' && i.dueAmount > 0) || [], [invoices]);
+  const outstandingInvoices = useMemo(() => {
+    return (invoices || [])
+        .filter((i) => i.status !== 'Paid' && i.dueAmount > 0)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [invoices]);
+
   const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.dueAmount, 0);
   
   const paginatedOutstandingInvoices = useMemo(() => {
