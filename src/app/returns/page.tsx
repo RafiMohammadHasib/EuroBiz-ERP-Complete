@@ -27,6 +27,7 @@ import { useSettings } from '@/context/settings-context';
 import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { CreateSalesReturnDialog } from '@/components/returns/create-sales-return-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ViewSalesReturnDialog } from '@/components/returns/view-sales-return-dialog';
 
 type SortKey = keyof SalesReturn | 'invoiceNumber';
 
@@ -47,6 +48,7 @@ export default function SalesReturnPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  const [selectedReturn, setSelectedReturn] = useState<(SalesReturn & { invoiceNumber: string }) | null>(null);
 
   const safeReturns = salesReturns || [];
   const safeInvoices = invoices || [];
@@ -242,7 +244,7 @@ export default function SalesReturnPage() {
                       <TableCell>{sreturn.reason}</TableCell>
                       <TableCell className="text-right">{currencySymbol}{sreturn.totalReturnValue.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
-                          <Button variant="outline" size="sm">View Details</Button>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedReturn(sreturn)}>View Details</Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -313,6 +315,13 @@ export default function SalesReturnPage() {
         invoices={invoices || []}
         products={products || []}
       />
+      {selectedReturn && (
+        <ViewSalesReturnDialog
+            isOpen={!!selectedReturn}
+            onOpenChange={() => setSelectedReturn(null)}
+            salesReturn={selectedReturn}
+        />
+      )}
     </>
   );
 }
