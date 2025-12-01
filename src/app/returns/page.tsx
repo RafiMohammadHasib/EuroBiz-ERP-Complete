@@ -28,7 +28,7 @@ import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { CreateSalesReturnDialog } from '@/components/returns/create-sales-return-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type SortKey = keyof SalesReturn;
+type SortKey = keyof SalesReturn | 'invoiceNumber';
 
 export default function SalesReturnPage() {
   const firestore = useFirestore();
@@ -49,14 +49,25 @@ export default function SalesReturnPage() {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safeReturns = salesReturns || [];
+  const safeInvoices = invoices || [];
   const isLoading = returnsLoading || invoicesLoading || productsLoading;
+
+  const returnWithInvoiceNumber = useMemo(() => {
+    return safeReturns.map(sreturn => {
+      const invoice = safeInvoices.find(inv => inv.id === sreturn.invoiceId);
+      return {
+        ...sreturn,
+        invoiceNumber: invoice ? invoice.invoiceNumber : sreturn.invoiceId,
+      };
+    });
+  }, [safeReturns, safeInvoices]);
   
   const sortedReturns = useMemo(() => {
-    let sortableItems = [...safeReturns];
+    let sortableItems = [...returnWithInvoiceNumber];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
-            const aValue = a[sortConfig.key];
-            const bValue = b[sortConfig.key];
+            const aValue = a[sortConfig.key as keyof typeof a];
+            const bValue = b[sortConfig.key as keyof typeof b];
             if (aValue < bValue) {
                 return sortConfig.direction === 'ascending' ? -1 : 1;
             }
@@ -67,7 +78,7 @@ export default function SalesReturnPage() {
         });
     }
     return sortableItems;
-  }, [safeReturns, sortConfig]);
+  }, [returnWithInvoiceNumber, sortConfig]);
   
   const paginatedReturns = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -204,8 +215,8 @@ export default function SalesReturnPage() {
                   <TableHead onClick={() => requestSort('returnDate')}>
                     <div className="flex items-center gap-2 cursor-pointer">Return Date <ArrowUpDown className="h-4 w-4" /></div>
                   </TableHead>
-                  <TableHead onClick={() => requestSort('invoiceId')}>
-                    <div className="flex items-center gap-2 cursor-pointer">Invoice ID <ArrowUpDown className="h-4 w-4" /></div>
+                  <TableHead onClick={() => requestSort('invoiceNumber')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Invoice Number <ArrowUpDown className="h-4 w-4" /></div>
                   </TableHead>
                   <TableHead onClick={() => requestSort('reason')}>
                     <div className="flex items-center gap-2 cursor-pointer">Reason <ArrowUpDown className="h-4 w-4" /></div>
@@ -227,7 +238,7 @@ export default function SalesReturnPage() {
                   paginatedReturns.map((sreturn) => (
                     <TableRow key={sreturn.id}>
                       <TableCell className="font-medium">{new Date(sreturn.returnDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{sreturn.invoiceId}</TableCell>
+                      <TableCell>{sreturn.invoiceNumber}</TableCell>
                       <TableCell>{sreturn.reason}</TableCell>
                       <TableCell className="text-right">{currencySymbol}{sreturn.totalReturnValue.toLocaleString()}</TableCell>
                       <TableCell className="text-right">

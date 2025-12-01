@@ -131,7 +131,7 @@ export function CreateSalesReturnDialog({ isOpen, onOpenChange, onCreate, invoic
                     <SelectContent>
                         {invoices.map(inv => (
                             <SelectItem key={inv.id} value={inv.id}>
-                                {inv.id} ({inv.customer})
+                                {inv.invoiceNumber} ({inv.customer})
                             </SelectItem>
                         ))}
                     </SelectContent>
