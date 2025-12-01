@@ -400,18 +400,10 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                 </Card>
 
                 <div className="grid md:grid-cols-2 gap-6 items-start">
-                    <div className="space-y-6">
-                         <Card className="p-4 grid gap-2">
-                            <Label>TERMS & CONDITIONS</Label>
-                            <div className="text-sm text-muted-foreground pt-2">
-                              <p>{terms}</p>
-                            </div>
-                        </Card>
-                         <Card className="p-4 grid gap-2">
-                            <Label>NOTES / MEMO</Label>
-                            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
-                        </Card>
-                    </div>
+                     <Card className="p-4 grid gap-2">
+                        <Label>NOTES / MEMO</Label>
+                        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    </Card>
                     <div className="space-y-4">
                         <div className="space-y-2 p-4 border rounded-lg bg-white">
                             <div className="flex justify-between items-center">
