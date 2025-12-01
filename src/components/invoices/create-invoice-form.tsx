@@ -27,7 +27,7 @@ interface CreateInvoiceFormProps {
   distributors: Distributor[];
   products: FinishedGood[];
   commissionRules: Commission[];
-  onCreateInvoice: (invoice: Omit<Invoice, 'id'>, totalDiscount: number) => void;
+  onCreateInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>, totalDiscount: number) => void;
   isLoading: boolean;
 }
 
@@ -131,7 +131,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   const [terms, setTerms] = useState('The origins of the first constellations date back to their beliefs experiences');
   const [saved, setSaved] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [invoiceNumber, setInvoiceNumber] = useState('INV-001');
+  const [invoiceNumber, setInvoiceNumber] = useState('INV#...');
 
   // State for payments
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -208,8 +208,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
         invoiceStatus = 'Paid'; // Consider it paid if total is 0
     }
 
-    const newInvoice: Omit<Invoice, 'id'> = {
-      invoiceNumber,
+    const newInvoice: Omit<Invoice, 'id' | 'invoiceNumber'> = {
       customer: customerName,
       customerEmail: distributors.find(d => d.name === customerName)?.email || '',
       totalAmount: grandTotal,
@@ -317,7 +316,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                          <div className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="invoice-number">Invoice Number</Label>
-                                <Input id="invoice-number" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
+                                <Input id="invoice-number" value={invoiceNumber} readOnly disabled />
                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="status">Status</Label>

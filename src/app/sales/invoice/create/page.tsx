@@ -47,8 +47,11 @@ export default function GenerateInvoicePage() {
     const datePrefix = `INV#${year}${month}${day}`;
 
     // Query for invoices from today to find the last sequence number
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
     
     const q = query(
       invoicesCollection, 
