@@ -197,15 +197,12 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
     }
     
     let invoiceStatus: Invoice['status'] = 'Unpaid';
-    if (totalPaidAmount > 0) {
-        if (totalPaidAmount < grandTotal) {
-            invoiceStatus = 'Partially Paid';
-        } else {
-            invoiceStatus = 'Paid';
-        }
-    }
-     if (grandTotal <= 0 && totalPaidAmount <= 0) {
-        invoiceStatus = 'Paid'; // Consider it paid if total is 0
+    if (dueAmount <= 0.001) { // Use a small epsilon for float comparison
+        invoiceStatus = 'Paid';
+    } else if (totalPaidAmount > 0 && totalPaidAmount < grandTotal) {
+        invoiceStatus = 'Partially Paid';
+    } else {
+        invoiceStatus = 'Unpaid';
     }
 
     const newInvoice: Omit<Invoice, 'id' | 'invoiceNumber'> = {
@@ -213,7 +210,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
       customerEmail: distributors.find(d => d.name === customerName)?.email || '',
       totalAmount: grandTotal,
       paidAmount: totalPaidAmount,
-      dueAmount: grandTotal - totalPaidAmount,
+      dueAmount: dueAmount < 0 ? 0 : dueAmount,
       status: invoiceStatus,
       date: dateIssued.toISOString(),
       dueDate: dueDate.toISOString(),
@@ -233,15 +230,10 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   
   const previewInvoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
       let invoiceStatus: Invoice['status'] = 'Unpaid';
-      if (totalPaidAmount > 0) {
-          if (totalPaidAmount < grandTotal) {
-              invoiceStatus = 'Partially Paid';
-          } else {
-              invoiceStatus = 'Paid';
-          }
-      }
-      if (grandTotal <= 0 && totalPaidAmount <= 0) {
+      if (dueAmount <= 0.001) {
           invoiceStatus = 'Paid';
+      } else if (totalPaidAmount > 0 && totalPaidAmount < grandTotal) {
+          invoiceStatus = 'Partially Paid';
       }
 
       return {
@@ -250,7 +242,7 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
           customerEmail: selectedDistributor?.email || '',
           totalAmount: grandTotal,
           paidAmount: totalPaidAmount,
-          dueAmount: dueAmount,
+          dueAmount: dueAmount < 0 ? 0 : dueAmount,
           status: invoiceStatus,
           date: dateIssued ? dateIssued.toISOString() : new Date().toISOString(),
           dueDate: dueDate ? dueDate.toISOString() : new Date().toISOString(),
