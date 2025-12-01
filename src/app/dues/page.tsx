@@ -110,14 +110,19 @@ export default function DuesPage() {
     let items = purchaseOrders?.filter((po) => po.paymentStatus !== 'Paid') || [];
     if (sortConfigPayable !== null) {
         items.sort((a, b) => {
-            if (a[sortConfigPayable.key] < b[sortConfigPayable.key]) {
+            const aValue = a[sortConfigPayable.key];
+            const bValue = b[sortConfigPayable.key];
+
+            if (aValue < bValue) {
                 return sortConfigPayable.direction === 'ascending' ? -1 : 1;
             }
-            if (a[sortConfigPayable.key] > b[sortConfigPayable.key]) {
+            if (aValue > bValue) {
                 return sortConfigPayable.direction === 'ascending' ? 1 : -1;
             }
             return 0;
         });
+    } else {
+      items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
     return items;
   }, [purchaseOrders, sortConfigPayable]);
