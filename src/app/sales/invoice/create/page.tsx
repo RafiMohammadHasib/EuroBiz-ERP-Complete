@@ -126,15 +126,20 @@ export default function GenerateInvoicePage() {
         });
         
         const saleAmount = item.quantity * item.unitPrice;
-        const discountAmount = totalDiscount; // Use the total discount passed
+        // The discount for *this specific item* is its proportion of the subtotal times the total discount
+        const subTotal = newInvoiceData.items.reduce((acc, currentItem) => acc + (currentItem.quantity * currentItem.unitPrice), 0);
+        const itemDiscountProportion = subTotal > 0 ? (saleAmount / subTotal) : 0;
+        const discountAmount = totalDiscount * itemDiscountProportion;
+
         const netSaleAmount = saleAmount - discountAmount;
+        // Commission for salesperson is calculated on the net sale amount AFTER discounts
         const commissionAmount = netSaleAmount * 0.01; // Example: 1% commission for salesperson on net amount
 
         const commissionDoc: Omit<SalesCommission, 'id'> = {
             salespersonId: user.uid,
             productId: product.id,
             distributionChannelId: distributor.id,
-            commissionRate: totalRate, // This now represents total discount rate
+            commissionRate: totalRate, // This is the combined rate of discount rules, not salesperson commission rate
             saleDate: newInvoiceData.date,
             saleAmount: saleAmount,
             discountAmount: discountAmount,
