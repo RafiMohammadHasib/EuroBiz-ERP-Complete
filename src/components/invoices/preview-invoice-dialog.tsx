@@ -146,23 +146,20 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                     </div>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subTotal.toFixed(2)}</span></div>
-                        <div className="flex justify-between"><span>Discount</span><span>{currencySymbol}{discount.toFixed(2)}</span></div>
+                        <div className="flex justify-between"><span>Discount</span><span>-{currencySymbol}{discount.toFixed(2)}</span></div>
                         <div className="flex justify-between"><span>Tax</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>
                         <Separator className="bg-gray-300 my-2"/>
                         <div className="flex justify-between font-bold text-base"><span>Total</span><span>{currencySymbol}{invoice.totalAmount.toFixed(2)}</span></div>
                         
-                        {payments.length > 0 && (
-                            <div className="pt-2">
-                                {payments.map((p, i) => (
-                                    <div key={i} className="flex justify-between items-center text-gray-500">
-                                        <span>Payment ({format(p.date, "PP")})</span>
-                                        <span>-{currencySymbol}{p.amount.toFixed(2)}</span>
-                                    </div>
-                                ))}
+                        {payments.map((p, i) => (
+                            <div key={i} className="flex justify-between items-center text-gray-500">
+                                <span>Payment ({format(p.date, "PP")})</span>
+                                <span>-{currencySymbol}{p.amount.toFixed(2)}</span>
                             </div>
-                        )}
+                        ))}
                         
-                        <Separator className="bg-gray-300 mt-2"/>
+                        {(payments.length > 0) && <Separator className="bg-gray-300 mt-2"/>}
+
                         <div className="flex justify-between text-base font-bold mt-2 text-red-600"><span>AMOUNT DUE</span><span>{currencySymbol}{invoice.dueAmount.toFixed(2)}</span></div>
                     </div>
                 </div>
