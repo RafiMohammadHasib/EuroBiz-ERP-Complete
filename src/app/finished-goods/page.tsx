@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck } from 'lucide-react';
+import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck, ArrowUpDown } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import type { FinishedGood, RawMaterial } from '@/lib/data';
@@ -30,6 +30,8 @@ import { cn } from '@/lib/utils';
 import { EditSellingPriceDialog } from '@/components/finished-goods/edit-selling-price-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type SortKey = keyof FinishedGood;
 
 export default function FinishedGoodsPage() {
   const firestore = useFirestore();
@@ -44,24 +46,52 @@ export default function FinishedGoodsPage() {
   const [itemToEdit, setItemToEdit] = useState<FinishedGood | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safeFinishedGoods = finishedGoods || [];
   const safeRawMaterials = rawMaterials || [];
   
+  const sortedFinishedGoods = useMemo(() => {
+    let sortableItems = [...safeFinishedGoods];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return sortableItems;
+}, [safeFinishedGoods, sortConfig]);
+
   const paginatedFinishedGoods = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return safeFinishedGoods.slice(startIndex, endIndex);
-  }, [safeFinishedGoods, currentPage, rowsPerPage]);
+    return sortedFinishedGoods.slice(startIndex, endIndex);
+  }, [sortedFinishedGoods, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(safeFinishedGoods.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedFinishedGoods.length / rowsPerPage);
 
-  const totalInventoryValue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
-  const potentialRevenue = safeFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
-  const productLines = safeFinishedGoods.length;
-  const totalUnits = safeFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
+  const totalInventoryValue = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const potentialRevenue = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
+  const productLines = sortedFinishedGoods.length;
+  const totalUnits = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
 
   const isLoading = fgLoading || rmLoading;
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleUpdateSellingPrice = async (productId: string, newPrice: number) => {
     if (!firestore) return;
@@ -140,10 +170,18 @@ export default function FinishedGoodsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product Name</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Unit Cost</TableHead>
-                <TableHead className="text-right">Selling Price</TableHead>
+                <TableHead onClick={() => requestSort('productName')}>
+                  <div className="flex items-center gap-2 cursor-pointer">Product Name <ArrowUpDown className="h-4 w-4" /></div>
+                </TableHead>
+                <TableHead className="text-right" onClick={() => requestSort('quantity')}>
+                  <div className="flex items-center justify-end gap-2 cursor-pointer">Quantity <ArrowUpDown className="h-4 w-4" /></div>
+                </TableHead>
+                <TableHead className="text-right" onClick={() => requestSort('unitCost')}>
+                  <div className="flex items-center justify-end gap-2 cursor-pointer">Unit Cost <ArrowUpDown className="h-4 w-4" /></div>
+                </TableHead>
+                <TableHead className="text-right" onClick={() => requestSort('sellingPrice')}>
+                  <div className="flex items-center justify-end gap-2 cursor-pointer">Selling Price <ArrowUpDown className="h-4 w-4" /></div>
+                </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -217,7 +255,7 @@ export default function FinishedGoodsPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedFinishedGoods.length}</strong> of <strong>{safeFinishedGoods.length}</strong> products
+                    Showing <strong>{paginatedFinishedGoods.length}</strong> of <strong>{sortedFinishedGoods.length}</strong> products
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Landmark } from 'lucide-react';
+import { DollarSign, Landmark, ArrowUpDown } from 'lucide-react';
 import { useSettings } from '@/context/settings-context';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
@@ -30,6 +30,10 @@ import type { Invoice, PurchaseOrder } from '@/lib/data';
 import { MakePaymentDialog } from '@/components/dues/make-payment-dialog';
 import { RecordSalePaymentDialog } from '@/components/dues/record-sale-payment-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type SortKeyReceivable = keyof Invoice;
+type SortKeyPayable = keyof PurchaseOrder;
+
 
 export default function DuesPage() {
   const { toast } = useToast();
@@ -43,6 +47,9 @@ export default function DuesPage() {
   const [rowsPerPageReceivable, setRowsPerPageReceivable] = useState(10);
   const [currentPagePayable, setCurrentPagePayable] = useState(1);
   const [rowsPerPagePayable, setRowsPerPagePayable] = useState(10);
+  const [sortConfigReceivable, setSortConfigReceivable] = useState<{ key: SortKeyReceivable; direction: 'ascending' | 'descending' } | null>(null);
+  const [sortConfigPayable, setSortConfigPayable] = useState<{ key: SortKeyPayable; direction: 'ascending' | 'descending' } | null>(null);
+
 
   // Firestore collections
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
@@ -52,11 +59,42 @@ export default function DuesPage() {
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
 
+  const requestSortReceivable = (key: SortKeyReceivable) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfigReceivable && sortConfigReceivable.key === key && sortConfigReceivable.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfigReceivable({ key, direction });
+  };
+  
+  const requestSortPayable = (key: SortKeyPayable) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfigPayable && sortConfigPayable.key === key && sortConfigPayable.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfigPayable({ key, direction });
+  };
+
   const outstandingInvoices = useMemo(() => {
-    return (invoices || [])
-        .filter((i) => i.status !== 'Paid' && i.dueAmount > 0)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [invoices]);
+    let items = (invoices || [])
+        .filter((i) => i.status !== 'Paid' && i.dueAmount > 0);
+    
+    if (sortConfigReceivable !== null) {
+        items.sort((a, b) => {
+            if (a[sortConfigReceivable.key] < b[sortConfigReceivable.key]) {
+                return sortConfigReceivable.direction === 'ascending' ? -1 : 1;
+            }
+            if (a[sortConfigReceivable.key] > b[sortConfigReceivable.key]) {
+                return sortConfigReceivable.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    } else {
+        items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    return items;
+  }, [invoices, sortConfigReceivable]);
 
   const totalSalesDue = outstandingInvoices.reduce((acc, i) => acc + i.dueAmount, 0);
   
@@ -68,7 +106,22 @@ export default function DuesPage() {
   const totalPagesReceivable = Math.ceil(outstandingInvoices.length / rowsPerPageReceivable);
 
 
-  const pendingPurchaseOrders = useMemo(() => purchaseOrders?.filter((po) => po.paymentStatus !== 'Paid') || [], [purchaseOrders]);
+  const pendingPurchaseOrders = useMemo(() => {
+    let items = purchaseOrders?.filter((po) => po.paymentStatus !== 'Paid') || [];
+    if (sortConfigPayable !== null) {
+        items.sort((a, b) => {
+            if (a[sortConfigPayable.key] < b[sortConfigPayable.key]) {
+                return sortConfigPayable.direction === 'ascending' ? -1 : 1;
+            }
+            if (a[sortConfigPayable.key] > b[sortConfigPayable.key]) {
+                return sortConfigPayable.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return items;
+  }, [purchaseOrders, sortConfigPayable]);
+  
   const totalPurchaseDue = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
 
   const paginatedPendingPurchaseOrders = useMemo(() => {
@@ -199,11 +252,19 @@ export default function DuesPage() {
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Invoice ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount Due ({currencySymbol})</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                        <TableHead onClick={() => requestSortReceivable('customer')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Customer <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSortReceivable('id')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Invoice ID <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSortReceivable('status')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Status <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSortReceivable('dueAmount')}>
+                            <div className="flex items-center justify-end gap-2 cursor-pointer">Amount Due ({currencySymbol}) <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -308,10 +369,18 @@ export default function DuesPage() {
                  <Table>
                     <TableHeader>
                         <TableRow>
-                        <TableHead>Supplier</TableHead>
-                        <TableHead>PO ID</TableHead>
-                        <TableHead>Payment Status</TableHead>
-                        <TableHead className="text-right">Amount Due ({currencySymbol})</TableHead>
+                        <TableHead onClick={() => requestSortPayable('supplier')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Supplier <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSortPayable('id')}>
+                             <div className="flex items-center gap-2 cursor-pointer">PO ID <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSortPayable('paymentStatus')}>
+                             <div className="flex items-center gap-2 cursor-pointer">Payment Status <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSortPayable('dueAmount')}>
+                             <div className="flex items-center justify-end gap-2 cursor-pointer">Amount Due ({currencySymbol}) <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>

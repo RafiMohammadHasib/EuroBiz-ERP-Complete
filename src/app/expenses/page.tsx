@@ -26,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Wallet, Receipt, TrendingUp } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Wallet, Receipt, TrendingUp, ArrowUpDown } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,8 @@ import type { Expense } from '@/lib/data';
 import { CreateExpenseDialog } from '@/components/expenses/create-expense-dialog';
 import { EditExpenseDialog } from '@/components/expenses/edit-expense-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type SortKey = keyof Expense;
 
 export default function ExpensesPage() {
   const firestore = useFirestore();
@@ -53,23 +55,51 @@ export default function ExpensesPage() {
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safeExpenses = expenses || [];
+
+  const sortedExpenses = useMemo(() => {
+    let sortableItems = [...safeExpenses];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return sortableItems;
+}, [safeExpenses, sortConfig]);
 
   const paginatedExpenses = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return safeExpenses.slice(startIndex, endIndex);
-  }, [safeExpenses, currentPage, rowsPerPage]);
+    return sortedExpenses.slice(startIndex, endIndex);
+  }, [sortedExpenses, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(safeExpenses.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedExpenses.length / rowsPerPage);
 
   const kpiData = useMemo(() => {
-    const totalExpenses = safeExpenses.reduce((acc, p) => acc + p.amount, 0);
-    const totalTransactions = safeExpenses.length;
+    const totalExpenses = sortedExpenses.reduce((acc, p) => acc + p.amount, 0);
+    const totalTransactions = sortedExpenses.length;
     const avgTransaction = totalTransactions > 0 ? totalExpenses / totalTransactions : 0;
     return { totalExpenses, totalTransactions, avgTransaction };
-  }, [safeExpenses]);
+  }, [sortedExpenses]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
 
   const handleCreateExpense = async (newExpense: Omit<Expense, 'id'>) => {
@@ -171,10 +201,18 @@ export default function ExpensesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead onClick={() => requestSort('date')}>
+                     <div className="flex items-center gap-2 cursor-pointer">Date <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('category')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Category <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('description')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Description <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead className="text-right" onClick={() => requestSort('amount')}>
+                    <div className="flex items-center justify-end gap-2 cursor-pointer">Amount <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -219,7 +257,7 @@ export default function ExpensesPage() {
           </CardContent>
            <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedExpenses.length}</strong> of <strong>{safeExpenses.length}</strong> expenses
+                    Showing <strong>{paginatedExpenses.length}</strong> of <strong>{sortedExpenses.length}</strong> expenses
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

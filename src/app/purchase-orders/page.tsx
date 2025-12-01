@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Package, ShoppingCart, List, CheckCircle, Truck, CreditCard } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Package, ShoppingCart, List, CheckCircle, Truck, CreditCard, ArrowUpDown } from "lucide-react"
 import { type PurchaseOrder, type Supplier, type RawMaterial } from "@/lib/data"
 import {
   DropdownMenu,
@@ -40,6 +40,7 @@ import { MakePaymentDialog } from "@/components/dues/make-payment-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type SortKey = keyof PurchaseOrder;
 
 export default function PurchaseOrdersPage() {
   const firestore = useFirestore();
@@ -59,51 +60,79 @@ export default function PurchaseOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("all");
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safePOs = purchaseOrders || [];
   const safeSuppliers = suppliers || [];
   const safeRawMaterials = rawMaterials || [];
 
-  const sortedPOs = useMemo(() => 
-    safePOs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [safePOs]
-  );
-  
   const getFilteredOrders = (status?: PurchaseOrder['deliveryStatus'], paymentStatus?: PurchaseOrder['paymentStatus']) => {
-    if (!status && !paymentStatus) return sortedPOs;
-    return sortedPOs.filter(o => (status && o.deliveryStatus === status) || (paymentStatus && o.paymentStatus === paymentStatus));
+    let filtered = safePOs;
+    if (status) {
+        filtered = filtered.filter(o => o.deliveryStatus === status);
+    }
+    if (paymentStatus) {
+         filtered = filtered.filter(o => o.paymentStatus === paymentStatus);
+    }
+    return filtered;
   };
 
-  const getPaginatedOrders = (orders: PurchaseOrder[]) => {
-      const startIndex = (currentPage - 1) * rowsPerPage;
-      const endIndex = startIndex + rowsPerPage;
-      return orders.slice(startIndex, endIndex);
+  const allOrders = useMemo(() => getFilteredOrders(), [safePOs]);
+  const pendingOrders = useMemo(() => getFilteredOrders('Pending'), [safePOs]);
+  const receivedOrders = useMemo(() => getFilteredOrders('Received'), [safePOs]);
+  const paidOrders = useMemo(() => getFilteredOrders(undefined, 'Paid'), [safePOs]);
+  
+  const getSortableOrders = (orders: PurchaseOrder[]) => {
+    let sortableItems = [...orders];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return sortableItems;
   }
-
-  const allOrders = sortedPOs;
-  const pendingOrders = getFilteredOrders('Pending');
-  const receivedOrders = getFilteredOrders('Received');
-  const paidOrders = getFilteredOrders(undefined, 'Paid');
 
   let currentOrders: PurchaseOrder[];
+  let totalOrdersCount: number;
   switch(activeTab) {
-    case 'pending': currentOrders = pendingOrders; break;
-    case 'received': currentOrders = receivedOrders; break;
-    case 'paid': currentOrders = paidOrders; break;
-    default: currentOrders = allOrders;
+    case 'pending': currentOrders = getSortableOrders(pendingOrders); totalOrdersCount = pendingOrders.length; break;
+    case 'received': currentOrders = getSortableOrders(receivedOrders); totalOrdersCount = receivedOrders.length; break;
+    case 'paid': currentOrders = getSortableOrders(paidOrders); totalOrdersCount = paidOrders.length; break;
+    default: currentOrders = getSortableOrders(allOrders); totalOrdersCount = allOrders.length;
   }
   
-  const totalPages = Math.ceil(currentOrders.length / rowsPerPage);
-  const paginatedOrders = getPaginatedOrders(currentOrders);
+  const totalPages = Math.ceil(totalOrdersCount / rowsPerPage);
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return currentOrders.slice(startIndex, endIndex);
+  }, [currentOrders, currentPage, rowsPerPage]);
 
-  const totalPOValue = sortedPOs.reduce((sum, order) => sum + order.amount, 0);
-  const pendingShipment = sortedPOs.filter(o => o.deliveryStatus === 'Pending').length;
-  const totalOrders = sortedPOs.length;
-  const totalPaid = sortedPOs.reduce((sum, order) => sum + order.paidAmount, 0);
+
+  const totalPOValue = safePOs.reduce((sum, order) => sum + order.amount, 0);
+  const pendingShipment = safePOs.filter(o => o.deliveryStatus === 'Pending').length;
+  const totalOrders = safePOs.length;
+  const totalPaid = safePOs.reduce((sum, order) => sum + order.paidAmount, 0);
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
 
   const handleMarkAsReceived = async (orderId: string) => {
-    const orderToUpdate = sortedPOs.find(po => po.id === orderId);
+    const orderToUpdate = safePOs.find(po => po.id === orderId);
 
     if (orderToUpdate) {
         try {
@@ -228,7 +257,7 @@ export default function PurchaseOrdersPage() {
     }
   }
 
-  const renderPurchaseOrderTable = (orders: PurchaseOrder[], totalOrdersCount: number) => (
+  const renderPurchaseOrderTable = (orders: PurchaseOrder[], totalCount: number) => (
     <Card>
       <CardHeader>
         <CardTitle>Purchase Orders</CardTitle>
@@ -240,11 +269,11 @@ export default function PurchaseOrdersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Payment Status</TableHead>
-              <TableHead>Delivery Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead onClick={() => requestSort('date')}><div className="flex items-center gap-2 cursor-pointer">Date <ArrowUpDown className="h-4 w-4" /></div></TableHead>
+              <TableHead onClick={() => requestSort('supplier')}><div className="flex items-center gap-2 cursor-pointer">Supplier <ArrowUpDown className="h-4 w-4" /></div></TableHead>
+              <TableHead onClick={() => requestSort('paymentStatus')}><div className="flex items-center gap-2 cursor-pointer">Payment Status <ArrowUpDown className="h-4 w-4" /></div></TableHead>
+              <TableHead onClick={() => requestSort('deliveryStatus')}><div className="flex items-center gap-2 cursor-pointer">Delivery Status <ArrowUpDown className="h-4 w-4" /></div></TableHead>
+              <TableHead className="text-right" onClick={() => requestSort('amount')}><div className="flex items-center justify-end gap-2 cursor-pointer">Amount <ArrowUpDown className="h-4 w-4" /></div></TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -310,7 +339,7 @@ export default function PurchaseOrdersPage() {
       </CardContent>
        <CardFooter className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground">
-                Showing <strong>{orders.length}</strong> of <strong>{totalOrdersCount}</strong> orders
+                Showing <strong>{orders.length}</strong> of <strong>{totalCount}</strong> orders
             </div>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -405,7 +434,7 @@ export default function PurchaseOrdersPage() {
           </CardContent>
         </Card>
       </div>
-      <Tabs defaultValue="all" onValueChange={setActiveTab}>
+      <Tabs defaultValue="all" onValueChange={(value) => {setActiveTab(value); setCurrentPage(1);}}>
         <div className="flex items-center">
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
@@ -425,16 +454,16 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
         <TabsContent value="all" className="mt-4">
-          {renderPurchaseOrderTable(paginatedOrders, allOrders.length)}
+          {renderPurchaseOrderTable(paginatedOrders, totalOrdersCount)}
         </TabsContent>
         <TabsContent value="pending" className="mt-4">
-          {renderPurchaseOrderTable(paginatedOrders, pendingOrders.length)}
+          {renderPurchaseOrderTable(paginatedOrders, totalOrdersCount)}
         </TabsContent>
         <TabsContent value="received" className="mt-4">
-          {renderPurchaseOrderTable(paginatedOrders, receivedOrders.length)}
+          {renderPurchaseOrderTable(paginatedOrders, totalOrdersCount)}
         </TabsContent>
         <TabsContent value="paid" className="mt-4">
-          {renderPurchaseOrderTable(paginatedOrders, paidOrders.length)}
+          {renderPurchaseOrderTable(paginatedOrders, totalOrdersCount)}
         </TabsContent>
       </Tabs>
     </div>

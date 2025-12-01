@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck, ArrowUpDown } from "lucide-react"
 import { type Supplier, type PurchaseOrder } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -25,6 +25,7 @@ import { useSettings } from "@/context/settings-context";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type SortKey = keyof Supplier | 'totalPOValue';
 
 export default function SuppliersPage() {
     const firestore = useFirestore();
@@ -41,6 +42,7 @@ export default function SuppliersPage() {
     const { toast } = useToast();
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
     const supplierData = useMemo(() => {
         if (!suppliers || !purchaseOrders) return [];
@@ -54,20 +56,46 @@ export default function SuppliersPage() {
         });
     }, [suppliers, purchaseOrders]);
 
+    const sortedSuppliers = useMemo(() => {
+        let sortableItems = [...supplierData];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [supplierData, sortConfig]);
+
     const paginatedSuppliers = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return supplierData.slice(startIndex, endIndex);
-    }, [supplierData, currentPage, rowsPerPage]);
+        return sortedSuppliers.slice(startIndex, endIndex);
+    }, [sortedSuppliers, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(supplierData.length / rowsPerPage);
+    const totalPages = Math.ceil(sortedSuppliers.length / rowsPerPage);
 
     const isLoading = isLoadingSuppliers || isLoadingPOs;
 
-    const totalSuppliers = supplierData.length;
-    const activeSuppliers = supplierData.filter(s => s.status === 'Active').length;
-    const totalPOValue = supplierData.reduce((acc, s) => acc + s.totalPOValue, 0);
+    const totalSuppliers = sortedSuppliers.length;
+    const activeSuppliers = sortedSuppliers.filter(s => s.status === 'Active').length;
+    const totalPOValue = sortedSuppliers.reduce((acc, s) => acc + s.totalPOValue, 0);
     const averagePOValue = totalSuppliers > 0 ? totalPOValue / totalSuppliers : 0;
+    
+    const requestSort = (key: SortKey) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
 
     const addSupplier = async (newSupplier: Omit<Supplier, 'id'>) => {
         try {
@@ -196,10 +224,18 @@ export default function SuppliersPage() {
              <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Supplier Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Total PO Value</TableHead>
+                        <TableHead onClick={() => requestSort('name')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Supplier Name <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSort('category')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Category <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSort('status')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Status <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('totalPOValue')}>
+                            <div className="flex items-center justify-end gap-2 cursor-pointer">Total PO Value <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
                         <TableHead>
                             <span className="sr-only">Actions</span>
                         </TableHead>
@@ -247,7 +283,7 @@ export default function SuppliersPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedSuppliers.length}</strong> of <strong>{supplierData.length}</strong> suppliers
+                    Showing <strong>{paginatedSuppliers.length}</strong> of <strong>{sortedSuppliers.length}</strong> suppliers
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

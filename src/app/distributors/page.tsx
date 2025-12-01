@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award, Mail, Phone, CreditCard, Percent } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award, Mail, Phone, CreditCard, Percent, ArrowUpDown } from "lucide-react"
 import { type Distributor, type Invoice, type SalesCommission } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -23,6 +23,8 @@ import { useSettings } from "@/context/settings-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EditDistributorDialog } from "@/components/distributors/edit-distributor-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+type SortKey = keyof Distributor;
 
 export default function DistributorsPage() {
     const firestore = useFirestore();
@@ -42,6 +44,7 @@ export default function DistributorsPage() {
     const { toast } = useToast();
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
     
     const isLoading = distributorsLoading || invoicesLoading || scLoading;
 
@@ -68,18 +71,45 @@ export default function DistributorsPage() {
         });
     }, [distributors, invoices, salesCommissions]);
 
+    const sortedDistributors = useMemo(() => {
+        let sortableItems = [...distributorData];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key as keyof typeof a];
+                const bValue = b[sortConfig.key as keyof typeof b];
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [distributorData, sortConfig]);
+
     const paginatedDistributors = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return distributorData.slice(startIndex, endIndex);
-    }, [distributorData, currentPage, rowsPerPage]);
+        return sortedDistributors.slice(startIndex, endIndex);
+    }, [sortedDistributors, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(distributorData.length / rowsPerPage);
+    const totalPages = Math.ceil(sortedDistributors.length / rowsPerPage);
 
-    const totalDistributors = distributorData.length;
-    const totalSales = distributorData.reduce((acc, dist) => acc + dist.totalSales, 0);
-    const totalDues = distributorData.reduce((acc, dist) => acc + dist.outstandingDues, 0);
-    const totalCommissionsPaid = distributorData.reduce((acc, dist) => acc + dist.totalCommission, 0);
+    const totalDistributors = sortedDistributors.length;
+    const totalSales = sortedDistributors.reduce((acc, dist) => acc + dist.totalSales, 0);
+    const totalDues = sortedDistributors.reduce((acc, dist) => acc + dist.outstandingDues, 0);
+    const totalCommissionsPaid = sortedDistributors.reduce((acc, dist) => acc + dist.totalCommission, 0);
+
+    const requestSort = (key: SortKey) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
 
     const addDistributor = async (newDistributorData: Omit<Distributor, 'id' | 'totalSales' | 'totalCommission' | 'outstandingDues'>) => {
       try {
@@ -219,12 +249,22 @@ export default function DistributorsPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Distributor Name</TableHead>
+                        <TableHead onClick={() => requestSort('name')}>
+                           <div className="flex items-center gap-2 cursor-pointer">Distributor Name <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
                         <TableHead>Contact</TableHead>
-                        <TableHead>Tier</TableHead>
-                        <TableHead className="text-right">Total Sales</TableHead>
-                        <TableHead className="text-right">Outstanding Dues</TableHead>
-                        <TableHead className="text-right">Total Commissions</TableHead>
+                        <TableHead onClick={() => requestSort('tier')}>
+                           <div className="flex items-center gap-2 cursor-pointer">Tier <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('totalSales')}>
+                            <div className="flex items-center justify-end gap-2 cursor-pointer">Total Sales <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('outstandingDues')}>
+                            <div className="flex items-center justify-end gap-2 cursor-pointer">Outstanding Dues <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('totalCommission')}>
+                            <div className="flex items-center justify-end gap-2 cursor-pointer">Total Commissions <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
                         <TableHead>
                             <span className="sr-only">Actions</span>
                         </TableHead>
@@ -273,7 +313,7 @@ export default function DistributorsPage() {
         </CardContent>
         <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedDistributors.length}</strong> of <strong>{distributorData.length}</strong> distributors
+                    Showing <strong>{paginatedDistributors.length}</strong> of <strong>{sortedDistributors.length}</strong> distributors
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Undo2, Box, Package, FileText } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Undo2, Box, Package, FileText, ArrowUpDown } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, writeBatch, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,8 @@ import { useSettings } from '@/context/settings-context';
 import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { CreateSalesReturnDialog } from '@/components/returns/create-sales-return-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type SortKey = keyof SalesReturn;
 
 export default function SalesReturnPage() {
   const firestore = useFirestore();
@@ -44,25 +46,52 @@ export default function SalesReturnPage() {
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safeReturns = salesReturns || [];
   const isLoading = returnsLoading || invoicesLoading || productsLoading;
   
+  const sortedReturns = useMemo(() => {
+    let sortableItems = [...safeReturns];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return sortableItems;
+  }, [safeReturns, sortConfig]);
+  
   const paginatedReturns = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return safeReturns.slice(startIndex, endIndex);
-  }, [safeReturns, currentPage, rowsPerPage]);
+    return sortedReturns.slice(startIndex, endIndex);
+  }, [sortedReturns, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(safeReturns.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedReturns.length / rowsPerPage);
 
   const kpiData = useMemo(() => {
-    const totalReturnedValue = safeReturns.reduce((acc, r) => acc + r.totalReturnValue, 0);
-    const totalReturns = safeReturns.length;
-    const totalItemsReturned = safeReturns.reduce((acc, r) => acc + r.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
+    const totalReturnedValue = sortedReturns.reduce((acc, r) => acc + r.totalReturnValue, 0);
+    const totalReturns = sortedReturns.length;
+    const totalItemsReturned = sortedReturns.reduce((acc, r) => acc + r.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
 
     return { totalReturnedValue, totalReturns, totalItemsReturned };
-  }, [safeReturns]);
+  }, [sortedReturns]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleCreateReturn = async (newReturn: Omit<SalesReturn, 'id'>) => {
     if (!firestore) return;
@@ -172,10 +201,18 @@ export default function SalesReturnPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Return Date</TableHead>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="text-right">Return Value</TableHead>
+                  <TableHead onClick={() => requestSort('returnDate')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Return Date <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('invoiceId')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Invoice ID <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('reason')}>
+                    <div className="flex items-center gap-2 cursor-pointer">Reason <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead className="text-right" onClick={() => requestSort('totalReturnValue')}>
+                    <div className="flex items-center justify-end gap-2 cursor-pointer">Return Value <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -208,7 +245,7 @@ export default function SalesReturnPage() {
           </CardContent>
            <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedReturns.length}</strong> of <strong>{safeReturns.length}</strong> returns
+                    Showing <strong>{paginatedReturns.length}</strong> of <strong>{sortedReturns.length}</strong> returns
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

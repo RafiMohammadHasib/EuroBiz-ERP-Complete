@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Percent, BarChart } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Percent, BarChart, ArrowUpDown } from "lucide-react"
 import { type Commission, type FinishedGood, type Distributor } from "@/lib/data"
 import {
   DropdownMenu,
@@ -36,6 +36,8 @@ import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestor
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type SortKey = keyof Commission;
 
 export default function CommissionsPage() {
     const firestore = useFirestore();
@@ -54,19 +56,39 @@ export default function CommissionsPage() {
     const { toast } = useToast();
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
     const safeCommissions = commissions || [];
     const isLoading = commissionsLoading || fgLoading || distLoading;
+
+    const sortedCommissions = useMemo(() => {
+        let sortableItems = [...safeCommissions];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [safeCommissions, sortConfig]);
     
     const paginatedCommissions = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return safeCommissions.slice(startIndex, endIndex);
-    }, [safeCommissions, currentPage, rowsPerPage]);
+        return sortedCommissions.slice(startIndex, endIndex);
+    }, [sortedCommissions, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(safeCommissions.length / rowsPerPage);
+    const totalPages = Math.ceil(sortedCommissions.length / rowsPerPage);
 
-    const totalCommissionValue = safeCommissions.reduce((acc, commission) => {
+    const totalCommissionValue = sortedCommissions.reduce((acc, commission) => {
         if (commission.type === 'Percentage') {
             // This is an estimation. A real calculation would need sales data.
             return acc + (10000 * (commission.rate / 100)); 
@@ -74,7 +96,16 @@ export default function CommissionsPage() {
         return acc + commission.rate;
     }, 0);
 
-    const averageCommissionRate = safeCommissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
+    const averageCommissionRate = sortedCommissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
+
+    const requestSort = (key: SortKey) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
 
     const addCommissionRule = async (newRule: Omit<Commission, 'id'>) => {
       if (!commissionsCollection) return;
@@ -185,13 +216,29 @@ export default function CommissionsPage() {
             <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead>Rule Name</TableHead>
-                <TableHead>Applies To</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Rate</TableHead>
-                <TableHead>
-                    <span className="sr-only">Actions</span>
-                </TableHead>
+                    <TableHead onClick={() => requestSort('ruleName')}>
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            Rule Name <ArrowUpDown className="h-4 w-4" />
+                        </div>
+                    </TableHead>
+                    <TableHead onClick={() => requestSort('appliesTo')}>
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            Applies To <ArrowUpDown className="h-4 w-4" />
+                        </div>
+                    </TableHead>
+                    <TableHead onClick={() => requestSort('type')}>
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            Type <ArrowUpDown className="h-4 w-4" />
+                        </div>
+                    </TableHead>
+                    <TableHead className="text-right" onClick={() => requestSort('rate')}>
+                         <div className="flex items-center justify-end gap-2 cursor-pointer">
+                            Rate <ArrowUpDown className="h-4 w-4" />
+                        </div>
+                    </TableHead>
+                    <TableHead>
+                        <span className="sr-only">Actions</span>
+                    </TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -231,7 +278,7 @@ export default function CommissionsPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedCommissions.length}</strong> of <strong>{safeCommissions.length}</strong> rules
+                    Showing <strong>{paginatedCommissions.length}</strong> of <strong>{sortedCommissions.length}</strong> rules
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

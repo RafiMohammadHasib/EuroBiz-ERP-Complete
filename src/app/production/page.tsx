@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign, MoreHorizontal } from "lucide-react"
+import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign, MoreHorizontal, ArrowUpDown } from "lucide-react"
 import { type ProductionOrder, type FinishedGood, type RawMaterial } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,8 @@ import { useSettings } from "@/context/settings-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type SortKey = keyof ProductionOrder;
 
 export default function ProductionPage() {
     const firestore = useFirestore();
@@ -39,25 +41,54 @@ export default function ProductionPage() {
     const { toast } = useToast();
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+
 
     const safeProductionOrders = productionOrders || [];
     const safeFinishedGoods = finishedGoods || [];
     const safeRawMaterials = rawMaterials || [];
 
+    const sortedProductionOrders = useMemo(() => {
+        let sortableItems = [...safeProductionOrders];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [safeProductionOrders, sortConfig]);
+
     const paginatedProductionOrders = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return safeProductionOrders.slice(startIndex, endIndex);
-    }, [safeProductionOrders, currentPage, rowsPerPage]);
+        return sortedProductionOrders.slice(startIndex, endIndex);
+    }, [sortedProductionOrders, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(safeProductionOrders.length / rowsPerPage);
+    const totalPages = Math.ceil(sortedProductionOrders.length / rowsPerPage);
 
-    const wipOrders = safeProductionOrders.filter(o => o.status === "In Progress").length;
-    const completedOrders = safeProductionOrders.filter(o => o.status === "Completed").length;
-    const totalProductionCost = safeProductionOrders.reduce((acc, order) => acc + (order.totalCost || 0), 0);
-    const totalUnitsProduced = safeProductionOrders.filter(o => o.status === "Completed").reduce((acc, order) => acc + (order.quantity || 0), 0);
+    const wipOrders = sortedProductionOrders.filter(o => o.status === "In Progress").length;
+    const completedOrders = sortedProductionOrders.filter(o => o.status === "Completed").length;
+    const totalProductionCost = sortedProductionOrders.reduce((acc, order) => acc + (order.totalCost || 0), 0);
+    const totalUnitsProduced = sortedProductionOrders.filter(o => o.status === "Completed").reduce((acc, order) => acc + (order.quantity || 0), 0);
     
     const isLoading = poLoading || fgLoading || rmLoading;
+
+    const requestSort = (key: SortKey) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
 
     const addProductionOrder = async (newOrder: Omit<ProductionOrder, 'id' | 'createdAt'>) => {
       if (!firestore) return;
@@ -208,12 +239,24 @@ export default function ProductionPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead className="text-right">Total Cost</TableHead>
-                        <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Start Date</TableHead>
+                        <TableHead onClick={() => requestSort('productName')}>
+                             <div className="flex items-center gap-2 cursor-pointer">Product <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSort('quantity')}>
+                             <div className="flex items-center gap-2 cursor-pointer">Quantity <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('totalCost')}>
+                             <div className="flex items-center justify-end gap-2 cursor-pointer">Total Cost <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead className="text-right" onClick={() => requestSort('unitCost')}>
+                             <div className="flex items-center justify-end gap-2 cursor-pointer">Unit Cost <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSort('status')}>
+                             <div className="flex items-center gap-2 cursor-pointer">Status <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
+                        <TableHead onClick={() => requestSort('startDate')}>
+                            <div className="flex items-center gap-2 cursor-pointer">Start Date <ArrowUpDown className="h-4 w-4" /></div>
+                        </TableHead>
                         <TableHead>
                             <span className="sr-only">Actions</span>
                         </TableHead>
@@ -273,7 +316,7 @@ export default function ProductionPage() {
         </CardContent>
         <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedProductionOrders.length}</strong> of <strong>{safeProductionOrders.length}</strong> orders
+                    Showing <strong>{paginatedProductionOrders.length}</strong> of <strong>{sortedProductionOrders.length}</strong> orders
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -351,5 +394,3 @@ export default function ProductionPage() {
     </>
   );
 }
-
-    

@@ -26,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark, ArrowUpDown } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,8 @@ import { CreateSalaryPaymentDialog } from '@/components/salaries/create-salary-p
 import { EditSalaryPaymentDialog } from '@/components/salaries/edit-salary-payment-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type SortKey = keyof SalaryPayment;
 
 export default function SalariesPage() {
   const firestore = useFirestore();
@@ -53,20 +55,48 @@ export default function SalariesPage() {
   const [paymentToDelete, setPaymentToDelete] = useState<SalaryPayment | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safePayments = salaryPayments || [];
+
+  const sortedPayments = useMemo(() => {
+    let sortableItems = [...safePayments];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    }
+    return sortableItems;
+}, [safePayments, sortConfig]);
 
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return safePayments.slice(startIndex, endIndex);
-  }, [safePayments, currentPage, rowsPerPage]);
+    return sortedPayments.slice(startIndex, endIndex);
+  }, [sortedPayments, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(safePayments.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedPayments.length / rowsPerPage);
 
-  const totalPaid = safePayments.reduce((acc, p) => acc + p.amount, 0);
-  const totalEmployees = new Set(safePayments.map(p => p.employeeName)).size;
-  const totalTransactions = safePayments.length;
+  const totalPaid = sortedPayments.reduce((acc, p) => acc + p.amount, 0);
+  const totalEmployees = new Set(sortedPayments.map(p => p.employeeName)).size;
+  const totalTransactions = sortedPayments.length;
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleCreatePayment = async (newPayment: Omit<SalaryPayment, 'id'>) => {
     if (!firestore) return;
@@ -167,10 +197,18 @@ export default function SalariesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Payment Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead onClick={() => requestSort('employeeName')}>
+                     <div className="flex items-center gap-2 cursor-pointer">Employee Name <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('position')}>
+                     <div className="flex items-center gap-2 cursor-pointer">Position <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead onClick={() => requestSort('paymentDate')}>
+                     <div className="flex items-center gap-2 cursor-pointer">Payment Date <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
+                  <TableHead className="text-right" onClick={() => requestSort('amount')}>
+                     <div className="flex items-center justify-end gap-2 cursor-pointer">Amount <ArrowUpDown className="h-4 w-4" /></div>
+                  </TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -215,7 +253,7 @@ export default function SalariesPage() {
           </CardContent>
           <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedPayments.length}</strong> of <strong>{safePayments.length}</strong> payments
+                    Showing <strong>{paginatedPayments.length}</strong> of <strong>{sortedPayments.length}</strong> payments
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
