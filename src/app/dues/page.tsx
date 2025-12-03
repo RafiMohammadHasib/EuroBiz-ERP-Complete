@@ -218,6 +218,14 @@ export default function DuesPage() {
   return (
     <>
     <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Outstanding Dues</CardTitle>
+                <CardDescription>
+                Monitor and manage all outstanding payments for sales and purchases.
+                </CardDescription>
+            </CardHeader>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

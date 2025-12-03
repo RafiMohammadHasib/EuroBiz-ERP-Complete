@@ -154,6 +154,12 @@ export default function SalariesPage() {
   return (
     <>
       <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Salary Payments</CardTitle>
+                <CardDescription>Manage and record all salary payments made to employees.</CardDescription>
+            </CardHeader>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -190,10 +196,7 @@ export default function SalariesPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Salary Payments</CardTitle>
-                <CardDescription>Manage and record all salary payments made to employees.</CardDescription>
-              </div>
+              <h2 className="text-lg font-semibold">Payment History</h2>
                 <div className="flex items-center gap-2">
                      <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

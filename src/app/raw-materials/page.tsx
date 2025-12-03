@@ -149,6 +149,14 @@ export default function RawMaterialsPage() {
   return (
     <>
     <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Raw Materials</CardTitle>
+                <CardDescription>
+                Manage your inventory of raw materials.
+                </CardDescription>
+            </CardHeader>
+        </Card>
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -197,12 +205,7 @@ export default function RawMaterialsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Raw Materials Inventory</CardTitle>
-              <CardDescription>
-                Manage your inventory of raw materials.
-              </CardDescription>
-            </div>
+            <h2 className="text-lg font-semibold">Raw Materials Inventory</h2>
             <div className="flex items-center gap-2">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

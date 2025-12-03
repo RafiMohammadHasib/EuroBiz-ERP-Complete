@@ -162,9 +162,12 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <DateRangePicker onUpdate={(range) => setDateRange(range.range)} />
+          <p className="text-muted-foreground">An overview of your business performance.</p>
+        </div>
+        <DateRangePicker onUpdate={(range) => setDateRange(range.range)} />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -289,9 +292,3 @@ export default function Home() {
     </div>
   )
 }
-
-    
-
-    
-
-    

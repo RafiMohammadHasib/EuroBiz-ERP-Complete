@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo } from "react";
@@ -238,6 +237,14 @@ export default function SalesPage() {
   return (
     <>
     <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Sales</CardTitle>
+                <CardDescription>
+                Manage your sales, generate invoices, and track payments.
+                </CardDescription>
+            </CardHeader>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

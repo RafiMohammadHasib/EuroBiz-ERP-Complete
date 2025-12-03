@@ -182,6 +182,14 @@ export default function CommissionsPage() {
   return (
     <>
     <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Commission Rules</CardTitle>
+                <CardDescription>
+                Manage product and distribution-based sales commissions.
+                </CardDescription>
+            </CardHeader>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -207,12 +215,7 @@ export default function CommissionsPage() {
         <Card>
         <CardHeader>
             <div className="flex items-center justify-between">
-                <div>
-                    <CardTitle>Commission Rules</CardTitle>
-                    <CardDescription>
-                    Manage product and distribution-based sales commissions.
-                    </CardDescription>
-                </div>
+                <h2 className="text-lg font-semibold">Commission Rules List</h2>
                  <div className="flex items-center gap-2">
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
