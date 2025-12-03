@@ -124,6 +124,20 @@ export default function SettingsPage() {
 
   const totalPagesFormulas = Math.ceil(safeFinishedGoods.length / formulasRowsPerPage);
 
+  // Pagination state for commissions
+  const [commissionsCurrentPage, setCommissionsCurrentPage] = useState(1);
+  const [commissionsRowsPerPage, setCommissionsRowsPerPage] = useState(5);
+
+  const safeCommissions = commissions || [];
+
+  const paginatedCommissions = useMemo(() => {
+    const startIndex = (commissionsCurrentPage - 1) * commissionsRowsPerPage;
+    const endIndex = startIndex + commissionsRowsPerPage;
+    return safeCommissions.slice(startIndex, endIndex);
+  }, [safeCommissions, commissionsCurrentPage, commissionsRowsPerPage]);
+
+  const totalPagesCommissions = Math.ceil(safeCommissions.length / commissionsRowsPerPage);
+
 
   // --- Effects to sync state with data from hooks ---
   useEffect(() => {
@@ -603,16 +617,16 @@ export default function SettingsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {commissionsLoading ? <p>Loading rules...</p> : commissions && commissions.length > 0 ? (
+                    {commissionsLoading ? <p>Loading rules...</p> : paginatedCommissions && paginatedCommissions.length > 0 ? (
                         <div className="space-y-4">
-                            {commissions.map(rule => (
+                            {paginatedCommissions.map(rule => (
                                 <div key={rule.id} className="flex justify-between items-center rounded-lg border p-4">
                                     <div>
                                         <p className="font-semibold">{rule.ruleName}</p>
                                         <p className="text-sm text-muted-foreground">{Array.isArray(rule.appliesTo) ? rule.appliesTo.join(', ') : rule.appliesTo}</p>
                                     </div>
                                     <div className="font-semibold text-primary">
-                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `৳${rule.rate.toLocaleString()}`}
+                                        {rule.type === 'Percentage' ? `${rule.rate}%` : `${currencySymbol}${rule.rate.toLocaleString()}`}
                                     </div>
                                 </div>
                             ))}
@@ -624,6 +638,55 @@ export default function SettingsPage() {
                         </div>
                     )}
                 </CardContent>
+                 <CardFooter className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                        Showing <strong>{paginatedCommissions.length}</strong> of <strong>{safeCommissions.length}</strong> rules
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium">Rows per page</p>
+                            <Select
+                                value={`${commissionsRowsPerPage}`}
+                                onValueChange={(value) => {
+                                    setCommissionsRowsPerPage(Number(value));
+                                    setCommissionsCurrentPage(1);
+                                }}
+                            >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                <SelectValue placeholder={commissionsRowsPerPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                {[5, 10, 15].map((pageSize) => (
+                                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                                    {pageSize}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="text-xs font-medium">
+                            Page {commissionsCurrentPage} of {totalPagesCommissions}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCommissionsCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={commissionsCurrentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCommissionsCurrentPage(prev => Math.min(prev + 1, totalPagesCommissions))}
+                                disabled={commissionsCurrentPage === totalPagesCommissions}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
           </TabsContent>
 
