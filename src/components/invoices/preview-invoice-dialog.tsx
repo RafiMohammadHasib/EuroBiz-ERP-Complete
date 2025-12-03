@@ -98,9 +98,14 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                 <div className="flex justify-between items-start mb-8">
                     <div>
                          {companyDetails.logoUrl && (
-                            <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={80} height={80} className="mb-4" />
+                            <div className="mb-4">
+                                <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={120} height={120} className="object-contain" />
+                            </div>
                         )}
-                        <h2 className="text-2xl font-bold text-teal-600">INVOICE</h2>
+                        <h2 className="text-xl font-bold text-gray-800">{companyDetails.name}</h2>
+                        <p className="text-xs text-gray-500 mt-2">{companyDetails.address}</p>
+                        <p className="text-xs text-gray-500">{companyDetails.email}</p>
+                        <p className="text-xs text-gray-500">{companyDetails.phone}</p>
                         <div className="text-sm text-gray-500 mt-6">
                             <p className="font-semibold text-xs uppercase tracking-wider">BILL TO</p>
                             <p className="font-semibold text-black mt-1">{distributor?.name || invoice.customer}</p>
@@ -108,9 +113,9 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                         </div>
                     </div>
                     <div className="text-right">
-                        <h3 className="font-bold text-lg">{companyDetails.name}</h3>
-                        <p className="text-sm text-gray-500">{invoice.invoiceNumber}</p>
-                        <div className="text-sm text-gray-500 mt-2">
+                        <h3 className="text-3xl font-bold tracking-wider text-gray-700">INVOICE</h3>
+                        <p className="text-sm text-gray-500 mt-1">{invoice.invoiceNumber}</p>
+                        <div className="text-sm text-gray-500 mt-4">
                           <p>Date: {format(new Date(invoice.date), 'yyyy-MM-dd')}</p>
                           <p>Due Date: {format(new Date(invoice.dueDate), 'yyyy-MM-dd')}</p>
                         </div>

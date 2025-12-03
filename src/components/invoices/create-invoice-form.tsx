@@ -304,7 +304,9 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             {companyDetails.logoUrl && (
-                                <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={80} height={80} className="mb-4" />
+                                <div className="mb-4">
+                                    <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={120} height={120} className="object-contain" />
+                                </div>
                             )}
                             <h3 className="font-bold text-lg">{companyDetails.name}</h3>
                              <div className="text-sm text-gray-500 mt-2 space-y-1">

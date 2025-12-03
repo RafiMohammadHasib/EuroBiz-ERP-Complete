@@ -7,19 +7,21 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, Landmark, ArrowLeft, Loader2 } from 'lucide-react';
+import { Printer, Landmark, ArrowLeft, Loader2, User } from 'lucide-react';
 import { useSettings } from '@/context/settings-context';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Invoice } from '@/lib/data';
-import { companyDetails } from '@/lib/data';
+import { companyDetails as initialCompanyDetails } from '@/lib/data';
+import Image from 'next/image';
 
 export default function InvoicePage() {
-  const { currencySymbol } = useSettings();
+  const { currencySymbol, businessSettings } = useSettings();
   const router = useRouter();
   const firestore = useFirestore();
   const params = useParams();
   const id = params.id as string;
+  const companyDetails = businessSettings || initialCompanyDetails;
 
   const invoiceQuery = useMemoFirebase(() => {
     if (!id || !firestore) return null;
@@ -65,10 +67,12 @@ export default function InvoicePage() {
         <CardHeader className="p-6 bg-muted/50 print:bg-transparent">
             <div className="flex justify-between items-start">
                 <div>
-                    <div className="flex items-center gap-3">
-                        <Landmark className="h-8 w-8 text-primary" />
-                        <h2 className="text-2xl font-bold text-primary">{companyDetails.name}</h2>
-                    </div>
+                     {companyDetails.logoUrl && (
+                        <div className="mb-4">
+                            <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={120} height={120} className="object-contain" />
+                        </div>
+                    )}
+                    <h2 className="text-2xl font-bold text-primary">{companyDetails.name}</h2>
                     <p className="text-muted-foreground text-sm mt-2">{companyDetails.address}</p>
                     <p className="text-muted-foreground text-sm">{companyDetails.email}</p>
                     <p className="text-muted-foreground text-sm">{companyDetails.phone}</p>
@@ -82,6 +86,12 @@ export default function InvoicePage() {
                     >
                         {invoice.status}
                     </Badge>
+                     {invoice.salesperson && (
+                        <div className="text-sm text-gray-500 mt-4 flex items-center justify-end gap-2">
+                            <User className="h-4 w-4"/>
+                            <span>{invoice.salesperson}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </CardHeader>
