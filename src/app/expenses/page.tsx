@@ -26,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Wallet, Receipt, TrendingUp, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Wallet, Receipt, TrendingUp, ArrowUpDown, Search } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ import type { Expense } from '@/lib/data';
 import { CreateExpenseDialog } from '@/components/expenses/create-expense-dialog';
 import { EditExpenseDialog } from '@/components/expenses/edit-expense-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 type SortKey = keyof Expense;
 
@@ -56,11 +57,20 @@ export default function ExpensesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const safeExpenses = expenses || [];
 
-  const sortedExpenses = useMemo(() => {
+  const filteredAndSortedExpenses = useMemo(() => {
     let sortableItems = [...safeExpenses];
+
+    if (searchTerm) {
+        sortableItems = sortableItems.filter(expense => 
+            expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (expense.description && expense.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }
+    
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const aValue = a[sortConfig.key];
@@ -76,22 +86,22 @@ export default function ExpensesPage() {
         });
     }
     return sortableItems;
-}, [safeExpenses, sortConfig]);
+}, [safeExpenses, sortConfig, searchTerm]);
 
   const paginatedExpenses = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return sortedExpenses.slice(startIndex, endIndex);
-  }, [sortedExpenses, currentPage, rowsPerPage]);
+    return filteredAndSortedExpenses.slice(startIndex, endIndex);
+  }, [filteredAndSortedExpenses, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(sortedExpenses.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAndSortedExpenses.length / rowsPerPage);
 
   const kpiData = useMemo(() => {
-    const totalExpenses = sortedExpenses.reduce((acc, p) => acc + p.amount, 0);
-    const totalTransactions = sortedExpenses.length;
+    const totalExpenses = filteredAndSortedExpenses.reduce((acc, p) => acc + p.amount, 0);
+    const totalTransactions = filteredAndSortedExpenses.length;
     const avgTransaction = totalTransactions > 0 ? totalExpenses / totalTransactions : 0;
     return { totalExpenses, totalTransactions, avgTransaction };
-  }, [sortedExpenses]);
+  }, [filteredAndSortedExpenses]);
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -191,10 +201,22 @@ export default function ExpensesPage() {
                 <CardTitle>Expense Management</CardTitle>
                 <CardDescription>Record and manage all business operating expenses.</CardDescription>
               </div>
-              <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Record Expense</span>
-              </Button>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by category..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                  <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Record Expense</span>
+                  </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -257,7 +279,7 @@ export default function ExpensesPage() {
           </CardContent>
            <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedExpenses.length}</strong> of <strong>{sortedExpenses.length}</strong> expenses
+                    Showing <strong>{paginatedExpenses.length}</strong> of <strong>{filteredAndSortedExpenses.length}</strong> expenses
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

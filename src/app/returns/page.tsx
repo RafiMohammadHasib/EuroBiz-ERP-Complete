@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Undo2, Box, Package, FileText, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Undo2, Box, Package, FileText, ArrowUpDown, Search } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, writeBatch, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +28,7 @@ import type { SalesReturn, Invoice, FinishedGood } from '@/lib/data';
 import { CreateSalesReturnDialog } from '@/components/returns/create-sales-return-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ViewSalesReturnDialog } from '@/components/returns/view-sales-return-dialog';
+import { Input } from '@/components/ui/input';
 
 type SortKey = keyof SalesReturn | 'invoiceNumber';
 
@@ -49,6 +50,7 @@ export default function SalesReturnPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
   const [selectedReturn, setSelectedReturn] = useState<(SalesReturn & { invoiceNumber: string }) | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const safeReturns = salesReturns || [];
   const safeInvoices = invoices || [];
@@ -64,8 +66,16 @@ export default function SalesReturnPage() {
     });
   }, [safeReturns, safeInvoices]);
   
-  const sortedReturns = useMemo(() => {
+  const filteredAndSortedReturns = useMemo(() => {
     let sortableItems = [...returnWithInvoiceNumber];
+
+    if (searchTerm) {
+        sortableItems = sortableItems.filter(item => 
+            item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.reason.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+    
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const aValue = a[sortConfig.key as keyof typeof a];
@@ -80,23 +90,23 @@ export default function SalesReturnPage() {
         });
     }
     return sortableItems;
-  }, [returnWithInvoiceNumber, sortConfig]);
+  }, [returnWithInvoiceNumber, sortConfig, searchTerm]);
   
   const paginatedReturns = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return sortedReturns.slice(startIndex, endIndex);
-  }, [sortedReturns, currentPage, rowsPerPage]);
+    return filteredAndSortedReturns.slice(startIndex, endIndex);
+  }, [filteredAndSortedReturns, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(sortedReturns.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAndSortedReturns.length / rowsPerPage);
 
   const kpiData = useMemo(() => {
-    const totalReturnedValue = sortedReturns.reduce((acc, r) => acc + r.totalReturnValue, 0);
-    const totalReturns = sortedReturns.length;
-    const totalItemsReturned = sortedReturns.reduce((acc, r) => acc + r.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
+    const totalReturnedValue = filteredAndSortedReturns.reduce((acc, r) => acc + r.totalReturnValue, 0);
+    const totalReturns = filteredAndSortedReturns.length;
+    const totalItemsReturned = filteredAndSortedReturns.reduce((acc, r) => acc + r.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
 
     return { totalReturnedValue, totalReturns, totalItemsReturned };
-  }, [sortedReturns]);
+  }, [filteredAndSortedReturns]);
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -204,10 +214,22 @@ export default function SalesReturnPage() {
                 <CardTitle>Sales Returns</CardTitle>
                 <CardDescription>Manage and process customer returns.</CardDescription>
               </div>
-              <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">New Return</span>
-              </Button>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by invoice # or reason..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                  <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">New Return</span>
+                  </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -258,7 +280,7 @@ export default function SalesReturnPage() {
           </CardContent>
            <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedReturns.length}</strong> of <strong>{sortedReturns.length}</strong> returns
+                    Showing <strong>{paginatedReturns.length}</strong> of <strong>{filteredAndSortedReturns.length}</strong> returns
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

@@ -20,13 +20,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { type RawMaterial } from "@/lib/data"
-import { DollarSign, List, PackageCheck, Archive, PlusCircle, Download, ArrowUpDown } from "lucide-react"
+import { DollarSign, List, PackageCheck, Archive, PlusCircle, Download, ArrowUpDown, Search } from "lucide-react"
 import { CreateRawMaterialDialog } from "@/components/raw-materials/create-raw-material-dialog";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof RawMaterial;
 
@@ -45,11 +46,20 @@ export default function RawMaterialsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const safeRawMaterials = rawMaterials || [];
 
-  const sortedRawMaterials = useMemo(() => {
+  const filteredAndSortedRawMaterials = useMemo(() => {
     let sortableItems = [...safeRawMaterials];
+
+    if (searchTerm) {
+        sortableItems = sortableItems.filter(material =>
+            material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            material.category.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+    
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const aValue = a[sortConfig.key];
@@ -64,20 +74,20 @@ export default function RawMaterialsPage() {
         });
     }
     return sortableItems;
-}, [safeRawMaterials, sortConfig]);
+}, [safeRawMaterials, sortConfig, searchTerm]);
 
   const paginatedRawMaterials = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return sortedRawMaterials.slice(startIndex, endIndex);
-  }, [sortedRawMaterials, currentPage, rowsPerPage]);
+    return filteredAndSortedRawMaterials.slice(startIndex, endIndex);
+  }, [filteredAndSortedRawMaterials, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(sortedRawMaterials.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAndSortedRawMaterials.length / rowsPerPage);
 
-  const totalInventoryValue = sortedRawMaterials.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
-  const materialTypes = sortedRawMaterials.length;
-  const totalUnits = sortedRawMaterials.reduce((acc, item) => acc + item.quantity, 0);
-  const mostStocked = sortedRawMaterials.length > 0 ? sortedRawMaterials.reduce((prev, current) => (prev.quantity > current.quantity) ? prev : current) : null;
+  const totalInventoryValue = filteredAndSortedRawMaterials.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const materialTypes = filteredAndSortedRawMaterials.length;
+  const totalUnits = filteredAndSortedRawMaterials.reduce((acc, item) => acc + item.quantity, 0);
+  const mostStocked = filteredAndSortedRawMaterials.length > 0 ? filteredAndSortedRawMaterials.reduce((prev, current) => (prev.quantity > current.quantity) ? prev : current) : null;
   
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -112,7 +122,7 @@ export default function RawMaterialsPage() {
     const headers = ["ID", "Name", "Category", "Quantity", "Unit", "Unit Cost"];
     const csvRows = [
       headers.join(','),
-      ...sortedRawMaterials.map(material => 
+      ...filteredAndSortedRawMaterials.map(material => 
         [
           material.id,
           `"${material.name.replace(/"/g, '""')}"`,
@@ -194,16 +204,26 @@ export default function RawMaterialsPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search by name or category..."
+                        className="pl-8 w-full"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+              <Button size="sm" variant="outline" className="h-9 gap-1" onClick={handleExport}>
                   <Download className="h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Export to Excel
+                  Export
                   </span>
               </Button>
-              <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
+              <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Add Raw Material
+                  Add Material
                   </span>
               </Button>
             </div>
@@ -249,7 +269,7 @@ export default function RawMaterialsPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedRawMaterials.length}</strong> of <strong>{sortedRawMaterials.length}</strong> materials
+                    Showing <strong>{paginatedRawMaterials.length}</strong> of <strong>{filteredAndSortedRawMaterials.length}</strong> materials
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

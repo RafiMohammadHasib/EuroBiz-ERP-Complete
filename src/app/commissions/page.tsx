@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Percent, BarChart, ArrowUpDown } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Percent, BarChart, ArrowUpDown, Search } from "lucide-react"
 import { type Commission, type FinishedGood, type Distributor } from "@/lib/data"
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestor
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof Commission;
 
@@ -57,12 +58,20 @@ export default function CommissionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const safeCommissions = commissions || [];
     const isLoading = commissionsLoading || fgLoading || distLoading;
 
-    const sortedCommissions = useMemo(() => {
+    const filteredAndSortedCommissions = useMemo(() => {
         let sortableItems = [...safeCommissions];
+        
+        if (searchTerm) {
+            sortableItems = sortableItems.filter(commission =>
+                commission.ruleName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
                 const aValue = a[sortConfig.key];
@@ -78,17 +87,17 @@ export default function CommissionsPage() {
             });
         }
         return sortableItems;
-    }, [safeCommissions, sortConfig]);
+    }, [safeCommissions, sortConfig, searchTerm]);
     
     const paginatedCommissions = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return sortedCommissions.slice(startIndex, endIndex);
-    }, [sortedCommissions, currentPage, rowsPerPage]);
+        return filteredAndSortedCommissions.slice(startIndex, endIndex);
+    }, [filteredAndSortedCommissions, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(sortedCommissions.length / rowsPerPage);
+    const totalPages = Math.ceil(filteredAndSortedCommissions.length / rowsPerPage);
 
-    const totalCommissionValue = sortedCommissions.reduce((acc, commission) => {
+    const totalCommissionValue = filteredAndSortedCommissions.reduce((acc, commission) => {
         if (commission.type === 'Percentage') {
             // This is an estimation. A real calculation would need sales data.
             return acc + (10000 * (commission.rate / 100)); 
@@ -96,7 +105,7 @@ export default function CommissionsPage() {
         return acc + commission.rate;
     }, 0);
 
-    const averageCommissionRate = sortedCommissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
+    const averageCommissionRate = filteredAndSortedCommissions.filter(c => c.type === 'Percentage').reduce((acc, c, _, arr) => arr.length > 0 ? acc + c.rate / arr.length : 0, 0);
 
     const requestSort = (key: SortKey) => {
         let direction: 'ascending' | 'descending' = 'ascending';
@@ -204,12 +213,24 @@ export default function CommissionsPage() {
                     Manage product and distribution-based sales commissions.
                     </CardDescription>
                 </div>
-                <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Rule
-                    </span>
-                </Button>
+                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by rule name..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Add Rule
+                        </span>
+                    </Button>
+                 </div>
             </div>
         </CardHeader>
         <CardContent>
@@ -278,7 +299,7 @@ export default function CommissionsPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedCommissions.length}</strong> of <strong>{sortedCommissions.length}</strong> rules
+                    Showing <strong>{paginatedCommissions.length}</strong> of <strong>{filteredAndSortedCommissions.length}</strong> rules
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

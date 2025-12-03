@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award, Mail, Phone, CreditCard, Percent, ArrowUpDown } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Users, Truck, DollarSign, TrendingUp, Award, Mail, Phone, CreditCard, Percent, ArrowUpDown, Search } from "lucide-react"
 import { type Distributor, type Invoice, type SalesCommission } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -23,6 +23,7 @@ import { useSettings } from "@/context/settings-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EditDistributorDialog } from "@/components/distributors/edit-distributor-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof Distributor;
 
@@ -45,6 +46,7 @@ export default function DistributorsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
     
     const isLoading = distributorsLoading || invoicesLoading || scLoading;
 
@@ -71,8 +73,15 @@ export default function DistributorsPage() {
         });
     }, [distributors, invoices, salesCommissions]);
 
-    const sortedDistributors = useMemo(() => {
+    const filteredAndSortedDistributors = useMemo(() => {
         let sortableItems = [...distributorData];
+        if(searchTerm) {
+            sortableItems = sortableItems.filter(dist => 
+                dist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dist.location.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
                 const aValue = a[sortConfig.key as keyof typeof a];
@@ -88,20 +97,20 @@ export default function DistributorsPage() {
             });
         }
         return sortableItems;
-    }, [distributorData, sortConfig]);
+    }, [distributorData, sortConfig, searchTerm]);
 
     const paginatedDistributors = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return sortedDistributors.slice(startIndex, endIndex);
-    }, [sortedDistributors, currentPage, rowsPerPage]);
+        return filteredAndSortedDistributors.slice(startIndex, endIndex);
+    }, [filteredAndSortedDistributors, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(sortedDistributors.length / rowsPerPage);
+    const totalPages = Math.ceil(filteredAndSortedDistributors.length / rowsPerPage);
 
-    const totalDistributors = sortedDistributors.length;
-    const totalSales = sortedDistributors.reduce((acc, dist) => acc + dist.totalSales, 0);
-    const totalDues = sortedDistributors.reduce((acc, dist) => acc + dist.outstandingDues, 0);
-    const totalCommissionsPaid = sortedDistributors.reduce((acc, dist) => acc + dist.totalCommission, 0);
+    const totalDistributors = filteredAndSortedDistributors.length;
+    const totalSales = filteredAndSortedDistributors.reduce((acc, dist) => acc + dist.totalSales, 0);
+    const totalDues = filteredAndSortedDistributors.reduce((acc, dist) => acc + dist.outstandingDues, 0);
+    const totalCommissionsPaid = filteredAndSortedDistributors.reduce((acc, dist) => acc + dist.totalCommission, 0);
 
     const requestSort = (key: SortKey) => {
         let direction: 'ascending' | 'descending' = 'ascending';
@@ -237,12 +246,24 @@ export default function DistributorsPage() {
                     A comprehensive overview of your sales distributors.
                     </CardDescription>
                 </div>
-                <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Distributor
-                    </span>
-                </Button>
+                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by name or location..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Add Distributor
+                        </span>
+                    </Button>
+                </div>
             </div>
         </CardHeader>
         <CardContent>
@@ -313,7 +334,7 @@ export default function DistributorsPage() {
         </CardContent>
         <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedDistributors.length}</strong> of <strong>{sortedDistributors.length}</strong> distributors
+                    Showing <strong>{paginatedDistributors.length}</strong> of <strong>{filteredAndSortedDistributors.length}</strong> distributors
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

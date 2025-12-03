@@ -26,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark, ArrowUpDown, Search } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ import { CreateSalaryPaymentDialog } from '@/components/salaries/create-salary-p
 import { EditSalaryPaymentDialog } from '@/components/salaries/edit-salary-payment-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 type SortKey = keyof SalaryPayment;
 
@@ -56,11 +57,17 @@ export default function SalariesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const safePayments = salaryPayments || [];
 
-  const sortedPayments = useMemo(() => {
+  const filteredAndSortedPayments = useMemo(() => {
     let sortableItems = [...safePayments];
+    
+    if (searchTerm) {
+        sortableItems = sortableItems.filter(p => p.employeeName.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const aValue = a[sortConfig.key];
@@ -76,19 +83,19 @@ export default function SalariesPage() {
         });
     }
     return sortableItems;
-}, [safePayments, sortConfig]);
+}, [safePayments, sortConfig, searchTerm]);
 
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return sortedPayments.slice(startIndex, endIndex);
-  }, [sortedPayments, currentPage, rowsPerPage]);
+    return filteredAndSortedPayments.slice(startIndex, endIndex);
+  }, [filteredAndSortedPayments, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(sortedPayments.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAndSortedPayments.length / rowsPerPage);
 
-  const totalPaid = sortedPayments.reduce((acc, p) => acc + p.amount, 0);
-  const totalEmployees = new Set(sortedPayments.map(p => p.employeeName)).size;
-  const totalTransactions = sortedPayments.length;
+  const totalPaid = filteredAndSortedPayments.reduce((acc, p) => acc + p.amount, 0);
+  const totalEmployees = new Set(filteredAndSortedPayments.map(p => p.employeeName)).size;
+  const totalTransactions = filteredAndSortedPayments.length;
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -187,10 +194,22 @@ export default function SalariesPage() {
                 <CardTitle>Salary Payments</CardTitle>
                 <CardDescription>Manage and record all salary payments made to employees.</CardDescription>
               </div>
-              <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Record Payment</span>
-              </Button>
+                <div className="flex items-center gap-2">
+                     <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by employee name..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Record Payment</span>
+                    </Button>
+                </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -253,7 +272,7 @@ export default function SalariesPage() {
           </CardContent>
           <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedPayments.length}</strong> of <strong>{sortedPayments.length}</strong> payments
+                    Showing <strong>{paginatedPayments.length}</strong> of <strong>{filteredAndSortedPayments.length}</strong> payments
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

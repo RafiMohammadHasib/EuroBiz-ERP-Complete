@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck, ArrowUpDown, Search } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import type { FinishedGood, RawMaterial } from '@/lib/data';
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { EditSellingPriceDialog } from '@/components/finished-goods/edit-selling-price-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 type SortKey = keyof FinishedGood;
 
@@ -47,12 +48,18 @@ export default function FinishedGoodsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const safeFinishedGoods = finishedGoods || [];
   const safeRawMaterials = rawMaterials || [];
   
-  const sortedFinishedGoods = useMemo(() => {
+  const filteredAndSortedFinishedGoods = useMemo(() => {
     let sortableItems = [...safeFinishedGoods];
+    if(searchTerm) {
+        sortableItems = sortableItems.filter(item => 
+            item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const aValue = a[sortConfig.key];
@@ -68,20 +75,20 @@ export default function FinishedGoodsPage() {
         });
     }
     return sortableItems;
-}, [safeFinishedGoods, sortConfig]);
+}, [safeFinishedGoods, sortConfig, searchTerm]);
 
   const paginatedFinishedGoods = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return sortedFinishedGoods.slice(startIndex, endIndex);
-  }, [sortedFinishedGoods, currentPage, rowsPerPage]);
+    return filteredAndSortedFinishedGoods.slice(startIndex, endIndex);
+  }, [filteredAndSortedFinishedGoods, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(sortedFinishedGoods.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAndSortedFinishedGoods.length / rowsPerPage);
 
-  const totalInventoryValue = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
-  const potentialRevenue = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
-  const productLines = sortedFinishedGoods.length;
-  const totalUnits = sortedFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
+  const totalInventoryValue = filteredAndSortedFinishedGoods.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const potentialRevenue = filteredAndSortedFinishedGoods.reduce((acc, item) => acc + item.quantity * (item.sellingPrice ?? 0), 0);
+  const productLines = filteredAndSortedFinishedGoods.length;
+  const totalUnits = filteredAndSortedFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
 
   const isLoading = fgLoading || rmLoading;
 
@@ -161,10 +168,24 @@ export default function FinishedGoodsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Finished Goods Inventory</CardTitle>
-          <CardDescription>
-            Manage your inventory of finished products. Click the arrow to see a product's formula.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Finished Goods Inventory</CardTitle>
+              <CardDescription>
+                Manage your inventory of finished products. Click the arrow to see a product's formula.
+              </CardDescription>
+            </div>
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search by product name..."
+                    className="pl-8 w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -258,7 +279,7 @@ export default function FinishedGoodsPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedFinishedGoods.length}</strong> of <strong>{sortedFinishedGoods.length}</strong> products
+                    Showing <strong>{paginatedFinishedGoods.length}</strong> of <strong>{filteredAndSortedFinishedGoods.length}</strong> products
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

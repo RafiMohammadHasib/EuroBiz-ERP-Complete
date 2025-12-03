@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign, MoreHorizontal, ArrowUpDown } from "lucide-react"
+import { PlusCircle, CheckCircle, Clock, Package, Factory, DollarSign, MoreHorizontal, ArrowUpDown, Search } from "lucide-react"
 import { type ProductionOrder, type FinishedGood, type RawMaterial } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,7 @@ import { useSettings } from "@/context/settings-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof ProductionOrder;
 
@@ -42,14 +43,22 @@ export default function ProductionPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
 
     const safeProductionOrders = productionOrders || [];
     const safeFinishedGoods = finishedGoods || [];
     const safeRawMaterials = rawMaterials || [];
 
-    const sortedProductionOrders = useMemo(() => {
+    const filteredAndSortedProductionOrders = useMemo(() => {
         let sortableItems = [...safeProductionOrders];
+
+        if (searchTerm) {
+            sortableItems = sortableItems.filter(order => 
+                order.productName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
                 const aValue = a[sortConfig.key];
@@ -65,20 +74,20 @@ export default function ProductionPage() {
             });
         }
         return sortableItems;
-    }, [safeProductionOrders, sortConfig]);
+    }, [safeProductionOrders, sortConfig, searchTerm]);
 
     const paginatedProductionOrders = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return sortedProductionOrders.slice(startIndex, endIndex);
-    }, [sortedProductionOrders, currentPage, rowsPerPage]);
+        return filteredAndSortedProductionOrders.slice(startIndex, endIndex);
+    }, [filteredAndSortedProductionOrders, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(sortedProductionOrders.length / rowsPerPage);
+    const totalPages = Math.ceil(filteredAndSortedProductionOrders.length / rowsPerPage);
 
-    const wipOrders = sortedProductionOrders.filter(o => o.status === "In Progress").length;
-    const completedOrders = sortedProductionOrders.filter(o => o.status === "Completed").length;
-    const totalProductionCost = sortedProductionOrders.reduce((acc, order) => acc + (order.totalCost || 0), 0);
-    const totalUnitsProduced = sortedProductionOrders.filter(o => o.status === "Completed").reduce((acc, order) => acc + (order.quantity || 0), 0);
+    const wipOrders = filteredAndSortedProductionOrders.filter(o => o.status === "In Progress").length;
+    const completedOrders = filteredAndSortedProductionOrders.filter(o => o.status === "Completed").length;
+    const totalProductionCost = filteredAndSortedProductionOrders.reduce((acc, order) => acc + (order.totalCost || 0), 0);
+    const totalUnitsProduced = filteredAndSortedProductionOrders.filter(o => o.status === "Completed").reduce((acc, order) => acc + (order.quantity || 0), 0);
     
     const isLoading = poLoading || fgLoading || rmLoading;
 
@@ -227,12 +236,24 @@ export default function ProductionPage() {
                     Manage production orders and calculate unit costs.
                     </CardDescription>
                 </div>
-                <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    New Production
-                    </span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by product name..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        New Production
+                        </span>
+                    </Button>
+                </div>
             </div>
         </CardHeader>
         <CardContent>
@@ -316,7 +337,7 @@ export default function ProductionPage() {
         </CardContent>
         <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedProductionOrders.length}</strong> of <strong>{sortedProductionOrders.length}</strong> orders
+                    Showing <strong>{paginatedProductionOrders.length}</strong> of <strong>{filteredAndSortedProductionOrders.length}</strong> orders
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

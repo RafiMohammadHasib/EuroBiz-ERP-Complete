@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck, ArrowUpDown } from "lucide-react"
+import { PlusCircle, MoreHorizontal, Building, Package, TrendingUp, UserCheck, ArrowUpDown, Search } from "lucide-react"
 import { type Supplier, type PurchaseOrder } from "@/lib/data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/settings-context";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof Supplier | 'totalPOValue';
 
@@ -43,6 +44,7 @@ export default function SuppliersPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const supplierData = useMemo(() => {
         if (!suppliers || !purchaseOrders) return [];
@@ -56,8 +58,13 @@ export default function SuppliersPage() {
         });
     }, [suppliers, purchaseOrders]);
 
-    const sortedSuppliers = useMemo(() => {
+    const filteredAndSortedSuppliers = useMemo(() => {
         let sortableItems = [...supplierData];
+
+        if (searchTerm) {
+            sortableItems = sortableItems.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        }
+
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
                 const aValue = a[sortConfig.key];
@@ -72,21 +79,21 @@ export default function SuppliersPage() {
             });
         }
         return sortableItems;
-    }, [supplierData, sortConfig]);
+    }, [supplierData, sortConfig, searchTerm]);
 
     const paginatedSuppliers = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-        return sortedSuppliers.slice(startIndex, endIndex);
-    }, [sortedSuppliers, currentPage, rowsPerPage]);
+        return filteredAndSortedSuppliers.slice(startIndex, endIndex);
+    }, [filteredAndSortedSuppliers, currentPage, rowsPerPage]);
 
-    const totalPages = Math.ceil(sortedSuppliers.length / rowsPerPage);
+    const totalPages = Math.ceil(filteredAndSortedSuppliers.length / rowsPerPage);
 
     const isLoading = isLoadingSuppliers || isLoadingPOs;
 
-    const totalSuppliers = sortedSuppliers.length;
-    const activeSuppliers = sortedSuppliers.filter(s => s.status === 'Active').length;
-    const totalPOValue = sortedSuppliers.reduce((acc, s) => acc + s.totalPOValue, 0);
+    const totalSuppliers = filteredAndSortedSuppliers.length;
+    const activeSuppliers = filteredAndSortedSuppliers.filter(s => s.status === 'Active').length;
+    const totalPOValue = filteredAndSortedSuppliers.reduce((acc, s) => acc + s.totalPOValue, 0);
     const averagePOValue = totalSuppliers > 0 ? totalPOValue / totalSuppliers : 0;
     
     const requestSort = (key: SortKey) => {
@@ -212,12 +219,24 @@ export default function SuppliersPage() {
                     Manage your raw material suppliers.
                     </CardDescription>
                 </div>
-                <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Supplier
-                    </span>
-                </Button>
+                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by supplier name..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Add Supplier
+                        </span>
+                    </Button>
+                </div>
             </div>
         </CardHeader>
         <CardContent>
@@ -283,7 +302,7 @@ export default function SuppliersPage() {
         </CardContent>
          <CardFooter className="flex items-center justify-between">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{paginatedSuppliers.length}</strong> of <strong>{sortedSuppliers.length}</strong> suppliers
+                    Showing <strong>{paginatedSuppliers.length}</strong> of <strong>{filteredAndSortedSuppliers.length}</strong> suppliers
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
