@@ -1,9 +1,5 @@
 
 
-
-
-
-
 export type Invoice = {
   id: string;
   invoiceNumber: string;
@@ -16,6 +12,7 @@ export type Invoice = {
   dueAmount: number;
   status: 'Paid' | 'Unpaid' | 'Overdue' | 'Partially Paid' | 'Cancelled';
   items: InvoiceItem[];
+  createdAt?: any;
 };
 
 export type UserRole = {
@@ -45,7 +42,7 @@ export const companyDetails = {
     address: 'Tegharia, West Keraniganj, Dhaka',
     email: 'info@deshchemicals.com',
     phone: '+880 1332-854803',
-    logoUrl: '/logo.png'
+    logoUrl: ''
 }
 
 export const customers: Customer[] = [

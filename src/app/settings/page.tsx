@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { useAuth, useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Copy, Check, Download } from 'lucide-react';
+import { PlusCircle, Copy, Check, Download, Upload } from 'lucide-react';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import type { Commission, FinishedGood, RawMaterial, Distributor, PurchaseOrder, SalesCommission, Supplier } from '@/lib/data';
 import { CreateCommissionRuleDialog } from '@/components/commissions/create-commission-rule-dialog';
@@ -528,7 +529,20 @@ export default function SettingsPage() {
                       <CardDescription>Manage general business information used across the application, like on invoices.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-6">
+                        {businessSettings.logoUrl ? (
+                            <Image src={businessSettings.logoUrl} alt="Company Logo" width={80} height={80} className="rounded-md object-cover" />
+                        ) : (
+                            <div className="w-20 h-20 bg-muted rounded-md flex items-center justify-center">
+                                <Upload className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div className="grid gap-2 flex-1">
+                            <Label htmlFor="logoUrl">Logo URL</Label>
+                            <Input id="logoUrl" value={businessSettings.logoUrl} onChange={handleBusinessDetailsChange} placeholder="https://example.com/logo.png" />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4 pt-4">
                           <div className="space-y-2">
                               <Label htmlFor="name">Company Name</Label>
                               <Input id="name" value={businessSettings.name} onChange={handleBusinessDetailsChange} />
@@ -546,10 +560,6 @@ export default function SettingsPage() {
                           <div className="space-y-2">
                               <Label htmlFor="phone">Phone</Label>
                               <Input id="phone" value={businessSettings.phone} onChange={handleBusinessDetailsChange} />
-                          </div>
-                           <div className="space-y-2">
-                              <Label htmlFor="logoUrl">Logo URL</Label>
-                              <Input id="logoUrl" value={businessSettings.logoUrl} onChange={handleBusinessDetailsChange} />
                           </div>
                       </div>
                   </CardContent>
@@ -607,5 +617,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Distributor, Commission, companyDetails } from '@/lib/data';
+import { Invoice, FinishedGood, InvoiceItem as InvoiceItemType, Distributor, Commission, companyDetails as initialCompanyDetails } from '@/lib/data';
 import { useSettings } from '@/context/settings-context';
 import { PlusCircle, ArrowLeft, Download, Printer, Check, Trash2, Eye, X } from 'lucide-react';
 import { Separator } from '../ui/separator';
@@ -22,6 +22,9 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { PreviewInvoiceDialog } from './preview-invoice-dialog';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
 
 interface CreateInvoiceFormProps {
   distributors: Distributor[];
@@ -35,6 +38,14 @@ export type Payment = {
   amount: number;
   date: Date;
   method: 'Cash' | 'Card' | 'Bank Transfer';
+};
+
+type BusinessSettings = {
+    name: string;
+    address: string;
+    email: string;
+    phone: string;
+    logoUrl: string;
 };
 
 
@@ -116,6 +127,12 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
   const { toast } = useToast();
   const router = useRouter();
   const { currencySymbol } = useSettings();
+  const firestore = useFirestore();
+
+  const businessSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
+  const { data: businessSettingsData } = useDoc<BusinessSettings>(businessSettingsDocRef);
+
+  const companyDetails = businessSettingsData || initialCompanyDetails;
   
   const [customerName, setCustomerName] = useState('');
   const [items, setItems] = useState<Omit<InvoiceItemType, 'id' | 'total'>[]>([]);
@@ -289,13 +306,19 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                         <div style={{ backgroundColor: '#f1f3f8' }} className="p-4 rounded-md">
                              <Label className="text-xs text-blue-800 font-semibold">FROM (BUSINESS)</Label>
                             <div className="flex items-start gap-4 mt-4">
-                                <div className="w-24 h-24 border-2 border-dashed border-gray-400 rounded-md flex flex-col items-center justify-center text-muted-foreground bg-white">
-                                    <Image src={companyDetails.logoUrl} alt="logo" width={48} height={48} />
-                                    <span className='text-xs mt-1'>Logo</span>
+                                <div className="w-24 h-24 border-2 border-dashed border-gray-400 rounded-md flex flex-col items-center justify-center text-muted-foreground bg-white relative overflow-hidden">
+                                    {companyDetails.logoUrl ? (
+                                        <Image src={companyDetails.logoUrl} alt="logo" layout="fill" objectFit="contain" />
+                                    ) : (
+                                        <>
+                                            <Upload className="h-8 w-8 text-gray-400" />
+                                            <span className='text-xs mt-1'>Logo</span>
+                                        </>
+                                    )}
                                 </div>
                                 <div>
                                     <p className="font-semibold text-lg text-gray-800">{companyDetails.name}</p>
-                                    <p className="text-sm text-gray-600">Upload a square or landscape logo.</p>
+                                    <p className="text-sm text-gray-600">Upload your logo in business settings.</p>
                                 </div>
                             </div>
                              <div className="text-sm text-blue-800 mt-4 space-y-2">
