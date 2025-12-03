@@ -51,7 +51,7 @@ export default function SettingsPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { setCurrency, businessSettings: contextBusinessSettings, setBusinessSettings: setContextBusinessSettings } = useSettings();
+  const { currencySymbol, setCurrency, businessSettings: contextBusinessSettings, setBusinessSettings: setContextBusinessSettings } = useSettings();
 
   // --- Profile State ---
   const salespersonDocRef = useMemoFirebase(() => user ? doc(firestore, 'salespeople', user.uid) : null, [user, firestore]);
