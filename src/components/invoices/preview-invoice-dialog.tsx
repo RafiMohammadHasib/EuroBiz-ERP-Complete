@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -97,7 +98,7 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
                 <div className="flex justify-between items-start mb-8">
                     <div>
                          {companyDetails.logoUrl && (
-                            <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={120} height={40} className="mb-4" />
+                            <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={80} height={80} className="mb-4" />
                         )}
                         <h2 className="text-2xl font-bold text-teal-600">INVOICE</h2>
                         <div className="text-sm text-gray-500 mt-6">

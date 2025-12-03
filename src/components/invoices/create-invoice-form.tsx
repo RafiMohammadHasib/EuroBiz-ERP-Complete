@@ -302,65 +302,54 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
             <div className="space-y-6 max-w-4xl mx-auto">
                 <Card className="p-6">
                     <div className="grid grid-cols-2 gap-6">
-                        <div style={{ backgroundColor: '#f1f3f8' }} className="p-4 rounded-md">
-                             <Label className="text-xs text-blue-800 font-semibold">FROM (BUSINESS)</Label>
-                            <div className="flex items-start gap-4 mt-4">
-                                <div className="w-24 h-24 border-2 border-dashed border-gray-400 rounded-md flex flex-col items-center justify-center text-muted-foreground bg-white relative overflow-hidden">
-                                    {companyDetails.logoUrl ? (
-                                        <Image src={companyDetails.logoUrl} alt="logo" layout="fill" objectFit="contain" />
-                                    ) : (
-                                        <>
-                                            <Upload className="h-8 w-8 text-gray-400" />
-                                            <span className='text-xs mt-1'>Logo</span>
-                                        </>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-lg text-gray-800">{companyDetails.name}</p>
-                                    <p className="text-sm text-gray-600">Upload your logo in business settings.</p>
-                                </div>
-                            </div>
-                             <div className="text-sm text-blue-800 mt-4 space-y-2">
-                                <Separator className="bg-blue-200"/>
-                                <p>{companyDetails.email}</p>
-                                <Separator className="bg-blue-200"/>
+                        <div>
+                            {companyDetails.logoUrl && (
+                                <Image src={companyDetails.logoUrl} alt={companyDetails.name} width={80} height={80} className="mb-4" />
+                            )}
+                            <h3 className="font-bold text-lg">{companyDetails.name}</h3>
+                             <div className="text-sm text-gray-500 mt-2 space-y-1">
                                 <p>{companyDetails.address}</p>
-                                 <Separator className="bg-blue-200"/>
+                                <p>{companyDetails.email}</p>
                                 <p>{companyDetails.phone}</p>
-                                 <Separator className="bg-blue-200"/>
-                                <p>www.deshchemicals.com</p>
                             </div>
                         </div>
-                         <div className="space-y-4">
+                         <div className="space-y-4 text-right">
+                            <h2 className="text-3xl font-bold text-gray-800 uppercase tracking-wider">Invoice</h2>
                             <div className="grid gap-2">
-                                <Label htmlFor="invoice-number">Invoice Number</Label>
-                                <Input id="invoice-number" value={invoiceNumber} readOnly disabled />
+                                <Input id="invoice-number" value={invoiceNumber} readOnly disabled className="text-right bg-muted" />
                             </div>
-                             <div className="grid gap-2">
-                                <Label htmlFor="status">Status</Label>
-                                <Select defaultValue="Draft">
-                                    <SelectTrigger id="status"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Draft">Draft</SelectItem>
-                                        <SelectItem value="Paid">Paid</SelectItem>
-                                        <SelectItem value="Unpaid">Unpaid</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Sales Person</Label>
-                                <div className="flex items-center h-10 rounded-md border border-input bg-muted px-3 text-sm">
-                                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                                    <span className="text-muted-foreground">
-                                        {salesperson ? `${salesperson.firstName} ${salesperson.lastName}` : (user?.email || 'Loading...')}
-                                    </span>
+                             <div className="grid grid-cols-2 gap-2 text-left">
+                                <div className="grid gap-2">
+                                    <Label className="text-muted-foreground">Date Issued</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn("font-normal bg-white justify-start", !dateIssued && "text-muted-foreground")}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {dateIssued ? format(dateIssued, "MM/dd/yyyy") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dateIssued} onSelect={setDateIssued} /></PopoverContent>
+                                    </Popover>
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label className="text-muted-foreground">Due Date</Label>
+                                     <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn("font-normal bg-white justify-start", !dueDate && "text-muted-foreground")}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {dueDate ? format(dueDate, "MM/dd/yyyy") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dueDate} onSelect={setDueDate} /></PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                          </div>
                     </div>
-                     <div className="grid grid-cols-2 gap-6 mt-6 bg-[#f1f3f8] p-4 rounded-md">
+                     <Separator className="my-6" />
+                     <div className="grid grid-cols-2 gap-6 items-start">
                         <div>
-                             <Label className="text-xs text-blue-800 font-semibold">BILL TO (CLIENT)</Label>
+                             <Label className="text-xs text-muted-foreground font-semibold">BILL TO</Label>
                              <Select value={customerName} onValueChange={setCustomerName}>
                                 <SelectTrigger className="mt-2">
                                     <SelectValue placeholder="Select a distributor" />
@@ -378,30 +367,13 @@ export function CreateInvoiceForm({ distributors, products, commissionRules, onC
                                 </div>
                             )}
                         </div>
-                        <div className="space-y-4">
-                             <div className="grid gap-2">
-                                <Label>Date Issued</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn("font-normal bg-white", !dateIssued && "text-muted-foreground")}>
-                                            {dateIssued ? format(dateIssued, "MM/dd/yyyy") : <span>Pick a date</span>}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dateIssued} onSelect={setDateIssued} /></PopoverContent>
-                                </Popover>
-                            </div>
-                             <div className="grid gap-2">
-                                <Label>Due Date</Label>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn("font-normal bg-white", !dueDate && "text-muted-foreground")}>
-                                            {dueDate ? format(dueDate, "MM/dd/yyyy") : <span>Pick a date</span>}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dueDate} onSelect={setDueDate} /></PopoverContent>
-                                </Popover>
+                        <div>
+                             <Label className="text-xs text-muted-foreground font-semibold">SALESPERSON</Label>
+                             <div className="flex items-center h-10 rounded-md border border-input bg-muted px-3 text-sm mt-2">
+                                <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span className="text-muted-foreground">
+                                    {salesperson ? `${salesperson.firstName} ${salesperson.lastName}` : (user?.email || 'Loading...')}
+                                </span>
                             </div>
                         </div>
                      </div>
