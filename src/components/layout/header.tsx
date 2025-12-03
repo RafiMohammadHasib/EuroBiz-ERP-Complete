@@ -41,6 +41,12 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+       <Link href="/reports">
+          <Button variant="ghost" size="icon">
+            <PieChart className="h-5 w-5" />
+            <span className="sr-only">Reports</span>
+          </Button>
+        </Link>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
