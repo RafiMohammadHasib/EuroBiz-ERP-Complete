@@ -112,7 +112,6 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const { businessSettings } = useSettings();
 
   const handleLogout = async () => {
     if (auth) {
@@ -151,7 +150,7 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
         <Link href="/" className="flex items-center gap-2.5">
           <Landmark className="h-7 w-7 text-primary" />
           <span className="font-bold text-xl whitespace-nowrap group-data-[collapsible=icon]:hidden">
-            {businessSettings.name || 'EuroBiz'}
+            EuroBiz
           </span>
         </Link>
       </SidebarHeader>
