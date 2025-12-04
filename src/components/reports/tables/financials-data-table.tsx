@@ -64,7 +64,7 @@ export function FinancialsDataTable({ dateRange }: { dateRange?: DateRange }) {
 
     const kpiData = useMemo(() => {
         const outstandingInvoices = (filteredInvoices || []).filter((i) => i.status !== 'Paid');
-        const accountsReceivable = outstandingInvoices.reduce((acc, inv) => acc + inv.dueAmount, 0);
+        const accountsReceivable = outstandingInvoices.reduce((acc, inv) => acc + (inv.dueAmount || 0), 0);
 
         const pendingPurchaseOrders = (filteredPurchaseOrders || []).filter((po) => po.paymentStatus !== 'Paid');
         const accountsPayable = pendingPurchaseOrders.reduce((acc, po) => acc + po.dueAmount, 0);
