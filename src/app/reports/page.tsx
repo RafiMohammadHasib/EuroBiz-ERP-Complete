@@ -18,6 +18,7 @@ import { FinancialsDataTable } from "@/components/reports/tables/financials-data
 import { CommissionsDataTable } from "@/components/reports/tables/commissions-data-table";
 import { IncomeExpenseDataTable } from "@/components/reports/tables/income-expense-data-table";
 import { ProfitLossDataTable } from "@/components/reports/tables/profit-loss-data-table";
+import { DistributorWiseDataTable } from "@/components/reports/tables/distributor-wise-data-table";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export default function ReportsPage() {
@@ -37,7 +38,7 @@ export default function ReportsPage() {
             </CardHeader>
         </Card>
         <Tabs defaultValue="sales" className="grid grid-cols-1 gap-6">
-            <TabsList className="grid w-full grid-cols-1 h-auto sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-1 h-auto sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8">
                 <TabsTrigger value="sales">Sales</TabsTrigger>
                 <TabsTrigger value="purchasing">Purchasing</TabsTrigger>
                 <TabsTrigger value="inventory">Inventory</TabsTrigger>
@@ -45,6 +46,7 @@ export default function ReportsPage() {
                 <TabsTrigger value="commissions">Commissions</TabsTrigger>
                 <TabsTrigger value="income-expense">Income/Expense</TabsTrigger>
                 <TabsTrigger value="profit-loss">Profit & Loss</TabsTrigger>
+                <TabsTrigger value="distributors">Distributors</TabsTrigger>
             </TabsList>
             <TabsContent value="sales">
                 <div className="grid gap-6">
@@ -70,6 +72,9 @@ export default function ReportsPage() {
             </TabsContent>
             <TabsContent value="profit-loss">
                <ProfitLossDataTable dateRange={dateRange} />
+            </TabsContent>
+            <TabsContent value="distributors">
+               <DistributorWiseDataTable dateRange={dateRange} />
             </TabsContent>
         </Tabs>
     </div>
