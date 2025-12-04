@@ -57,16 +57,8 @@ export default function SettingsPage() {
   // --- Profile State ---
   const salespersonDocRef = useMemoFirebase(() => user ? doc(firestore, 'salespeople', user.uid) : null, [user, firestore]);
   const { data: salespersonData, isLoading: salespersonLoading } = useDoc<Salesperson>(salespersonDocRef);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
-  useEffect(() => {
-    if (salespersonData) {
-        setFirstName(salespersonData.firstName || '');
-        setLastName(salespersonData.lastName || '');
-    }
-  }, [salespersonData]);
 
 
   // --- Firestore References ---
@@ -156,14 +148,12 @@ export default function SettingsPage() {
   // --- Handlers ---
   const handleProfileSave = async () => {
     if (!user || !salespersonDocRef) return;
-    if (!firstName || !lastName) {
-      toast({ variant: 'destructive', title: 'Name is required', description: 'Please enter both first and last name.' });
-      return;
-    }
+    
     setIsSavingProfile(true);
     try {
-      await setDoc(salespersonDocRef, { firstName, lastName, email: user.email }, { merge: true });
-      toast({ title: 'Profile Updated', description: 'Your name has been saved successfully.' });
+      // Since name fields are removed, we just show a success message or save other potential fields.
+      // For now, we don't have other fields to save.
+      toast({ title: 'Profile Saved', description: 'Your profile information is up to date.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error saving profile', description: error.message });
     } finally {
@@ -429,16 +419,7 @@ export default function SettingsPage() {
                               <Label htmlFor="email">Email Address</Label>
                               <Input id="email" type="email" value={user?.email || ''} disabled />
                           </div>
-                          <div className='grid grid-cols-2 gap-4'>
-                            <div className="space-y-2">
-                                <Label htmlFor="firstName">First Name</Label>
-                                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. John" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="lastName">Last Name</Label>
-                                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Doe" />
-                            </div>
-                          </div>
+                          
                       </CardContent>
                       <CardFooter>
                           <Button onClick={handleProfileSave} disabled={isSavingProfile || salespersonLoading}>
