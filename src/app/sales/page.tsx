@@ -288,25 +288,25 @@ export default function SalesPage() {
                     <TabsTrigger value="overdue">Overdue</TabsTrigger>
                     <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
                 </TabsList>
-                 <div className="flex-1 w-full md:w-auto relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Search by customer name..."
-                        className="pl-8 w-full md:w-[300px]"
-                        value={searchTerm}
-                        onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
-                    />
-                </div>
-                 <div className="md:ml-auto">
-                    <Link href="/sales/invoice/create" passHref>
-                        <Button size="sm" className="h-9 gap-1 w-full md:w-auto">
-                            <PlusCircle className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Generate Invoice
-                            </span>
-                        </Button>
-                    </Link>
+                <div className="flex-1 flex w-full md:w-auto items-center gap-2">
+                  <div className="relative w-full">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                          type="search"
+                          placeholder="Search by customer name..."
+                          className="pl-8 w-full md:w-[300px]"
+                          value={searchTerm}
+                          onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
+                      />
+                  </div>
+                   <Link href="/sales/invoice/create" passHref>
+                      <Button size="sm" className="h-9 gap-1 whitespace-nowrap">
+                          <PlusCircle className="h-3.5 w-3.5" />
+                          <span className="sr-only sm:not-sr-only">
+                          Generate Invoice
+                          </span>
+                      </Button>
+                  </Link>
                 </div>
             </div>
        
