@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-// AI flows have been removed from this file.
+import './flows/integrate-predictive-analytics';
