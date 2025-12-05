@@ -52,14 +52,14 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
-      <SidebarTrigger />
+      
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Clock className="h-4 w-4" />
+          <span>{currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          <span>{currentTime.toLocaleTimeString()}</span>
+      </div>
       
       <div className="flex items-center gap-4 ml-auto">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>{currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            <span>{currentTime.toLocaleTimeString()}</span>
-        </div>
         <Select value={currency} onValueChange={(value) => setCurrency(value as 'BDT' | 'USD')}>
             <SelectTrigger className="w-auto h-9 text-sm focus:ring-0 focus:ring-offset-0" variant="ghost">
                  <SelectValue>

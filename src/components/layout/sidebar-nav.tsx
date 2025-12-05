@@ -14,6 +14,7 @@ import {
   SidebarSeparator,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -204,6 +205,7 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
               </SidebarMenuItem>
           ))}
         </SidebarMenu>
+        <SidebarTrigger className="mt-2" />
       </SidebarFooter>
     </>
   );
