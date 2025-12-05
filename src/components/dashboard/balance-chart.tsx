@@ -26,26 +26,29 @@ const chartConfig = {
   }
 };
 
-export default function BalanceChart({ dateRange }: { dateRange?: DateRange }) {
+interface BalanceChartProps {
+    dateRange?: DateRange;
+    invoices: Invoice[];
+    purchaseOrders: PurchaseOrder[];
+    productionOrders: ProductionOrder[];
+    salesCommissions: SalesCommission[];
+    salaryPayments: SalaryPayment[];
+    expenses: Expense[];
+    isLoading: boolean;
+}
+
+export default function BalanceChart({ 
+    dateRange, 
+    invoices,
+    purchaseOrders,
+    productionOrders,
+    salesCommissions,
+    salaryPayments,
+    expenses,
+    isLoading 
+}: BalanceChartProps) {
   const { currencySymbol } = useSettings();
-  const firestore = useFirestore();
-
-  const invoicesCol = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const poCol = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
-  const prodCol = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
-  const salaryCol = useMemoFirebase(() => collection(firestore, 'salary_payments'), [firestore]);
-  const commissionCol = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
-  const expenseCol = useMemoFirebase(() => collection(firestore, 'expenses'), [firestore]);
-
-  const { data: invoices, isLoading: l1 } = useCollection<Invoice>(invoicesCol);
-  const { data: purchaseOrders, isLoading: l2 } = useCollection<PurchaseOrder>(poCol);
-  const { data: productionOrders, isLoading: l3 } = useCollection<ProductionOrder>(prodCol);
-  const { data: salaryPayments, isLoading: l4 } = useCollection<SalaryPayment>(salaryCol);
-  const { data: salesCommissions, isLoading: l5 } = useCollection<SalesCommission>(commissionCol);
-  const { data: expenses, isLoading: l6 } = useCollection<Expense>(expenseCol);
   
-  const isLoading = l1 || l2 || l3 || l4 || l5 || l6;
-
   const data = useMemo(() => {
     let allInvoices = invoices || [];
     if (dateRange?.from) {
@@ -56,24 +59,19 @@ export default function BalanceChart({ dateRange }: { dateRange?: DateRange }) {
     }
 
     const allExpensesRaw = [
-        ...(purchaseOrders || []),
-        ...(productionOrders || []),
-        ...(salaryPayments || []),
-        ...(salesCommissions || []),
-        ...(expenses || []),
+        ...(purchaseOrders || []).map(p => ({ date: p.date, amount: p.paidAmount })),
+        ...(productionOrders || []).map(p => ({ date: p.startDate, amount: (p.labourCost || 0) + (p.otherCosts || 0) })),
+        ...(salesCommissions || []).map(c => ({ date: c.saleDate, amount: c.commissionAmount })),
+        ...(salaryPayments || []).map(s => ({ date: s.paymentDate, amount: s.amount })),
+        ...(expenses || []).map(e => ({ date: e.date, amount: e.amount })),
     ];
+
     let allExpenses = allExpensesRaw;
      if (dateRange?.from) {
-        allExpenses = allExpenses.filter(item => {
-            const date = (item as any).date || (item as any).startDate || (item as any).saleDate || (item as any).paymentDate;
-            return new Date(date) >= dateRange.from!
-        });
+        allExpenses = allExpenses.filter(item => new Date(item.date) >= dateRange.from!);
     }
     if (dateRange?.to) {
-         allExpenses = allExpenses.filter(item => {
-            const date = (item as any).date || (item as any).startDate || (item as any).saleDate || (item as any).paymentDate;
-            return new Date(date) <= dateRange.to!
-        });
+         allExpenses = allExpenses.filter(item => new Date(item.date) <= dateRange.to!);
     }
 
 
@@ -91,13 +89,9 @@ export default function BalanceChart({ dateRange }: { dateRange?: DateRange }) {
     });
 
     allExpenses.forEach(exp => {
-        const date = (exp as any).date || (exp as any).startDate || (exp as any).saleDate || (exp as any).paymentDate;
-        const month = new Date(date).toLocaleString('default', { month: 'short' });
+        const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
         if(monthlyData[month]) {
-            if('paidAmount' in exp) monthlyData[month].expense += exp.paidAmount;
-            else if('labourCost' in exp) monthlyData[month].expense += exp.labourCost + exp.otherCosts;
-            else if('commissionAmount' in exp) monthlyData[month].expense += exp.commissionAmount;
-            else if('amount' in exp) monthlyData[month].expense += exp.amount;
+            monthlyData[month].expense += exp.amount || 0;
         }
     });
     

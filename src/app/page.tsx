@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { DollarSign, CreditCard, Users, Truck, ShoppingCart, Building, Package, FileText, ArrowUp, ArrowDown, Boxes } from "lucide-react"
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
-import type { Invoice, Distributor, Supplier, PurchaseOrder, FinishedGood } from "@/lib/data";
+import type { Invoice, Distributor, Supplier, PurchaseOrder, FinishedGood, ProductionOrder, SalesCommission, SalaryPayment, Expense } from "@/lib/data";
 import { useSettings } from "@/context/settings-context";
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { cn } from '@/lib/utils';
@@ -44,14 +44,26 @@ export default function Home() {
   const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
   const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
   const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+  const productionOrdersCollection = useMemoFirebase(() => collection(firestore, 'productionOrders'), [firestore]);
+  const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
+  const salaryPaymentsCollection = useMemoFirebase(() => collection(firestore, 'salary_payments'), [firestore]);
+  const expensesCollection = useMemoFirebase(() => collection(firestore, 'expenses'), [firestore]);
+
 
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
   const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
   const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
   const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
+  const { data: productionOrders, isLoading: prodLoading } = useCollection<ProductionOrder>(productionOrdersCollection);
+  const { data: salesCommissions, isLoading: commLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
+  const { data: salaryPayments, isLoading: salaryLoading } = useCollection<SalaryPayment>(salaryPaymentsCollection);
+  const { data: expenses, isLoading: expLoading } = useCollection<Expense>(expensesCollection);
 
-  const { currentPeriodStats, growth } = useMemo(() => {
+
+  const isLoading = invoicesLoading || poLoading || distributorsLoading || suppliersLoading || fgLoading || prodLoading || commLoading || salaryLoading || expLoading;
+
+  const { currentPeriodStats, growth, netProfit } = useMemo(() => {
     const getStatsForPeriod = (start?: Date, end?: Date) => {
         let periodInvoices = (invoices || []).filter(inv => inv.status !== 'Cancelled');
         if (start) periodInvoices = periodInvoices.filter(inv => new Date(inv.date) >= start);
@@ -61,7 +73,22 @@ export default function Home() {
         const uniqueCustomers = new Set(periodInvoices.map(i => i.customer)).size;
         const salesVolume = periodInvoices.length;
 
-        return { totalRevenue, uniqueCustomers, salesVolume };
+        // Calculate total expenses for the period
+        const allExpensesRaw = [
+            ...(purchaseOrders || []).map(p => ({ date: p.date, amount: p.paidAmount })),
+            ...(productionOrders || []).map(p => ({ date: p.startDate, amount: (p.labourCost || 0) + (p.otherCosts || 0) })),
+            ...(salesCommissions || []).map(c => ({ date: c.saleDate, amount: c.commissionAmount })),
+            ...(salaryPayments || []).map(s => ({ date: s.paymentDate, amount: s.amount })),
+            ...(expenses || []).map(e => ({ date: e.date, amount: e.amount })),
+        ];
+
+        let periodExpenses = allExpensesRaw;
+        if (start) periodExpenses = periodExpenses.filter(e => new Date(e.date) >= start);
+        if (end) periodExpenses = periodExpenses.filter(e => new Date(e.date) <= end);
+
+        const totalExpenses = periodExpenses.reduce((acc, e) => acc + e.amount, 0);
+
+        return { totalRevenue, uniqueCustomers, salesVolume, totalExpenses };
     };
 
     const currentStats = getStatsForPeriod(dateRange?.from, dateRange?.to);
@@ -85,9 +112,10 @@ export default function Home() {
         revenue: calculateGrowth(currentStats.totalRevenue, previousStats.totalRevenue),
         customers: calculateGrowth(currentStats.uniqueCustomers, previousStats.uniqueCustomers),
         salesVolume: calculateGrowth(currentStats.salesVolume, previousStats.salesVolume),
-      }
+      },
+      netProfit: currentStats.totalRevenue - currentStats.totalExpenses
     };
-  }, [invoices, dateRange]);
+  }, [invoices, purchaseOrders, productionOrders, salesCommissions, salaryPayments, expenses, dateRange]);
 
 
   const filteredPOs = useMemo(() => {
@@ -126,8 +154,6 @@ export default function Home() {
   const totalSuppliers = new Set(safeSuppliers.map(p => p.name)).size;
   const totalDistributors = new Set(safeDistributors.map(d => d.name)).size;
   const activeStockValue = safeFinishedGoods.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
-
-  const isLoading = invoicesLoading || poLoading || distributorsLoading || suppliersLoading || fgLoading;
 
   const getStatusVariant = (status: Invoice['status']) => {
     switch (status) {
@@ -180,12 +206,29 @@ export default function Home() {
       </div>
       
       <Card>
-        <CardHeader>
-          <CardTitle>Balance</CardTitle>
-          <CardDescription>A summary of your income and expenses for the selected period.</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle>Balance</CardTitle>
+            <CardDescription>A summary of your income and expenses for the selected period.</CardDescription>
+          </div>
+          <div className="text-right">
+              <p className="text-sm text-muted-foreground">Current Net Profit</p>
+              <p className={cn("text-2xl font-bold", netProfit >= 0 ? "text-green-600" : "text-red-600")}>
+                {currencySymbol}{netProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </p>
+          </div>
         </CardHeader>
         <CardContent className="h-[350px]">
-          <BalanceChart dateRange={dateRange} />
+          <BalanceChart 
+            dateRange={dateRange}
+            invoices={invoices || []}
+            purchaseOrders={purchaseOrders || []}
+            productionOrders={productionOrders || []}
+            salaryPayments={salaryPayments || []}
+            salesCommissions={salesCommissions || []}
+            expenses={expenses || []}
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
 
