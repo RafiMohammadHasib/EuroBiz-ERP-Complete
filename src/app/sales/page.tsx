@@ -302,7 +302,7 @@ export default function SalesPage() {
                    <Link href="/sales/invoice/create" passHref>
                       <Button size="sm" className="h-9 gap-1 whitespace-nowrap">
                           <PlusCircle className="h-3.5 w-3.5" />
-                          <span className="sr-only sm:not-sr-only">
+                          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                           Generate Invoice
                           </span>
                       </Button>
