@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import ProductPerformanceChart from '@/components/reports/product-performance-chart';
 import BalanceChart from '@/components/dashboard/balance-chart';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -38,6 +39,7 @@ export default function Home() {
     from: subDays(new Date(), 29),
     to: new Date(),
   });
+  const router = useRouter();
 
   const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
   const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
@@ -309,7 +311,7 @@ export default function Home() {
                         </TableRow>
                     ) : (
                         filteredInvoices.slice(0, 5).map((invoice) => (
-                        <TableRow key={invoice.id}>
+                        <TableRow key={invoice.id} onClick={() => router.push(`/sales/${invoice.id}`)} className="cursor-pointer">
                             <TableCell>
                                 <div className="font-medium">{invoice.customer}</div>
                                 <div className="text-sm text-muted-foreground">
