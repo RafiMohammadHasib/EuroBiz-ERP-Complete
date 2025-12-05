@@ -73,7 +73,7 @@ service cloud.firestore {
     
     match /settings/{settingId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     /**
@@ -97,7 +97,7 @@ service cloud.firestore {
      */
     match /distributors/{distributorId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin();
     }
 
     /**
@@ -109,12 +109,16 @@ service cloud.firestore {
      */
     match /suppliers/{supplierId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn();
     }
     
     match /purchaseOrders/{purchaseOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() && request.resource.data.id == resource.data.id;
+        allow delete: if isSignedIn();
     }
     
     match /sales_commissions/{commissionId} {
@@ -123,7 +127,9 @@ service cloud.firestore {
 
     match /invoices/{invoiceId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() && request.resource.data.id == resource.data.id;
+        allow delete: if isSignedIn();
     }
 
     match /rawMaterials/{materialId} {
