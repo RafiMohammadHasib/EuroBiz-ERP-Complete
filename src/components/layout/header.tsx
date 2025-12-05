@@ -23,7 +23,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import placeholder from '@/lib/placeholder-images.json';
 
 interface HeaderProps {
     searchQuery: string;
@@ -36,7 +35,6 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   const auth = useAuth();
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const userAvatar = placeholder.placeholderImages.find(p => p.id === 'user-avatar');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -84,17 +82,11 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
                 <SelectItem value="bn" disabled>Bengali</SelectItem>
             </SelectContent>
         </Select>
-        <Link href="/reports" passHref>
-          <Button variant="ghost" size="sm">
-            <PieChart className="h-4 w-4 mr-2" />
-            Report
-          </Button>
-        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.photoURL || userAvatar?.imageUrl} alt={user?.displayName || ''} />
+                <AvatarImage src={businessSettings.logoUrl} alt={businessSettings.name} />
                 <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
             </Button>
