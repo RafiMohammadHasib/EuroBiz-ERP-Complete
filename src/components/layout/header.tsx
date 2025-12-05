@@ -17,8 +17,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useSettings } from '@/context/settings-context';
-import { PieChart, Search } from 'lucide-react';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { PieChart, Search, Settings, LifeBuoy, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
     searchQuery: string;
@@ -27,6 +30,15 @@ interface HeaderProps {
 
 export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   const { businessSettings } = useSettings();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
@@ -59,10 +71,23 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/support">Support</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings" className='flex items-center'>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/support" className='flex items-center'>
+              <LifeBuoy className="mr-2 h-4 w-4" />
+              <span>Support</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

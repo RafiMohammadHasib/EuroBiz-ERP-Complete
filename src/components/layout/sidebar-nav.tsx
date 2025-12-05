@@ -91,8 +91,6 @@ export const navGroups: NavGroup[] = [
 ]
 
 const bottomNavItems: NavItem[] = [
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 interface SidebarNavProps {
@@ -205,12 +203,6 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
                 </Link>
               </SidebarMenuItem>
           ))}
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout" size="sm" onClick={handleLogout}>
-                <LogOut />
-                <span>Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>
