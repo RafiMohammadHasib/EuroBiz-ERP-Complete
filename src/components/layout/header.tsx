@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import placeholder from '@/lib/placeholder-images.json';
 
 interface HeaderProps {
     searchQuery: string;
@@ -35,6 +36,7 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   const auth = useAuth();
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const userAvatar = placeholder.placeholderImages.find(p => p.id === 'user-avatar');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -92,7 +94,7 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || ''} />}
+                <AvatarImage src={user?.photoURL || userAvatar?.imageUrl} alt={user?.displayName || ''} />
                 <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
             </Button>
