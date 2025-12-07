@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SalesDetailsDialog } from "@/components/sales/sales-details-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PreviewInvoiceDialog } from "@/components/invoices/preview-invoice-dialog";
@@ -62,7 +61,6 @@ export default function SalesPage() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceToCancel, setInvoiceToCancel] = useState<Invoice | null>(null);
   const [invoiceToPreview, setInvoiceToPreview] = useState<Invoice | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -366,7 +364,6 @@ export default function SalesPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>View Sale Details</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setInvoiceToPreview(invoice)}>View Invoice</DropdownMenuItem>
                                     <DropdownMenuItem disabled>Edit</DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -444,14 +441,7 @@ export default function SalesPage() {
             </Card>
         </Tabs>
     </div>
-    {selectedInvoice && (
-        <SalesDetailsDialog 
-            isOpen={!!selectedInvoice}
-            onOpenChange={() => setSelectedInvoice(null)}
-            invoice={selectedInvoice}
-        />
-    )}
-     <AlertDialog open={!!invoiceToCancel} onOpenChange={(open) => !open && setInvoiceToCancel(null)}>
+    <AlertDialog open={!!invoiceToCancel} onOpenChange={(open) => !open && setInvoiceToCancel(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
