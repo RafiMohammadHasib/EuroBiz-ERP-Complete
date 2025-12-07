@@ -40,6 +40,7 @@ import { MakePaymentDialog } from "@/components/dues/make-payment-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { PoDetailsDialog } from "@/components/purchase-orders/po-details-dialog";
 
 type SortKey = keyof PurchaseOrder;
 
@@ -58,6 +59,7 @@ export default function PurchaseOrdersPage() {
 
   const [paymentPo, setPaymentPo] = useState<PurchaseOrder | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<PurchaseOrder | null>(null);
+  const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("all");
@@ -386,8 +388,9 @@ export default function PurchaseOrdersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setSelectedPO(order)}>View Details</DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/purchase-orders/${order.id}`}>View Details</Link>
+                                <Link href={`/purchase-orders/${order.id}`}>View Full Page</Link>
                               </DropdownMenuItem>
                                <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => setPaymentPo(order)} disabled={order.paymentStatus === 'Paid'}>
@@ -465,6 +468,13 @@ export default function PurchaseOrdersPage() {
         </Card>
       </Tabs>
     </div>
+    {selectedPO && (
+        <PoDetailsDialog
+            isOpen={!!selectedPO}
+            onOpenChange={() => setSelectedPO(null)}
+            purchaseOrder={selectedPO}
+        />
+    )}
     {paymentPo && (
       <MakePaymentDialog 
         isOpen={!!paymentPo}
@@ -495,7 +505,3 @@ export default function PurchaseOrdersPage() {
     </>
   );
 }
-
-    
-
-    
