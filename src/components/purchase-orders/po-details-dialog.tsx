@@ -11,10 +11,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useSettings } from '@/context/settings-context';
-import type { PurchaseOrder } from '@/lib/data';
+import type { PurchaseOrder, RawMaterial } from '@/lib/data';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 interface PoDetailsDialogProps {
   isOpen: boolean;
@@ -24,6 +26,9 @@ interface PoDetailsDialogProps {
 
 export function PoDetailsDialog({ isOpen, onOpenChange, purchaseOrder }: PoDetailsDialogProps) {
   const { currencySymbol } = useSettings();
+  const firestore = useFirestore();
+  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+  const { data: rawMaterials } = useCollection<RawMaterial>(rawMaterialsCollection);
 
   const getDeliveryStatusVariant = (status: PurchaseOrder['deliveryStatus']) => {
     switch (status) {
@@ -80,14 +85,17 @@ export function PoDetailsDialog({ isOpen, onOpenChange, purchaseOrder }: PoDetai
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {purchaseOrder.items.map(item => (
+                    {purchaseOrder.items.map(item => {
+                      const material = rawMaterials?.find(rm => rm.id === item.rawMaterialId);
+                      return (
                         <TableRow key={item.id}>
-                            <TableCell>{item.rawMaterialId}</TableCell>
+                            <TableCell>{material?.name || item.rawMaterialId}</TableCell>
                             <TableCell className="text-center">{item.quantity}</TableCell>
                             <TableCell className="text-right">{currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
                             <TableCell className="text-right">{currencySymbol}{(item.quantity * item.unitCost).toFixed(2)}</TableCell>
                         </TableRow>
-                    ))}
+                      )
+                    })}
                 </TableBody>
             </Table>
             <Separator />
