@@ -389,9 +389,6 @@ export default function PurchaseOrdersPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => setSelectedPO(order)}>View Details</DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/purchase-orders/${order.id}`}>View Full Page</Link>
-                              </DropdownMenuItem>
                                <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => setPaymentPo(order)} disabled={order.paymentStatus === 'Paid'}>
                                 Make Payment
