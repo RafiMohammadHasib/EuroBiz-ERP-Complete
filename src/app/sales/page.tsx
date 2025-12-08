@@ -460,7 +460,7 @@ export default function SalesPage() {
     {previewInvoiceData && (
         <PreviewInvoiceDialog
             isOpen={!!invoiceToPreview}
-            onOpenChange={() => setInvoiceToPreview(null)}
+            onOpenChange={(isOpen) => !isOpen && setInvoiceToPreview(null)}
             invoice={previewInvoiceData.invoice}
             distributor={previewInvoiceData.distributor}
             subTotal={previewInvoiceData.subTotal}
