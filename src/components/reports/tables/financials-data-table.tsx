@@ -24,8 +24,8 @@ export function FinancialsDataTable({ dateRange }: { dateRange?: DateRange }) {
     const firestore = useFirestore();
     const { currencySymbol } = useSettings();
 
-    const invoicesCol = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-    const poCol = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
+    const invoicesCol = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+    const poCol = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
     const { data: invoices, isLoading: l1 } = useCollection<Invoice>(invoicesCol);
     const { data: purchaseOrders, isLoading: l2 } = useCollection<PurchaseOrder>(poCol);

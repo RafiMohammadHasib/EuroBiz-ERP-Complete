@@ -30,9 +30,9 @@ export function DistributorWiseDataTable({ dateRange }: { dateRange?: DateRange 
     const firestore = useFirestore();
     const { currencySymbol } = useSettings();
 
-    const distributorCol = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
-    const invoicesCol = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-    const commissionCol = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
+    const distributorCol = useMemoFirebase(() => firestore ? collection(firestore, 'distributors') : null, [firestore]);
+    const invoicesCol = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+    const commissionCol = useMemoFirebase(() => firestore ? collection(firestore, 'sales_commissions') : null, [firestore]);
 
     const { data: distributors, isLoading: l1 } = useCollection<Distributor>(distributorCol);
     const { data: invoices, isLoading: l2 } = useCollection<Invoice>(invoicesCol);
