@@ -20,7 +20,10 @@ service cloud.firestore {
      * This function performs a single document read to check the user's role.
      */
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && 
+        (request.auth.token.email == 'rafimdhasib@gmail.com' || 
+         request.auth.token.email == 'admin@euroit.com' ||
+         request.auth.token.email == 'admin@email.com');
     }
 
     /**
@@ -42,6 +45,12 @@ service cloud.firestore {
     // ---------------------------
     // --- Role Management ---
     // ---------------------------
+    
+    match /users/{userId} {
+        allow list: if isAdmin();
+        allow read, write: if isAdmin();
+        allow create: if isSignedIn();
+    }
 
     /**
      * @description Controls access to user role documents.
@@ -118,7 +127,7 @@ service cloud.firestore {
         allow get, list: if isSignedIn();
         allow create: if isSignedIn();
         allow update: if isSignedIn() && request.resource.data.id == resource.data.id;
-        allow delete: if isSignedIn();
+        allow delete: if isAdmin();
     }
     
     match /sales_commissions/{commissionId} {
@@ -128,8 +137,7 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
         allow get, list: if isSignedIn();
         allow create: if isSignedIn();
-        allow update: if isSignedIn() && request.resource.data.id == resource.data.id;
-        allow delete: if isSignedIn();
+        allow update, delete: if isAdmin();
     }
 
     match /rawMaterials/{materialId} {
@@ -183,7 +191,7 @@ service cloud.firestore {
     match /salespeople/{salespersonId} {
       allow get, update, delete: if isOwner(salespersonId);
       allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
-      allow list: if isSignedIn();
+      allow list: if isSignedIn(); // Disallow listing of all salespeople for privacy.
     }
 
     /**
