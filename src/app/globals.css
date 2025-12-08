@@ -109,9 +109,3 @@
     background-color: hsl(var(--muted-foreground) / 0.7);
   }
 }
-
-@layer components {
-    .glass-card {
-        @apply backdrop-blur-lg;
-    }
-}
