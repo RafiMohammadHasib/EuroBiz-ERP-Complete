@@ -84,5 +84,3 @@ export function ManageRoleDialog({ isOpen, onOpenChange, user, onRoleChange }: M
     </Dialog>
   );
 }
-
-    
