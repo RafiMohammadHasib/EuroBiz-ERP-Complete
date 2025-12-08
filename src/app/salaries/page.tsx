@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from '@/components/ui/card';
+} from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -17,26 +17,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark, ArrowUpDown, Search, Download } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
-import { useSettings } from '@/context/settings-context';
-import type { SalaryPayment } from '@/lib/data';
-import { CreateSalaryPaymentDialog } from '@/components/salaries/create-salary-payment-dialog';
-import { EditSalaryPaymentDialog } from '@/components/salaries/edit-salary-payment-dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, PlusCircle, Wallet, Users, Landmark, ArrowUpDown, Search, Download } from "lucide-react"
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/context/settings-context";
+import type { SalaryPayment } from "@/lib/data";
+import { CreateSalaryPaymentDialog } from "@/components/salaries/create-salary-payment-dialog";
+import { EditSalaryPaymentDialog } from "@/components/salaries/edit-salary-payment-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type SortKey = keyof SalaryPayment;
 
@@ -54,7 +54,7 @@ export default function SalariesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const salaryPaymentsQuery = useMemoFirebase(() => {
-    return query(collection(firestore, 'salary_payments'), orderBy(sortConfig.key, sortConfig.direction));
+    return firestore ? query(collection(firestore, 'salary_payments'), orderBy(sortConfig.key, sortConfig.direction)) : null;
   }, [firestore, sortConfig]);
 
   const { data: salaryPayments, isLoading } = useCollection<SalaryPayment>(salaryPaymentsQuery);

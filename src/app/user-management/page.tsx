@@ -43,7 +43,7 @@ export default function UserManagementPage() {
     const auth = useAuth();
     const { toast } = useToast();
     
-    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const usersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
     const { data: users, isLoading } = useCollection<User>(usersCollection);
 
     const [userToManage, setUserToManage] = useState<User | null>(null);
@@ -191,7 +191,7 @@ export default function UserManagementPage() {
     {userToManage && (
         <ManageRoleDialog
             isOpen={!!userToManage}
-            onOpenChange={() => setUserToManage(null)}
+            onOpenChange={(open) => !open && setUserToManage(null)}
             user={userToManage}
             onRoleChange={handleRoleChange}
         />
@@ -204,4 +204,3 @@ export default function UserManagementPage() {
     </>
   );
 }
-

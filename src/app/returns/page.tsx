@@ -37,9 +37,9 @@ export default function SalesReturnPage() {
   const { currencySymbol } = useSettings();
   const { toast } = useToast();
 
-  const salesReturnsCollection = useMemoFirebase(() => collection(firestore, 'sales_returns'), [firestore]);
-  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
+  const salesReturnsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'sales_returns') : null, [firestore]);
+  const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+  const productsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
   
   const { data: salesReturns, isLoading: returnsLoading } = useCollection<SalesReturn>(salesReturnsCollection);
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
@@ -343,7 +343,7 @@ export default function SalesReturnPage() {
       {selectedReturn && (
         <ViewSalesReturnDialog
             isOpen={!!selectedReturn}
-            onOpenChange={() => setSelectedReturn(null)}
+            onOpenChange={(open) => !open && setSelectedReturn(null)}
             salesReturn={selectedReturn}
         />
       )}

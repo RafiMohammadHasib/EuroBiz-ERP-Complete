@@ -52,8 +52,8 @@ export default function DuesPage() {
 
 
   // Firestore collections
-  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
+  const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+  const purchaseOrdersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
   // Data hooks
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);

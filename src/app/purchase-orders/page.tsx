@@ -49,9 +49,9 @@ export default function PurchaseOrdersPage() {
   const { toast } = useToast();
   const { currencySymbol } = useSettings();
 
-  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
-  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
-  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+  const purchaseOrdersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+  const suppliersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'suppliers') : null, [firestore]);
+  const rawMaterialsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'rawMaterials') : null, [firestore]);
 
   const { data: purchaseOrders, isLoading: poLoading } = useCollection<PurchaseOrder>(purchaseOrdersCollection);
   const { data: suppliers, isLoading: suppliersLoading } = useCollection<Supplier>(suppliersCollection);
@@ -134,6 +134,7 @@ export default function PurchaseOrdersPage() {
 
 
   const handleMarkAsReceived = async (orderId: string) => {
+    if(!firestore) return;
     const orderToUpdate = safePOs.find(po => po.id === orderId);
 
     if (orderToUpdate) {
@@ -180,7 +181,7 @@ export default function PurchaseOrdersPage() {
   }
 
     const handleCancelOrder = async () => {
-        if (!orderToCancel) return;
+        if (!orderToCancel || !firestore) return;
         try {
             const poRef = doc(firestore, 'purchaseOrders', orderToCancel.id);
             await updateDoc(poRef, { deliveryStatus: 'Cancelled' });
@@ -468,7 +469,7 @@ export default function PurchaseOrdersPage() {
     {selectedPO && (
         <PoDetailsDialog
             isOpen={!!selectedPO}
-            onOpenChange={() => setSelectedPO(null)}
+            onOpenChange={(open) => !open && setSelectedPO(null)}
             purchaseOrder={selectedPO}
         />
     )}

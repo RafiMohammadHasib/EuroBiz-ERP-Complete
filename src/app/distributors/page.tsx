@@ -31,9 +31,9 @@ export default function DistributorsPage() {
     const firestore = useFirestore();
     const { currencySymbol } = useSettings();
     
-    const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
-    const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-    const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
+    const distributorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'distributors') : null, [firestore]);
+    const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+    const salesCommissionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'sales_commissions') : null, [firestore]);
 
     const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
     const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
@@ -122,7 +122,7 @@ export default function DistributorsPage() {
 
     const addDistributor = async (newDistributorData: Omit<Distributor, 'id' | 'totalSales' | 'totalCommission' | 'outstandingDues'>) => {
       try {
-        if (!firestore) return;
+        if (!firestore || !distributorsCollection) return;
         const newDistributor = {
             ...newDistributorData,
             totalSales: 0,

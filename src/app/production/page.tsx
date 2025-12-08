@@ -31,9 +31,9 @@ type SortKey = keyof ProductionOrder;
 export default function ProductionPage() {
     const firestore = useFirestore();
     const { currencySymbol } = useSettings();
-    const productionOrdersCollection = useMemoFirebase(() => query(collection(firestore, 'productionOrders'), orderBy('createdAt', 'desc')), [firestore]);
-    const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
-    const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
+    const productionOrdersCollection = useMemoFirebase(() => firestore ? query(collection(firestore, 'productionOrders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+    const finishedGoodsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
+    const rawMaterialsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'rawMaterials') : null, [firestore]);
     
     const { data: productionOrders, isLoading: poLoading } = useCollection<ProductionOrder>(productionOrdersCollection);
     const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);

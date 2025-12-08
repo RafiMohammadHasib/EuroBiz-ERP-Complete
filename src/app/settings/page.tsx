@@ -57,15 +57,15 @@ export default function SettingsPage() {
 
 
   // --- Firestore References ---
-  const businessSettingsDocRef = useMemoFirebase(() => doc(firestore, 'settings', 'business'), [firestore]);
+  const businessSettingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'business') : null, [firestore]);
   
-  const commissionsCollection = useMemoFirebase(() => collection(firestore, 'commissions'), [firestore]);
-  const finishedGoodsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
-  const rawMaterialsCollection = useMemoFirebase(() => collection(firestore, 'rawMaterials'), [firestore]);
-  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
-  const purchaseOrdersCollection = useMemoFirebase(() => collection(firestore, 'purchaseOrders'), [firestore]);
-  const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
-  const suppliersCollection = useMemoFirebase(() => collection(firestore, 'suppliers'), [firestore]);
+  const commissionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'commissions') : null, [firestore]);
+  const finishedGoodsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
+  const rawMaterialsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'rawMaterials') : null, [firestore]);
+  const distributorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'distributors') : null, [firestore]);
+  const purchaseOrdersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+  const salesCommissionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'sales_commissions') : null, [firestore]);
+  const suppliersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'suppliers') : null, [firestore]);
 
   
   // --- Data Hooks ---
@@ -177,6 +177,7 @@ export default function SettingsPage() {
   };
 
   const handleBusinessSave = async () => {
+    if (!businessSettingsDocRef) return;
     setIsSavingBusiness(true);
     try {
         await setDoc(businessSettingsDocRef, businessSettings, { merge: true });

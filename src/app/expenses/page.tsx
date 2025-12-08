@@ -46,7 +46,7 @@ export default function ExpensesPage() {
   const { toast } = useToast();
 
   const expensesQuery = useMemoFirebase(() => 
-    query(collection(firestore, 'expenses'), orderBy('date', 'desc')), 
+    firestore ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, 
     [firestore]
   );
   const { data: expenses, isLoading } = useCollection<Expense>(expensesQuery);

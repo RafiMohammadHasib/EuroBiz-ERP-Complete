@@ -47,11 +47,11 @@ export default function SalesPage() {
   const firestore = useFirestore();
   const { currencySymbol } = useSettings();
   const { toast } = useToast();
-  const invoicesCollection = useMemoFirebase(() => collection(firestore, 'invoices'), [firestore]);
-  const salesCommissionsCollection = useMemoFirebase(() => collection(firestore, 'sales_commissions'), [firestore]);
-  const usersCollection = useMemoFirebase(() => collection(firestore, 'salespeople'), [firestore]);
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'finishedGoods'), [firestore]);
-  const distributorsCollection = useMemoFirebase(() => collection(firestore, 'distributors'), [firestore]);
+  const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
+  const salesCommissionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'sales_commissions') : null, [firestore]);
+  const usersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'salespeople') : null, [firestore]);
+  const productsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
+  const distributorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'distributors') : null, [firestore]);
   
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
   const { data: salesCommissions, isLoading: commissionsLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
@@ -460,7 +460,7 @@ export default function SalesPage() {
     {previewInvoiceData && (
         <PreviewInvoiceDialog
             isOpen={!!invoiceToPreview}
-            onOpenChange={(open) => {if (!open) setInvoiceToPreview(null)}}
+            onOpenChange={(open) => !open && setInvoiceToPreview(null)}
             invoice={previewInvoiceData.invoice}
             distributor={previewInvoiceData.distributor}
             subTotal={previewInvoiceData.subTotal}

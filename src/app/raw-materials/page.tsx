@@ -36,7 +36,7 @@ export default function RawMaterialsPage() {
   const { currencySymbol } = useSettings();
   
   const rawMaterialsQuery = useMemoFirebase(() => 
-    query(collection(firestore, 'rawMaterials'), orderBy('createdAt', 'desc')), 
+    firestore ? query(collection(firestore, 'rawMaterials'), orderBy('createdAt', 'desc')) : null, 
     [firestore]
   );
   const { data: rawMaterials, isLoading } = useCollection<RawMaterial>(rawMaterialsQuery);
@@ -98,6 +98,7 @@ export default function RawMaterialsPage() {
   };
 
   const addRawMaterial = async (newMaterial: Omit<RawMaterial, 'id' | 'createdAt'>) => {
+    if (!firestore) return;
     try {
       const materialWithTimestamp = {
         ...newMaterial,
