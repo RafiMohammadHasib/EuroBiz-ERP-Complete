@@ -20,11 +20,15 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Users, MoreHorizontal } from "lucide-react"
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc, updateDoc } from "firebase/firestore";
+import { Users, MoreHorizontal, PlusCircle } from "lucide-react"
+import { useCollection, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 import { ManageRoleDialog } from "@/components/user-management/manage-role-dialog";
+import { CreateUserDialog, type NewUser } from "@/components/user-management/create-user-dialog";
+import { updateDoc } from 'firebase/firestore';
+
 
 type User = {
     uid: string;
@@ -36,12 +40,14 @@ type User = {
 
 export default function UserManagementPage() {
     const firestore = useFirestore();
+    const auth = useAuth();
     const { toast } = useToast();
     
     const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
     const { data: users, isLoading } = useCollection<User>(usersCollection);
 
     const [userToManage, setUserToManage] = useState<User | null>(null);
+    const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
     const handleRoleChange = async (uid: string, newRole: 'admin' | 'salesperson' | 'viewer') => {
         if (!firestore) return;
@@ -63,6 +69,48 @@ export default function UserManagementPage() {
         }
     };
     
+    const handleCreateUser = async (newUser: NewUser) => {
+        if (!auth || !firestore) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Authentication or database service is not available.'});
+            return;
+        }
+
+        try {
+            // Step 1: Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
+            const authUser = userCredential.user;
+
+            // Step 2: Create user document in Firestore
+            const userDocRef = doc(firestore, 'users', authUser.uid);
+            await setDoc(userDocRef, {
+                uid: authUser.uid,
+                name: newUser.name,
+                email: newUser.email,
+                role: newUser.role,
+                createdAt: new Date().toISOString(),
+            });
+
+            toast({
+                title: 'User Created',
+                description: `User ${newUser.name} has been created successfully.`,
+            });
+            setCreateDialogOpen(false);
+        } catch (error: any) {
+            console.error("Error creating user:", error);
+            let errorMessage = 'Could not create the user.';
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'This email address is already in use by another account.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'The password is too weak. Please use a stronger password.';
+            }
+            toast({
+                variant: 'destructive',
+                title: 'Error Creating User',
+                description: errorMessage,
+            });
+        }
+    };
+
     const getRoleBadgeVariant = (role: string) => {
         switch (role) {
             case 'admin':
@@ -88,7 +136,15 @@ export default function UserManagementPage() {
         
         <Card>
             <CardHeader>
-                <h2 className="text-lg font-semibold">Registered Users</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">Registered Users</h2>
+                     <Button size="sm" className="h-9 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Create User
+                        </span>
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -140,8 +196,12 @@ export default function UserManagementPage() {
             onRoleChange={handleRoleChange}
         />
     )}
+    <CreateUserDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreateUser={handleCreateUser}
+    />
     </>
   );
 }
 
-    
