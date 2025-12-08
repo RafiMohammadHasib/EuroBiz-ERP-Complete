@@ -30,6 +30,19 @@
         "unitPrice"
       ]
     },
+    "User": {
+        "title": "User",
+        "type": "object",
+        "description": "Represents a user account with their assigned role.",
+        "properties": {
+            "uid": { "type": "string", "description": "The user's unique ID." },
+            "name": { "type": "string", "description": "The full name of the user." },
+            "email": { "type": "string", "description": "The user's email address.", "format": "email" },
+            "role": { "type": "string", "description": "The role assigned to the user.", "enum": ["admin", "salesperson", "viewer"] },
+            "createdAt": { "type": "string", "description": "The date the user account was created.", "format": "date-time"}
+        },
+        "required": ["uid", "name", "email", "role", "createdAt"]
+    },
     "DistributionChannel": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "DistributionChannel",
@@ -378,6 +391,15 @@
         }
       },
       {
+        "path": "/users/{userId}",
+        "definition": {
+            "entityName": "User",
+            "schema": { "$ref": "#/backend/entities/User"},
+            "description": "Stores user account and role information.",
+            "params": [{"name": "userId", "description": "The user's unique ID (UID)."}]
+        }
+      },
+      {
         "path": "/distribution_channels/{distributionChannelId}",
         "definition": {
           "entityName": "DistributionChannel",
@@ -581,3 +603,5 @@
     "reasoning": "The Firestore structure is designed to support the BizFin Sales ERP application, focusing on commission management, invoice handling, sales return processing, and outstanding dues monitoring. The structure prioritizes Authorization Independence by avoiding hierarchical `get()` calls in security rules. It uses Structural Segregation to ensure that all documents within a collection share the same security requirements. Access Modeling follows consistent patterns: path-based ownership for user-related data and membership maps for collaborative data if needed in the future. Data clarity and predictability are maintained through explicit state modeling and consistent naming conventions.\n\nThe core entities (Product, DistributionChannel, Salesperson, Customer) are stored in top-level collections. SalesCommission, SalesInvoice, SalesReturn, and OutstandingDue are structured as subcollections under their respective parent entities to reflect the relationships described in the entities section. This approach enables efficient querying and management of related data while maintaining security and scalability. For example, sales commissions are nested under Salesperson, Product, and DistributionChannel to enable complex commission reporting and management based on these dimensions. SalesReturns are nested under SalesInvoices, and OutstandingDues are also related to SalesInvoices, reflecting their direct relationship.\n\nAuthorization Independence is achieved by potentially denormalizing relevant authorization data into each document in the subcollections if access control depends on parent document attributes, though this is not explicitly required by the current schema. The structure supports QAPs by enabling secure list operations, leveraging Structural Segregation to ensure consistent security requirements within each collection and subcollection. A 'user_roles' collection has been added to manage role-based access control, allowing for flexible admin privileges."
   }
 }
+
+    

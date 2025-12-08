@@ -41,6 +41,11 @@ service cloud.firestore {
     // ---------------------------
     // --- Role Management ---
     // ---------------------------
+    
+    match /users/{userId} {
+        allow read, write: if isAdmin();
+        allow create: if isSignedIn();
+    }
 
     /**
      * @description Controls access to user role documents.
@@ -286,3 +291,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

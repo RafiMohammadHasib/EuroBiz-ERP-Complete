@@ -41,6 +41,7 @@ import {
   Undo2,
   Wallet,
   Receipt,
+  Users
 } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -90,6 +91,12 @@ export const navGroups: NavGroup[] = [
             { href: "/dues", label: "Outstanding Dues", icon: Landmark },
             { href: "/expenses", label: "Expenses", icon: Receipt },
             { href: "/salaries", label: "Salaries", icon: Wallet },
+        ]
+    },
+    {
+        label: "Administration",
+        items: [
+            { href: "/user-management", label: "User Management", icon: Users }
         ]
     }
 ]
@@ -223,3 +230,5 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
     </>
   );
 }
+
+    
