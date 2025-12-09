@@ -51,7 +51,7 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
       
       <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Clock className="h-4 w-4" />
