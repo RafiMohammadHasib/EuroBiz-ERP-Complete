@@ -8,6 +8,7 @@ import { FinishedGood, InvoiceItem } from '@/lib/data';
 import { Trash2 } from 'lucide-react';
 import { useSettings } from '@/context/settings-context';
 import { useMemo } from 'react';
+import { Label } from '../ui/label';
 
 interface InvoiceItemFormProps {
   item: Omit<InvoiceItem, 'id' | 'total'>;
@@ -66,15 +67,13 @@ export function InvoiceItemForm({ item, products, onChange, onRemove }: InvoiceI
         max={selectedProduct?.quantity}
         className="text-right"
       />
-      <div className="relative">
-          <Input
-            type="number"
-            placeholder="Price"
-            value={item.unitPrice}
-            onChange={handlePriceChange}
-            className="text-right"
-          />
-      </div>
+      <Input
+        type="number"
+        placeholder="Price"
+        value={item.unitPrice}
+        onChange={handlePriceChange}
+        className="text-right"
+      />
       <div className="text-right font-medium pr-2">{currencySymbol}{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
       <Button variant="ghost" size="icon" onClick={onRemove}>
         <Trash2 className="h-4 w-4 text-destructive" />

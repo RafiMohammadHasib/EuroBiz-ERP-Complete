@@ -58,7 +58,7 @@ export function ManageRoleDialog({ isOpen, onOpenChange, user, onRoleChange }: M
             <Label htmlFor="user-email" className="text-right">
               Email
             </Label>
-            <p id="user-email" className="col-span-3 text-sm text-muted-foreground">{user?.email}</p>
+            <div id="user-email" className="col-span-3 text-sm text-muted-foreground">{user?.email}</div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="role-select" className="text-right">
