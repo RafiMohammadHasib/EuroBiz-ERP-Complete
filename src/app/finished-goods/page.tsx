@@ -24,13 +24,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { MoreHorizontal, DollarSign, TrendingUp, Boxes, ChevronDown, PackageCheck, ArrowUpDown, Search, Download } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, updateDoc } from 'firebase/firestore';
-import type { FinishedGood, RawMaterial } from '@/lib/data';
+import type { FinishedGood, RawMaterial, ProductionOrder, Invoice } from '@/lib/data';
 import { useSettings } from '@/context/settings-context';
 import { cn } from '@/lib/utils';
 import { EditSellingPriceDialog } from '@/components/finished-goods/edit-selling-price-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { ViewHistoryDialog } from '@/components/finished-goods/view-history-dialog';
 
 type SortKey = keyof FinishedGood;
 
@@ -40,11 +41,16 @@ export default function FinishedGoodsPage() {
   const { toast } = useToast();
   const finishedGoodsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
   const rawMaterialsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'rawMaterials') : null, [firestore]);
+  const productionOrdersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'productionOrders') : null, [firestore]);
+  const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
 
   const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
   const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
+  const { data: productionOrders, isLoading: poLoading } = useCollection<ProductionOrder>(productionOrdersCollection);
+  const { data: invoices, isLoading: invLoading } = useCollection<Invoice>(invoicesCollection);
   
   const [itemToEdit, setItemToEdit] = useState<FinishedGood | null>(null);
+  const [itemHistory, setItemHistory] = useState<FinishedGood | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
@@ -90,7 +96,7 @@ export default function FinishedGoodsPage() {
   const productLines = filteredAndSortedFinishedGoods.length;
   const totalUnits = filteredAndSortedFinishedGoods.reduce((acc, item) => acc + item.quantity, 0);
 
-  const isLoading = fgLoading || rmLoading;
+  const isLoading = fgLoading || rmLoading || poLoading || invLoading;
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -295,7 +301,7 @@ export default function FinishedGoodsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => setItemToEdit(item)}>Edit Selling Price</DropdownMenuItem>
-                          <DropdownMenuItem>View History</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setItemHistory(item)}>View History</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -362,6 +368,15 @@ export default function FinishedGoodsPage() {
             onOpenChange={(open) => !open && setItemToEdit(null)}
             product={itemToEdit}
             onUpdate={handleUpdateSellingPrice}
+        />
+    )}
+    {itemHistory && (
+        <ViewHistoryDialog
+            isOpen={!!itemHistory}
+            onOpenChange={(open) => !open && setItemHistory(null)}
+            product={itemHistory}
+            productionOrders={productionOrders || []}
+            invoices={invoices || []}
         />
     )}
     </>
