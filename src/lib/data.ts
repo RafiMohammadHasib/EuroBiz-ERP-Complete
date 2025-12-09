@@ -46,7 +46,7 @@ export type InvoiceItem = {
 }
 
 export const companyDetails = {
-    name: 'Desh Chemicals',
+    name: 'Desh Chemicals Company',
     address: 'Tegharia, West Keraniganj, Dhaka',
     email: 'info@deshchemicals.com',
     phone: '+880 1332-854803',
