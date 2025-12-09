@@ -44,6 +44,10 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
       
+      <div className="hidden md:block">
+        <SidebarTrigger />
+      </div>
+      
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
