@@ -224,7 +224,7 @@ export default function SidebarNav({ searchQuery }: SidebarNavProps) {
               </SidebarMenuItem>
           ))}
         </SidebarMenu>
-        <SidebarTrigger className="mt-2" />
+        
       </SidebarFooter>
     </>
   );
