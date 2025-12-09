@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, writeBatch } from "firebase/firestore";
-import type { Invoice, SalesCommission, UserRole, FinishedGood, Distributor, Payment } from "@/lib/data";
+import type { Invoice, SalesCommission, FinishedGood, Distributor, Payment } from "@/lib/data";
 import {
   Table,
   TableBody,
@@ -48,14 +48,10 @@ export default function SalesPage() {
   const { currencySymbol } = useSettings();
   const { toast } = useToast();
   const invoicesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
-  const salesCommissionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'sales_commissions') : null, [firestore]);
-  const usersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'salespeople') : null, [firestore]);
   const productsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'finishedGoods') : null, [firestore]);
   const distributorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'distributors') : null, [firestore]);
   
   const { data: invoices, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesCollection);
-  const { data: salesCommissions, isLoading: commissionsLoading } = useCollection<SalesCommission>(salesCommissionsCollection);
-  const { data: users, isLoading: usersLoading } = useCollection<UserRole>(usersCollection);
   const { data: products, isLoading: productsLoading } = useCollection<FinishedGood>(productsCollection);
   const { data: distributors, isLoading: distributorsLoading } = useCollection<Distributor>(distributorsCollection);
   
@@ -68,21 +64,17 @@ export default function SalesPage() {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   const safeInvoices = invoices || [];
-  const safeCommissions = salesCommissions || [];
-  const safeUsers = users || [];
   
-  const isLoading = invoicesLoading || commissionsLoading || usersLoading || productsLoading || distributorsLoading;
+  const isLoading = invoicesLoading || productsLoading || distributorsLoading;
 
   const invoiceWithSalesperson = useMemo(() => {
     return safeInvoices.map(invoice => {
-      const commission = safeCommissions.find(c => c.invoiceId === invoice.id);
-      const salesperson = safeUsers.find(u => u.uid === commission?.salespersonId);
       return {
         ...invoice,
-        salespersonName: salesperson ? `${salesperson.firstName} ${salesperson.lastName}` : 'N/A',
+        salespersonName: invoice.salesperson || 'N/A',
       };
     });
-  }, [safeInvoices, safeCommissions, safeUsers]);
+  }, [safeInvoices]);
 
   const kpiData = useMemo(() => {
     const relevantInvoices = safeInvoices.filter(inv => inv.status !== 'Cancelled');
