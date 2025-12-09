@@ -91,6 +91,9 @@ export function PreviewInvoiceDialog({ isOpen, onOpenChange, invoice, distributo
       <DialogContent className="max-w-4xl p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="text-2xl">Invoice Preview</DialogTitle>
+             <DialogDescription>
+              This is a preview of what your invoice will look like.
+            </DialogDescription>
           </DialogHeader>
           <div className="p-6 overflow-y-auto max-h-[80vh]">
             <div id="invoice-preview-content" className="p-8 border rounded-lg bg-white text-black shadow-lg">
