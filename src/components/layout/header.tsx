@@ -18,10 +18,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useSettings } from '@/context/settings-context';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { PieChart, Settings, LifeBuoy, LogOut, Globe, Clock, DollarSign } from 'lucide-react';
+import { PieChart, Settings, LifeBuoy, LogOut, Globe, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface HeaderProps {
@@ -34,14 +33,6 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleLogout = async () => {
     if (auth) {
@@ -53,12 +44,10 @@ export default function Header({ searchQuery, setSearchQuery }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
       
-      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-          <span>{currentTime.toLocaleTimeString()}</span>
+      <div className="md:hidden">
+        <SidebarTrigger />
       </div>
-      
+
       <div className="flex items-center gap-4 ml-auto">
         <Link href="/reports">
             <Button variant="ghost" size="icon">
