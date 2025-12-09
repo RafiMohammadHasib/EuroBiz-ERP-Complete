@@ -165,10 +165,12 @@ service cloud.firestore {
     // --- User Profiles ---
     // ---------------------------
     
-    match /salespeople/{salespersonId} {
-      allow get, update, delete: if isOwner(salespersonId) || isAdmin();
-      allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
-      allow list: if isSignedIn(); 
+    match /salespeople {
+        allow list: if isSignedIn();
+        match /{salespersonId} {
+            allow get, update, delete: if isOwner(salespersonId) || isAdmin();
+            allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
+        }
     }
     
     match /customers/{customerId} {
