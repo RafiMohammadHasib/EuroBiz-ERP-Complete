@@ -373,7 +373,7 @@ export default function Home() {
     {previewInvoiceData && (
         <PreviewInvoiceDialog
             isOpen={!!invoiceToPreview}
-            onOpenChange={() => setInvoiceToPreview(null)}
+            onOpenChange={(open) => !open && setInvoiceToPreview(null)}
             invoice={previewInvoiceData.invoice}
             distributor={previewInvoiceData.distributor}
             subTotal={previewInvoiceData.subTotal}

@@ -442,7 +442,7 @@ export default function SalesPage() {
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Back</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleCancelSale} className="bg-destructive hover:bg-destructive/90">
                     Confirm Cancellation
                 </AlertDialogAction>
