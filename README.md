@@ -1,5 +1,2 @@
-# Firebase Studio
-
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+# EuroBiz-ERP-Complete (Your Project Title)
+This is the main repository for the Eurobiz ERP frontend.
