@@ -3,7 +3,7 @@
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import DashboardLayout from './dashboard-layout';
 import { Skeleton } from '../ui/skeleton';
 import { SettingsProvider } from '@/context/settings-context';
@@ -48,10 +48,8 @@ function AppContentController({ children }: { children: React.ReactNode }) {
         );
     }
 
-    const effectiveBusinessSettings = businessSettingsData || initialCompanyDetails;
-
     return (
-        <SettingsProvider initialBusinessSettings={effectiveBusinessSettings}>
+        <SettingsProvider initialBusinessSettings={businessSettingsData ?? initialCompanyDetails}>
             <DashboardLayout>
                 {children}
             </DashboardLayout>

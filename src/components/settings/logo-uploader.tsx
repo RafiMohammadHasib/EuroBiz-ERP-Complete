@@ -10,15 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2 } from 'lucide-react';
+import { useSettings } from '@/context/settings-context';
 
-interface LogoUploaderProps {
-  currentLogoUrl: string;
-  onUploadComplete: (newUrl: string) => void;
-}
-
-export function LogoUploader({ currentLogoUrl, onUploadComplete }: LogoUploaderProps) {
+export function LogoUploader() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { businessSettings, setBusinessSettings } = useSettings();
 
   const [isSaving, setIsSaving] = useState(false);
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null);
@@ -59,11 +56,13 @@ export function LogoUploader({ currentLogoUrl, onUploadComplete }: LogoUploaderP
       reader.onloadend = async () => {
         const dataUrl = reader.result as string;
 
+        const newSettings = { ...businessSettings, logoUrl: dataUrl };
+        
         // Update the settings document in Firestore
         const settingsRef = doc(firestore, 'settings', 'business');
         await setDoc(settingsRef, { logoUrl: dataUrl }, { merge: true });
 
-        onUploadComplete(dataUrl); // Notify parent component
+        setBusinessSettings(newSettings); // Notify parent component
 
         toast({
           title: 'Logo Updated',
@@ -88,7 +87,7 @@ export function LogoUploader({ currentLogoUrl, onUploadComplete }: LogoUploaderP
     }
   };
 
-  const logoToShow = previewUrl || currentLogoUrl;
+  const logoToShow = previewUrl || businessSettings.logoUrl;
 
   return (
     <div className="space-y-4">

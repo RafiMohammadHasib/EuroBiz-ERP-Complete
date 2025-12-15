@@ -67,8 +67,6 @@ export default function SettingsPage() {
 
   
   // --- Data Hooks ---
-  const { data: businessSettingsData, isLoading: businessLoading } = useDoc<BusinessSettings>(businessSettingsDocRef);
-  
   const { data: commissions, isLoading: commissionsLoading } = useCollection<Commission>(commissionsCollection);
   const { data: finishedGoods, isLoading: fgLoading } = useCollection<FinishedGood>(finishedGoodsCollection);
   const { data: rawMaterials, isLoading: rmLoading } = useCollection<RawMaterial>(rawMaterialsCollection);
@@ -596,12 +594,7 @@ export default function SettingsPage() {
                       <CardDescription>Manage general business information used across the application, like on invoices.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                      <LogoUploader 
-                        currentLogoUrl={businessSettings.logoUrl}
-                        onUploadComplete={(newUrl) => {
-                            setBusinessSettings(prev => ({...prev, logoUrl: newUrl}));
-                        }}
-                      />
+                      <LogoUploader />
                       <div className="grid md:grid-cols-2 gap-4 pt-4">
                           <div className="space-y-2">
                               <Label htmlFor="name">Company Name</Label>

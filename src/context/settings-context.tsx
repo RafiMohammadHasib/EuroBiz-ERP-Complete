@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useState, useContext, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 
 type Currency = 'BDT' | 'USD';
 
@@ -30,8 +30,13 @@ interface SettingsProviderProps {
 }
 
 export function SettingsProvider({ children, initialBusinessSettings }: SettingsProviderProps) {
-  const [currency, setCurrency] = useState<Currency>(initialBusinessSettings.currency || 'BDT');
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(initialBusinessSettings);
+  const [currency, setCurrency] = useState<Currency>(initialBusinessSettings.currency || 'BDT');
+
+  useEffect(() => {
+    setBusinessSettings(initialBusinessSettings);
+    setCurrency(initialBusinessSettings.currency || 'BDT');
+  }, [initialBusinessSettings]);
 
   const currencySymbol = currency === 'USD' ? '$' : '৳';
 
