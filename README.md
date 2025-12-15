@@ -1,2 +1,2 @@
-# EuroBiz-ERP-Complete (Your Project Title)
+# EuroBiz-ERP-Complete
 This is the main repository for the Eurobiz ERP frontend.
