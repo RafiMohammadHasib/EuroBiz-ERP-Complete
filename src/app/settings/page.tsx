@@ -47,15 +47,13 @@ export default function SettingsPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currencySymbol, businessSettings: contextBusinessSettings, setBusinessSettings: setContextBusinessSettings } = useSettings();
+  const { currencySymbol, businessSettings, setBusinessSettings } = useSettings();
 
   // --- Profile State ---
   const salespersonDocRef = useMemoFirebase(() => user ? doc(firestore, 'salespeople', user.uid) : null, [user, firestore]);
   const { data: salespersonData, isLoading: salespersonLoading } = useDoc<Salesperson>(salespersonDocRef);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
-
-
   // --- Firestore References ---
   const businessSettingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'business') : null, [firestore]);
   
@@ -84,8 +82,6 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(contextBusinessSettings);
 
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
@@ -121,12 +117,6 @@ export default function SettingsPage() {
   }, [safeCommissions, commissionsCurrentPage, commissionsRowsPerPage]);
 
   const totalPagesCommissions = Math.ceil(safeCommissions.length / commissionsRowsPerPage);
-
-
-  // --- Effects to sync state with data from hooks ---
-  useEffect(() => {
-    setBusinessSettings(contextBusinessSettings);
-  }, [contextBusinessSettings]);
 
 
   // --- Handlers ---
@@ -181,7 +171,6 @@ export default function SettingsPage() {
     setIsSavingBusiness(true);
     try {
         await setDoc(businessSettingsDocRef, businessSettings, { merge: true });
-        setContextBusinessSettings(businessSettings); // Update context
         toast({ title: 'Business Details Updated', description: 'Your new business details have been saved.' });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error Saving Details', description: error.message });
@@ -190,7 +179,7 @@ export default function SettingsPage() {
     }
   };
 
-    const handleBusinessDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBusinessDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setBusinessSettings(prev => ({ ...prev, [id]: value }));
     }
@@ -611,7 +600,6 @@ export default function SettingsPage() {
                         currentLogoUrl={businessSettings.logoUrl}
                         onUploadComplete={(newUrl) => {
                             setBusinessSettings(prev => ({...prev, logoUrl: newUrl}));
-                            setContextBusinessSettings(prev => ({...prev, logoUrl: newUrl}));
                         }}
                       />
                       <div className="grid md:grid-cols-2 gap-4 pt-4">

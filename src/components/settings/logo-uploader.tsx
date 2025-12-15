@@ -41,7 +41,7 @@ export function LogoUploader({ currentLogoUrl, onUploadComplete }: LogoUploaderP
   };
 
   const handleSave = async () => {
-    if (!newLogoFile) {
+    if (!newLogoFile || !firestore) {
       toast({
         variant: 'destructive',
         title: 'No file selected',
@@ -124,4 +124,3 @@ export function LogoUploader({ currentLogoUrl, onUploadComplete }: LogoUploaderP
     </div>
   );
 }
-
