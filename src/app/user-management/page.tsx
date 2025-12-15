@@ -21,9 +21,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Users, MoreHorizontal, PlusCircle } from "lucide-react"
-import { useCollection, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 import { ManageRoleDialog } from "@/components/user-management/manage-role-dialog";
 import { CreateUserDialog, type NewUser } from "@/components/user-management/create-user-dialog";
@@ -40,7 +39,6 @@ type User = {
 
 export default function UserManagementPage() {
     const firestore = useFirestore();
-    const auth = useAuth();
     const { toast } = useToast();
     
     const usersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -69,46 +67,10 @@ export default function UserManagementPage() {
         }
     };
     
-    const handleCreateUser = async (newUser: NewUser) => {
-        if (!auth || !firestore) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Authentication or database service is not available.'});
-            return;
-        }
-
-        try {
-            // Step 1: Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
-            const authUser = userCredential.user;
-
-            // Step 2: Create user document in Firestore
-            const userDocRef = doc(firestore, 'users', authUser.uid);
-            await setDoc(userDocRef, {
-                uid: authUser.uid,
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role,
-                createdAt: new Date().toISOString(),
-            });
-
-            toast({
-                title: 'User Created',
-                description: `User ${newUser.name} has been created successfully.`,
-            });
-            setCreateDialogOpen(false);
-        } catch (error: any) {
-            console.error("Error creating user:", error);
-            let errorMessage = 'Could not create the user.';
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'This email address is already in use by another account.';
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'The password is too weak. Please use a stronger password.';
-            }
-            toast({
-                variant: 'destructive',
-                title: 'Error Creating User',
-                description: errorMessage,
-            });
-        }
+    // This function is no longer needed here as logic is moved to CreateUserDialog
+    const handleCreateUser = (newUser: NewUser) => {
+        // The dialog now handles creation internally.
+        // This function could be used for other logic if needed, e.g., refetching data.
     };
 
     const getRoleBadgeVariant = (role: string) => {
