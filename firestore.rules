@@ -19,7 +19,15 @@ service cloud.firestore {
      * This function performs a single document read to check the user's role.
      */
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isSalesperson() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'salesperson';
+    }
+    
+    function isViewer() {
+         return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'viewer';
     }
 
     /**
@@ -43,6 +51,7 @@ service cloud.firestore {
     // ---------------------------
     
     match /users/{userId} {
+        allow list: if isAdmin();
         allow read, write: if isAdmin();
         allow create: if isSignedIn();
     }
@@ -62,92 +71,73 @@ service cloud.firestore {
     // ---------------------------
     // --- Business-Wide Data ---
     // ---------------------------
-
-    /**
-     * @description Controls access to product information.
-     * @path /products/{productId}
-     * @allow (get) Any authenticated user can read a specific product.
-     * @allow (write) Only users with an 'admin' role can create, update, or delete products.
-     * @principle Public read for signed-in users, with writes restricted to admins.
-     */
-    match /products/{productId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
     
     match /settings/{settingId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
-    }
-
-    /**
-     * @description Controls access to distribution channel information.
-     * @path /distribution_channels/{distributionChannelId}
-     * @allow (get) Any authenticated user can read a specific distribution channel.
-     * @allow (write) Only users with an 'admin' role can create, update, or delete channels.
-     * @principle Public read for signed-in users, with writes restricted to admins.
-     */
-    match /distribution_channels/{distributionChannelId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
     
-    /**
-     * @description Controls access to distributor information.
-     * @path /distributors/{distributorId}
-     * @allow (get, list) Any authenticated user can read distributor data.
-     * @allow (write) Only admins can create, update, or delete distributors.
-     * @principle Public read for signed-in users, with writes restricted to admins.
-     */
+    match /products/{productId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin() || isSalesperson();
+    }
+    
+    match /distribution_channels/{distributionChannelId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin() || isSalesperson();
+    }
+    
     match /distributors/{distributorId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow write: if isAdmin() || isSalesperson();
     }
 
-    /**
-     * @description Controls access to supplier information.
-     * @path /suppliers/{supplierId}
-     * @allow (get) Any authenticated user can read supplier data.
-     * @deny (create) Anonymous users cannot create suppliers.
-     * @principle Public read for signed-in users, with writes disabled pending an admin role.
-     */
     match /suppliers/{supplierId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update: if isAdmin() || isSalesperson();
+      allow delete: if isAdmin();
     }
     
     match /purchaseOrders/{purchaseOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow create: if isAdmin() || isSalesperson();
+        allow update: if isAdmin() || isSalesperson();
+        allow delete: if isAdmin();
     }
     
     match /sales_commissions/{commissionId} {
-        allow read, write: if isSignedIn();
+        allow read: if isSignedIn();
+        allow create: if (isSalesperson() && request.resource.data.salespersonId == request.auth.uid) || isAdmin();
+        allow write: if isAdmin();
     }
 
     match /invoices/{invoiceId} {
-        allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow read: if isSignedIn();
+        allow create: if isAdmin() || isSalesperson();
+        allow update, delete: if isAdmin();
     }
 
     match /rawMaterials/{materialId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update: if isAdmin() || isSalesperson();
+      allow delete: if isAdmin();
     }
 
     match /finishedGoods/{goodId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow create, update: if isAdmin() || isSalesperson();
+      allow delete: if isAdmin();
     }
     
     match /productionOrders/{productionOrderId} {
         allow get, list: if isSignedIn();
-        allow write: if isSignedIn();
+        allow create, update: if isAdmin() || isSalesperson();
+        allow delete: if isAdmin();
     }
 
     match /commissions/{commissionId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {
@@ -156,44 +146,33 @@ service cloud.firestore {
     }
     
     match /salary_payments/{paymentId} {
-        allow read, write: if isSignedIn();
+        allow read: if isAdmin();
+        allow create, update, delete: if isAdmin();
     }
 
     match /sales_returns/{returnId} {
-        allow read, write: if isSignedIn();
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin() || isSalesperson();
     }
     
     match /expenses/{expenseId} {
-        allow read, write: if isSignedIn();
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
     }
 
 
     // ---------------------------
     // --- User Profiles ---
     // ---------------------------
-
-    /**
-     * @description Controls access to salesperson profiles.
-     * @path /salespeople/{salespersonId}
-     * @allow (create) A new salesperson can create their own profile document if their UID matches the document ID.
-     * @deny (get) Another salesperson cannot read a different salesperson's profile.
-     * @principle Enforces self-creation and ownership of personal profile data.
-     */
+    
     match /salespeople/{salespersonId} {
-      allow get, update, delete: if isOwner(salespersonId);
-      allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
-      allow list: if isSignedIn(); // Disallow listing of all salespeople for privacy.
+        allow get, list: if isSignedIn();
+        allow update, delete: if isOwner(salespersonId) || isAdmin();
+        allow create: if isOwner(salespersonId) && request.resource.data.id == salespersonId;
     }
-
-    /**
-     * @description Controls access to customer profiles.
-     * @path /customers/{customerId}
-     * @allow (create) A new customer can create their own profile document if their UID matches the document ID.
-     * @allow (list) Authenticated users can list customers for creating invoices.
-     * @principle Enforces self-creation and ownership of personal profile data, but allows listing for internal use.
-     */
+    
     match /customers/{customerId} {
-      allow get, update, delete: if isOwner(customerId);
+      allow get, update, delete: if isOwner(customerId) || isAdmin();
       allow create: if isOwner(customerId) && request.resource.data.id == customerId;
       allow list: if isSignedIn();
     }
@@ -201,90 +180,51 @@ service cloud.firestore {
     // ---------------------------
     // --- Salesperson Data ---
     // ---------------------------
-
-    /**
-     * @description Secures a salesperson's commission records.
-     * @path /salespeople/{salespersonId}/commissions/{commissionId}
-     * @allow (create) A salesperson can create a commission record for themselves.
-     * @deny (get) A salesperson cannot read another salesperson's commissions.
-     * @principle Restricts access to a user's own data tree and validates relational integrity.
-     */
+    
     match /salespeople/{salespersonId}/commissions/{commissionId} {
-      allow get, list: if isOwner(salespersonId);
+      allow get, list: if isOwner(salespersonId) || isAdmin();
       allow create: if isOwner(salespersonId) && request.resource.data.salespersonId == salespersonId;
       allow update: if isExistingOwner(salespersonId) && request.resource.data.salespersonId == resource.data.salespersonId;
-      allow delete: if isExistingOwner(salespersonId);
+      allow delete: if isExistingOwner(salespersonId) || isAdmin();
     }
 
     // ---------------------------
     // --- Customer Data ---
     // ---------------------------
-
-    /**
-     * @description Secures a customer's invoice records.
-     * @path /customers/{customerId}/invoices/{invoiceId}
-     * @allow (get) A customer can read their own invoices.
-     * @deny (list) Another customer cannot list a different customer's invoices.
-     * @principle Restricts access to a user's own data tree and validates relational integrity.
-     */
+    
     match /customers/{customerId}/invoices/{invoiceId} {
-      allow get, list: if isOwner(customerId);
+      allow get, list: if isOwner(customerId) || isAdmin();
       allow create: if isOwner(customerId) && request.resource.data.customerId == customerId;
       allow update: if isExistingOwner(customerId) && request.resource.data.customerId == resource.data.customerId;
-      allow delete: if isExistingOwner(customerId);
+      allow delete: if isExistingOwner(customerId) || isAdmin();
 
-      /**
-       * @description Secures sales returns associated with a customer's invoice.
-       * @path /customers/{customerId}/invoices/{invoiceId}/returns/{returnId}
-       * @allow (create) A customer can log a return for their own invoice.
-       * @deny (get) Another customer cannot view return data for an invoice that is not theirs.
-       * @principle Inherits ownership from the path and validates the invoice link.
-       */
+      
       match /returns/{returnId} {
-        allow get, list: if isOwner(customerId);
+        allow get, list: if isOwner(customerId) || isAdmin();
         allow create: if isOwner(customerId) && request.resource.data.invoiceId == invoiceId;
         allow update: if isExistingOwner(customerId) && request.resource.data.invoiceId == resource.data.invoiceId;
-        allow delete: if isExistingOwner(customerId);
+        allow delete: if isExistingOwner(customerId) || isAdmin();
       }
 
-      /**
-       * @description Secures outstanding due records for a customer's invoice.
-       * @path /customers/{customerId}/invoices/{invoiceId}/outstanding_dues/{outstandingDueId}
-       * @allow (get) A customer can view outstanding dues for their own invoices.
-       * @deny (create) A customer cannot create an outstanding due record for another customer's invoice.
-       * @principle Inherits ownership from the path and validates the invoice link.
-       */
+      
       match /outstanding_dues/{outstandingDueId} {
-        allow get, list: if isOwner(customerId);
+        allow get, list: if isOwner(customerId) || isAdmin();
         allow create: if isOwner(customerId) && request.resource.data.invoiceId == invoiceId;
         allow update: if isExistingOwner(customerId) && request.resource.data.invoiceId == resource.data.invoiceId;
-        allow delete: if isExistingOwner(customerId);
+        allow delete: if isExistingOwner(customerId) || isAdmin();
       }
     }
 
     // --------------------------------
     // --- Reporting Subcollections ---
     // --------------------------------
-
-    /**
-     * @description Provides read-only access to commission data under products for reporting.
-     * @path /products/{productId}/commissions/{commissionId}
-     * @allow (get) Any signed-in user can read commission data related to a product.
-     * @deny (create, update, delete) No client can write to this path to maintain data integrity.
-     * @principle Secures reporting data by making it read-only for clients.
-     */
+    
     match /products/{productId}/commissions/{commissionId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
-    /**
-     * @description Provides read-only access to commission data under channels for reporting.
-     * @path /distribution_channels/{distributionChannelId}/commissions/{commissionId}
-     * @allow (get) Any signed-in user can read commission data related to a distribution channel.
-     * @deny (create, update, delete) No client can write to this path to maintain data integrity.
-     * @principle Secures reporting data by making it read-only for clients.
-     */
+    
     match /distribution_channels/{distributionChannelId}/commissions/{commissionId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
@@ -292,4 +232,3 @@ service cloud.firestore {
   }
 }
 
-    
